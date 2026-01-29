@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotspot Central | Payment Success</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #e0e0e0;
+        }
+
+        .card {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(30, 30, 46, 0.95);
+            padding: 40px;
+            border-radius: 30px;
+            border: 2px solid #4ecdc4;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .check-container {
+            width: 80px;
+            height: 80px;
+            background: rgba(78, 205, 196, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            border: 2px solid #4ecdc4;
+            font-size: 40px;
+            color: #4ecdc4;
+        }
+
+        h1 { color: #4ecdc4; font-size: 1.8rem; margin-bottom: 10px; }
+        .status-text { color: #b8b8b8; margin-bottom: 30px; font-size: 1rem; }
+
+        #voucherDisplay {
+            display: none;
+            background: rgba(240, 147, 251, 0.1);
+            border: 2px dashed #f093fb;
+            padding: 25px;
+            border-radius: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .voucher-label { font-size: 0.75rem; color: #f093fb; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+        .voucher-code { font-size: 2.2rem; font-weight: 800; color: #ffffff; letter-spacing: 5px; }
+
+        .progress-container { width: 100%; background: rgba(255,255,255,0.05); height: 6px; border-radius: 10px; margin-top: 30px; overflow: hidden; }
+        .progress-bar { width: 0%; height: 100%; background: #4ecdc4; transition: width 0.5s ease; }
+
+        .btn {
+            display: none;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            margin-top: 20px;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(78, 205, 196, 0.3); }
+        .footer-note { font-size: 0.8rem; color: #666; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="processingUI">
+        <div class="check-container">✓</div>
+        <h1>Payment Verified</h1>
+        <p class="status-text">Generating your access code... <span id="percent">0</span>%</p>
+        <div class="progress-container">
+            <div class="progress-bar" id="bar"></div>
+        </div>
+    </div>
+
+    <div id="readyUI">
+        <div id="voucherDisplay">
+            <p class="voucher-label">Your WiFi Voucher</p>
+            <div class="voucher-code" id="codeText">------</div>
+        </div>
+        <p style="font-size: 0.9rem; color: #b8b8b8;">The code has been saved to this phone automatically.</p>
+        <button id="connectBtn" class="btn">ACTIVATE INTERNET NOW</button>
+        <div class="footer-note">
+            Order ID: <span id="displayOrderId" style="color:#888;"></span>
+        </div>
+    </div>
+
+    <div id="errorUI" style="display:none;">
+        <h1 style="color: #ff4757;">⚠️ Connection Delayed</h1>
+        <p class="status-text">Payment was successful, but the voucher generation timed out.</p>
+        <a href="https://wa.me/256771999302" class="btn" style="display:block; background:#25d366;">Chat with Support</a>
+    </div>
+</div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const trackingId = urlParams.get('OrderTrackingId');
+    const API_URL = 'https://voucher-api.mobilehubugandainfo.workers.dev';
+
+    document.getElementById('displayOrderId').innerText = trackingId || 'N/A';
+
+    async function getVoucher() {
+        if (!trackingId) return;
+
+        let width = 0;
+        const interval = setInterval(() => {
+            if (width >= 90) clearInterval(interval);
+            width += 10;
+            document.getElementById('bar').style.width = width + '%';
+            document.getElementById('percent').innerText = width;
+        }, 300);
+
+        try {
+            const response = await fetch(`${API_URL}/api/payment/status?id=${trackingId}`);
+            const data = await response.json();
+
+            if (data.status === 'COMPLETED' || data.status === 'SUCCESS') {
+                clearInterval(interval);
+                document.getElementById('bar').style.width = '100%';
+                document.getElementById('percent').innerText = '100';
+                
+                // SAVE TO PHONE MEMORY BEFORE SHOWING
+                localStorage.setItem('last_voucher', data.voucherCode);
+                localStorage.setItem('voucher_date', new Date().toLocaleString());
+                
+                showVoucher(data.voucherCode);
+            } else {
+                showError();
+            }
+        } catch (error) {
+            showError();
+        }
+    }
+
+    function showVoucher(code) {
+        setTimeout(() => {
+            document.getElementById('processingUI').style.display = 'none';
+            document.getElementById('voucherDisplay').style.display = 'block';
+            document.getElementById('codeText').innerText = code;
+            
+            const btn = document.getElementById('connectBtn');
+            btn.style.display = 'block';
+            
+            btn.onclick = () => {
+                window.location.href = `login.html?voucher=${code}`;
+            };
+        }, 800);
+    }
+
+    function showError() {
+        document.getElementById('processingUI').style.display = 'none';
+        document.getElementById('errorUI').style.display = 'block';
+    }
+
+    getVoucher();
+</script>
+</body>
+</html>

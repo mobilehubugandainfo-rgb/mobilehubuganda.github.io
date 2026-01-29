@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Register IPN | MobileHub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgba(30, 30, 46, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid #4ecdc4;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #4ecdc4;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #b8b8b8;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            background: rgba(78, 205, 196, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            color: #b8b8b8;
+            margin-bottom: 30px;
+            border: 1px solid rgba(78, 205, 196, 0.3);
+            line-height: 1.8;
+        }
+
+        .info-box strong {
+            color: #4ecdc4;
+        }
+
+        .step {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: 700;
+            margin-right: 10px;
+        }
+
+        .step-title {
+            color: #e0e0e0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .step-content {
+            color: #b8b8b8;
+            line-height: 1.6;
+            margin-left: 40px;
+        }
+
+        button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(78, 205, 196, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-box {
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .success {
+            background: rgba(78, 205, 196, 0.2);
+            border: 2px solid #4ecdc4;
+            color: #4ecdc4;
+            display: block;
+        }
+
+        .error {
+            background: rgba(255, 71, 87, 0.2);
+            border: 2px solid #ff4757;
+            color: #ff4757;
+            display: block;
+        }
+
+        .ipn-id-box {
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(245, 87, 108, 0.2));
+            border: 2px solid #f093fb;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .ipn-id-box.show {
+            display: block;
+        }
+
+        .ipn-id-title {
+            color: #f093fb;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .ipn-id-value {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            margin-bottom: 15px;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            margin-bottom: 0;
+        }
+
+        .instructions {
+            background: rgba(78, 205, 196, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 1px solid rgba(78, 205, 196, 0.3);
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            color: #b8b8b8;
+            line-height: 2;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-not-configured {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+            border: 1px solid #ff4757;
+        }
+
+        .status-configured {
+            background: rgba(78, 205, 196, 0.2);
+            color: #4ecdc4;
+            border: 1px solid #4ecdc4;
+        }
+
+        .loading {
+            text-align: center;
+            color: #4ecdc4;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🔧 MobileHub Pesapal Setup</h1>
+            <p class="subtitle">One-time IPN Registration</p>
+
+            <div class="info-box">
+                <strong>ℹ️ What is IPN?</strong><br>
+                IPN (Instant Payment Notification) allows Pesapal to notify your system when payments are completed.
+                This is <strong>mandatory</strong> before you can process payments.<br><br>
+                <strong>Current Status:</strong> 
+                <span id="ipnStatus" class="status-badge status-not-configured">Checking...</span>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    Register IPN with Pesapal
+                </div>
+                <div class="step-content">
+                    Click the button below to register your IPN URL with Pesapal. This needs to be done only once.
+                </div>
+                <button onclick="registerIPN()" id="registerBtn" style="margin-top: 15px;">
+                    📡 Register IPN Now
+                </button>
+            </div>
+
+            <div id="resultBox" class="result-box"></div>
+
+            <div id="ipnIdBox" class="ipn-id-box">
+                <div class="ipn-id-title">✅ IPN Registered Successfully!</div>
+                <p style="color: #b8b8b8; margin-bottom: 10px;">Your IPN ID:</p>
+                <div class="ipn-id-value" id="ipnIdValue"></div>
+                <button class="copy-btn" onclick="copyIpnId()">📋 Copy IPN ID</button>
+                
+                <div class="instructions">
+                    <strong style="color: #4ecdc4;">Next Steps:</strong>
+                    <ol>
+                        <li>Copy the IPN ID above (already done if you clicked the button)</li>
+                        <li>Go to <strong>Cloudflare Dashboard</strong></li>
+                        <li>Navigate to <strong>Workers & Pages</strong> → <strong>voucher-api</strong></li>
+                        <li>Click <strong>Settings</strong> → <strong>Variables and Secrets</strong></li>
+                        <li>Click <strong>Add variable</strong></li>
+                        <li>Variable name: <code style="background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 4px;">PESAPAL_IPN_ID</code></li>
+                        <li>Value: <strong>Paste the IPN ID</strong></li>
+                        <li>Type: <strong>Encrypted</strong> (select "Encrypt")</li>
+                        <li>Click <strong>Save</strong></li>
+                        <li>Go back and <strong>redeploy</strong> the worker</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    Verify IPN List (Optional)
+                </div>
+                <div class="step-content">
+                    View all registered IPNs to confirm registration.
+                </div>
+                <button onclick="listIPNs()" id="listBtn" style="margin-top: 15px;">
+                    📋 View Registered IPNs
+                </button>
+            </div>
+
+            <div id="listResult" class="result-box"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://voucher-api.mobilehubugandainfo.workers.dev';
+        let currentIpnId = '';
+
+        // Check IPN status on page load
+        window.addEventListener('load', async () => {
+            await checkIPNStatus();
+        });
+
+        async function checkIPNStatus() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                const statusBadge = document.getElementById('ipnStatus');
+                if (data.ipn_configured) {
+                    statusBadge.textContent = '✓ Configured';
+                    statusBadge.className = 'status-badge status-configured';
+                } else {
+                    statusBadge.textContent = '✗ Not Configured';
+                    statusBadge.className = 'status-badge status-not-configured';
+                }
+            } catch (error) {
+                console.error('Status check error:', error);
+            }
+        }
+
+        async function registerIPN() {
+            const btn = document.getElementById('registerBtn');
+            const resultBox = document.getElementById('resultBox');
+            const ipnIdBox = document.getElementById('ipnIdBox');
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Registering IPN with Pesapal...';
+            resultBox.style.display = 'none';
+            ipnIdBox.classList.remove('show');
+
+            try {
+                const response = await fetch(`${API_URL}/api/pesapal/register-ipn`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.ipn_data && data.ipn_data.ipn_id) {
+                    // Success!
+                    currentIpnId = data.ipn_data.ipn_id;
+                    document.getElementById('ipnIdValue').textContent = currentIpnId;
+                    ipnIdBox.classList.add('show');
+                    
+                    resultBox.className = 'result-box success';
+                    resultBox.textContent = JSON.stringify(data, null, 2);
+                    
+                    // Update status badge
+                    await checkIPNStatus();
+                } else {
+                    throw new Error(JSON.stringify(data, null, 2));
+                }
+
+            } catch (error) {
+                resultBox.className = 'result-box error';
+                resultBox.textContent = 'Error: ' + error.message;
+                console.error('IPN Registration Error:', error);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📡 Register IPN Now';
+            }
+        }
+
+        async function listIPNs() {
+            const btn = document.getElementById('listBtn');
+            const resultBox = document.getElementById('listResult');
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Fetching IPN list...';
+            resultBox.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_URL}/api/pesapal/list-ipns`);
+                const data = await response.json();
+
+                resultBox.className = 'result-box success';
+                resultBox.textContent = JSON.stringify(data, null, 2);
+
+            } catch (error) {
+                resultBox.className = 'result-box error';
+                resultBox.textContent = 'Error: ' + error.message;
+                console.error('List IPNs Error:', error);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📋 View Registered IPNs';
+            }
+        }
+
+        function copyIpnId() {
+            navigator.clipboard.writeText(currentIpnId).then(() => {
+                alert('✅ IPN ID copied to clipboard!\n\nNow add it to Cloudflare Worker settings as PESAPAL_IPN_ID');
+            }).catch(() => {
+                prompt('Copy this IPN ID:', currentIpnId);
+            });
+        }
+    </script>
+</body>
+</html>

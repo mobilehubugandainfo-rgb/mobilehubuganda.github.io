@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HotSpotCentral | Diagnostics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white p-6">
+    <div class="max-w-md mx-auto">
+        <h1 class="text-2xl font-bold mb-6 text-yellow-500">System Diagnostics</h1>
+        
+        <div id="results" class="space-y-4">
+            <div class="p-4 bg-slate-800 rounded-lg border border-slate-700">
+                <p class="text-sm text-slate-400">Connection Status</p>
+                <p id="net-status" class="font-mono">Checking...</p>
+            </div>
+
+            <div class="p-4 bg-slate-800 rounded-lg border border-slate-700">
+                <p class="text-sm text-slate-400">API Reachability</p>
+                <p id="api-status" class="font-mono">Checking...</p>
+            </div>
+            
+            <div class="p-4 bg-slate-800 rounded-lg border border-slate-700">
+                <p class="text-sm text-slate-400">Your IP Address</p>
+                <p id="ip-address" class="font-mono text-blue-400">Detecting...</p>
+            </div>
+        </div>
+
+        <button onclick="runDiagnostics()" class="w-full mt-8 bg-yellow-600 p-3 rounded-lg font-bold hover:bg-yellow-500 transition">Rerun Tests</button>
+        <a href="index.html" class="block text-center mt-4 text-slate-400 underline hover:text-white">Back to Home</a>
+    </div>
+
+    <script>
+        async function runDiagnostics() {
+            // Network status
+            const netStatusEl = document.getElementById('net-status');
+            netStatusEl.innerText = navigator.onLine ? "🌐 Online" : "🚫 Offline";
+            netStatusEl.className = navigator.onLine ? "font-mono text-green-400" : "font-mono text-red-400";
+
+            const apiStatusEl = document.getElementById('api-status');
+            const ipEl = document.getElementById('ip-address');
+
+            try {
+                // Ping worker API
+                const start = Date.now();
+                const res = await fetch('/api/admin/stock', { method: 'GET' });
+                const duration = Date.now() - start;
+
+                if (res.ok) {
+                    apiStatusEl.innerText = `✅ Reachable (${duration}ms)`;
+                    apiStatusEl.className = "font-mono text-green-400";
+                } else {
+                    throw new Error('Non-200 response');
+                }
+
+                // Fetch public IP
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipRes.json();
+                ipEl.innerText = ipData.ip;
+
+            } catch (err) {
+                apiStatusEl.innerText = "❌ API Unreachable";
+                apiStatusEl.className = "font-mono text-red-400";
+                ipEl.innerText = "Local/Unknown";
+            }
+        }
+
+        runDiagnostics();
+    </script>
+</body>
+</html>

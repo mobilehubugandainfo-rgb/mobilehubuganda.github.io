@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Voucher | HotSpot Central</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.container { max-width: 600px; width: 100%; }
+
+.voucher-card {
+  background: rgba(30,30,46,0.95);
+  border-radius: 28px;
+  padding: 45px 35px;
+  border: 3px solid #4ecdc4;
+  box-shadow: 0 30px 90px rgba(0,0,0,0.5);
+  text-align: center;
+}
+
+.title { color: #4ecdc4; font-size: 1.9rem; margin-bottom: 10px; }
+.subtitle { color: #bbb; margin-bottom: 25px; }
+
+.spinner {
+  width: 45px;
+  height: 45px;
+  border: 4px solid rgba(78,205,196,0.2);
+  border-top: 4px solid #4ecdc4;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.voucher-box {
+  background: linear-gradient(135deg,#f093fb,#f5576c);
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+}
+
+.code-label {
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  color: #fff;
+  opacity: 0.85;
+}
+
+.code-value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: white;
+  font-family: monospace;
+}
+
+.btn {
+  width: 100%;
+  padding: 15px;
+  border-radius: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.btn-primary { background: #4ecdc4; color: white; }
+.btn-secondary {
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.support {
+  margin-top: 20px;
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.support a {
+  color: #25d366;
+  text-decoration: none;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="voucher-card">
+
+    <!-- LOADING -->
+    <div id="loading">
+      <div class="spinner"></div>
+      <h2 class="title" style="font-size:1.4rem;">Confirming Payment</h2>
+      <p class="subtitle">This may take a few seconds. Please keep this page open.</p>
+    </div>
+
+    <!-- SUCCESS -->
+    <div id="success" style="display:none;">
+      <h1 class="title">Payment Successful 🎉</h1>
+      <p class="subtitle">Your internet voucher is ready.</p>
+
+      <div class="voucher-box">
+        <div class="code-label">VOUCHER CODE</div>
+        <div id="voucherCode" class="code-value">----</div>
+      </div>
+
+      <button class="btn btn-primary" onclick="connectNow()">Connect to Internet</button>
+      <button class="btn btn-secondary" onclick="copyVoucher()">Copy Voucher</button>
+
+      <p class="support">Order Reference: <span id="orderRef"></span></p>
+    </div>
+
+    <!-- PENDING / FAILED -->
+    <div id="pending" style="display:none;">
+      <h2 class="title" style="color:#f1c40f;">Payment Processing</h2>
+      <p class="subtitle">
+        Your payment is still being confirmed.  
+        If you’ve been charged, your voucher will arrive shortly.
+      </p>
+      <div class="spinner"></div>
+
+      <div class="support">
+        Need help?  
+        <a id="supportLink" href="#">Chat on WhatsApp</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API_BASE = "https://mobilehubuganda.pages.dev";
+
+const params = new URLSearchParams(window.location.search);
+const merchantRef = params.get("OrderMerchantReference");
+const trackingId = params.get("OrderTrackingId");
+const lookupId = merchantRef || trackingId;
+
+let attempts = 0;
+const MAX_ATTEMPTS = 20;
+
+if (!lookupId) {
+  document.getElementById("loading").innerHTML =
+    "<h2 class='title' style='color:#ff4757'>Invalid Payment Link</h2>";
+} else {
+  pollStatus();
+}
+
+async function pollStatus() {
+  try {
+    const res = await fetch(`${API_BASE}/api/payment/status?id=${lookupId}`);
+    const data = await res.json();
+
+    if (data.status === "SUCCESS" && data.voucherCode) {
+      showSuccess(data.voucherCode);
+      return;
+    }
+
+    if (data.status === "FAILED") {
+      showPending();
+      return;
+    }
+
+    attempts++;
+    if (attempts < MAX_ATTEMPTS) {
+      setTimeout(pollStatus, 3000);
+    } else {
+      showPending();
+    }
+
+  } catch {
+    showPending();
+  }
+}
+
+function showSuccess(code) {
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("pending").style.display = "none";
+  document.getElementById("success").style.display = "block";
+
+  document.getElementById("voucherCode").innerText = code;
+  document.getElementById("orderRef").innerText = lookupId;
+
+  localStorage.setItem("last_voucher", code);
+}
+
+function showPending() {
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("pending").style.display = "block";
+  document.getElementById("supportLink").href =
+    `https://wa.me/256771999302?text=Payment%20help%20Ref:%20${lookupId}`;
+}
+
+function connectNow() {
+  const code = document.getElementById("voucherCode").innerText;
+  window.location.href = `login.html?voucher=${code}`;
+}
+
+function copyVoucher() {
+  navigator.clipboard.writeText(
+    document.getElementById("voucherCode").innerText
+  );
+  alert("Voucher copied successfully");
+}
+</script>
+
+</body>
+</html>

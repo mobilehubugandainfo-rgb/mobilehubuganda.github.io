@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hotspot Central | System Diagnostics</title>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI';
+    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    color:#fff;
+    min-height:100vh;
+    padding:30px;
+}
+.container {
+    max-width:900px;
+    margin:auto;
+    background:rgba(0,0,0,0.35);
+    padding:35px;
+    border-radius:24px;
+    border:1px solid rgba(255,255,255,0.1);
+}
+h1 {
+    text-align:center;
+    color:#4ecdc4;
+    margin-bottom:25px;
+}
+.grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:20px;
+}
+.section {
+    background:rgba(255,255,255,0.05);
+    padding:20px;
+    border-radius:14px;
+}
+.section h3 {
+    font-size:0.9rem;
+    margin-bottom:10px;
+    color:#f093fb;
+    letter-spacing:1px;
+}
+button {
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    font-weight:600;
+    background:linear-gradient(135deg,#4ecdc4,#44a08d);
+    color:#fff;
+    cursor:pointer;
+}
+button:hover { opacity:0.9; }
+.result {
+    margin-top:12px;
+    background:#000;
+    padding:12px;
+    border-radius:8px;
+    font-family:monospace;
+    font-size:0.75rem;
+    max-height:160px;
+    overflow:auto;
+    border-left:4px solid #4ecdc4;
+}
+.error { border-left-color:#ff4757; color:#ff6b6b; }
+select {
+    width:100%;
+    padding:10px;
+    margin-bottom:10px;
+    border-radius:8px;
+    background:#000;
+    color:#fff;
+    border:1px solid #4ecdc4;
+}
+.copy {
+    margin-top:25px;
+    text-align:center;
+}
+.copy button {
+    width:auto;
+    background:none;
+    border:1px solid #4ecdc4;
+    color:#4ecdc4;
+    padding:6px 14px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+<h1>🔧 Hotspot Central – Diagnostics</h1>
+
+<div class="grid">
+
+<div class="section">
+<h3>1. Worker Health</h3>
+<button onclick="pingWorker()">Ping Worker</button>
+<div id="pingRes" class="result">Waiting…</div>
+</div>
+
+<div class="section">
+<h3>2. Voucher Stock</h3>
+<button onclick="checkStock()">Check Stock</button>
+<div id="stockRes" class="result">Waiting…</div>
+</div>
+
+<div class="section">
+<h3>3. Pesapal Checkout</h3>
+<select id="pkg">
+<option value="250ugx-35min">250 UGX – 35 Min</option>
+<option value="500ugx-2hrs">500 UGX – 2 Hrs</option>
+<option value="1000ugx-24hrs">1000 UGX – 24 Hrs</option>
+</select>
+<button onclick="testCheckout()">Start Checkout</button>
+<div id="payRes" class="result">Waiting…</div>
+</div>
+
+<div class="section">
+<h3>4. MikroTik Status</h3>
+<button onclick="checkRouter()">Check Active Users</button>
+<div id="routerRes" class="result">Waiting…</div>
+</div>
+
+</div>
+
+<div class="copy">
+<button onclick="copyLogs()">📋 Copy Debug Log</button>
+</div>
+</div>
+
+<script>
+const API = ''; // SAME DOMAIN (Cloudflare Pages friendly)
+let logs = '';
+
+function log(id, data, err=false){
+    const el=document.getElementById(id);
+    const text=typeof data==='string'?data:JSON.stringify(data,null,2);
+    el.textContent=text;
+    el.className=err?'result error':'result';
+    logs+=`\n[${id}]\n${text}\n`;
+}
+
+async function pingWorker(){
+    try{
+        const r=await fetch(API+'/api/admin/mikrotik-stats');
+        log('pingRes',`Status ${r.status}`);
+    }catch(e){ log('pingRes',e.message,true); }
+}
+
+async function checkStock(){
+    try{
+        const r=await fetch(API+'/api/admin/stock');
+        log('stockRes', await r.json());
+    }catch(e){
+        log('stockRes','/api/admin/stock not yet implemented',true);
+    }
+}
+
+async function testCheckout(){
+    try{
+        const r=await fetch(API+'/api/payment/checkout',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+                package_type:document.getElementById('pkg').value,
+                phone_number:'256771999302',
+                email:'test@mobilehub.ug'
+            })
+        });
+        const d=await r.json();
+        log('payRes',d);
+        if(d.redirect_url && confirm('Open Pesapal?')) window.open(d.redirect_url,'_blank');
+    }catch(e){ log('payRes',e.message,true); }
+}
+
+async function checkRouter(){
+    try{
+        const r=await fetch(API+'/api/admin/mikrotik-stats');
+        log('routerRes',await r.json());
+    }catch(e){
+        log('routerRes','Check MikroTik credentials in Secrets',true);
+    }
+}
+
+function copyLogs(){
+    navigator.clipboard.writeText(logs);
+    alert('Logs copied');
+}
+</script>
+</body>
+</html>

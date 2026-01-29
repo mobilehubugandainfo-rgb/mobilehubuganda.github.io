@@ -1,0 +1,19 @@
+# --- Permanent Clean URLs ---
+/payment-success    /callback.html     301
+/check-status       /diagnostics.html  301
+/admin-panel        /admin.html        301
+
+# --- API routing (must come before SPA fallback) ---
+# Keep all API calls routed to the worker backend
+/api/*              /api/:splat        200
+
+# --- SPA fallback / 404 handling ---
+# Any other route serves index.html so SPA routing works correctly
+# This ensures future routes in your SPA don't break
+/*                  /index.html        200
+
+# --- Optional: enforce trailing slashes / canonical URLs ---
+# Uncomment if you want consistent URLs
+# /admin-panel/     /admin.html        301
+# /check-status/    /diagnostics.html  301
+# /payment-success/ /callback.html     301
