@@ -1,13 +1,13 @@
 // functions/api/payment/ipn.js
 export async function onRequestPost({ request, env }) {
   try {
-    // 1. Read Pesapal IPN payload
-    const body = await request.json();
-    const {
-      OrderTrackingId,
-      OrderNotificationType,
-      OrderMerchantReference
-    } = body;
+    // 1. Read Pesapal IPN payload (Pesapal sends FORM data, not JSON)
+const raw = await request.text();
+const params = new URLSearchParams(raw);
+
+const OrderTrackingId = params.get('OrderTrackingId');
+const OrderMerchantReference = params.get('OrderMerchantReference');
+const OrderNotificationType = params.get('OrderNotificationType');
 
     console.log(`[IPN] Received: ${OrderMerchantReference}`);
 
@@ -127,4 +127,5 @@ async function getPesapalToken(env) {
   return data.token;
 
 }
+
 
