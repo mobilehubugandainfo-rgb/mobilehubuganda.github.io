@@ -18,27 +18,26 @@ export async function onRequestGet({ request, env }) {
       });
     }
 
-    const transaction = await env.DB.prepare(
-      "SELECT status FROM transactions WHERE tracking_id = ?"
-    ).bind(tracking_id).first();
+    // Improved: Joins transactions and vouchers to get the code and status at once
+    const data = await env.DB.prepare(`
+      SELECT t.status, v.code as voucherCode 
+      FROM transactions t 
+      LEFT JOIN vouchers v ON t.voucher_id = v.id 
+      WHERE t.tracking_id = ?
+    `).bind(tracking_id).first();
 
-    if (!transaction) {
+    if (!data) { // Use 'data' here to match the variable above
       return new Response(JSON.stringify({ status: 'NOT_FOUND', message: 'Transaction not found' }), {
         status: 404,
         headers: jsonHeaders
       });
     }
 
-    // Normalize status for frontend
-    const statusMap = {
-      'PENDING': 'PENDING',
-      'COMPLETED': 'SUCCESS',
-      'FAILED': 'FAILED'
-    };
-
-    const frontendStatus = statusMap[transaction.status.toUpperCase()] || 'PENDING';
-
-    return new Response(JSON.stringify({ status: frontendStatus }), {
+    // Improved: Sends the actual DB status and the Wi-Fi code to the HTML
+    return new Response(JSON.stringify({ 
+      status: data.status, 
+      voucherCode: data.voucherCode 
+    }), {
       status: 200,
       headers: jsonHeaders
     });
@@ -62,4 +61,5 @@ export function onRequestOptions() {
       'Access-Control-Allow-Headers': 'Content-Type'
     }
   });
+
 }
