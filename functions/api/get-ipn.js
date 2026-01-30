@@ -1,13 +1,17 @@
 // functions/api/get-ipn.js
 export async function onRequestGet({ env }) {
-  try {
-    // 🔐 Safety check (simple protection)
-    if (env.ALLOW_IPN_REGISTER !== 'true') {
-      return new Response(
-        JSON.stringify({ error: 'IPN registration disabled' }),
-        { status: 403 }
-      );
-    }
+  if (env.ALLOW_IPN_REGISTER !== 'true') {
+    return new Response(
+      JSON.stringify({
+        disabled: true,
+        message: 'IPN registration is disabled in production'
+      }),
+      { status: 403 }
+    );
+  }
+
+  // 🔽 registration code lives below
+}
 
     // 1️⃣ Authenticate with Pesapal
     const authRes = await fetch(
