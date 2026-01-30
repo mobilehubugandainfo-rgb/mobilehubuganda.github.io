@@ -5,35 +5,44 @@ export async function onRequestPost({ request, env }) {
   try {
     const url = new URL(request.url);
 
-    // 1️⃣ Parse query parameters first, fallback to body
+    // 1️⃣ Try URL parameters first
     let OrderTrackingId = url.searchParams.get('OrderTrackingId');
     let OrderMerchantReference = url.searchParams.get('OrderMerchantReference');
     let OrderNotificationType = url.searchParams.get('OrderNotificationType');
 
-    if (!OrderTrackingId || !OrderMerchantReference || !OrderNotificationType) {
+    // FIX: If URL is empty, parse the Body (Fixes the "Missing Required Fields" error from your logs)
+    if (!OrderTrackingId) {
       const contentType = request.headers.get('content-type') || '';
       
       if (contentType.includes('application/json')) {
-        // Handle JSON body - Pesapal may use different field names
-        const body = await request.json();
-        console.log('[IPN DEBUG] Received JSON body:', JSON.stringify(body));
-        OrderTrackingId = OrderTrackingId || body.OrderTrackingId || body.orderTrackingId || body.order_tracking_id;
-        OrderMerchantReference = OrderMerchantReference || body.OrderMerchantReference || body.orderMerchantReference || body.order_merchant_reference;
-        OrderNotificationType = OrderNotificationType || body.OrderNotificationType || body.orderNotificationType || body.order_notification_type;
+        const rawBody = await request.text(); 
+        console.log('[IPN DEBUG] RAW JSON BODY:', rawBody);
+        
+        try {
+          const body = JSON.parse(rawBody);
+          // Look for every possible variation of the name
+          OrderTrackingId = body.OrderTrackingId || body.orderTrackingId || body.order_tracking_id;
+          OrderMerchantReference = body.OrderMerchantReference || body.orderMerchantReference || body.order_merchant_reference;
+          OrderNotificationType = body.OrderNotificationType || body.orderNotificationType || body.order_notification_type;
+        } catch (e) {
+          console.error('[IPN ERROR] JSON Parse failed:', e.message);
+        }
       } else {
-        // Handle form-encoded body
-        const raw = await request.text();
-        console.log('[IPN DEBUG] Received form body:', raw);
-        const params = new URLSearchParams(raw);
-        OrderTrackingId = OrderTrackingId || params.get('OrderTrackingId');
-        OrderMerchantReference = OrderMerchantReference || params.get('OrderMerchantReference');
-        OrderNotificationType = OrderNotificationType || params.get('OrderNotificationType');
+        try {
+          const formData = await request.formData();
+          OrderTrackingId = formData.get('OrderTrackingId');
+          OrderMerchantReference = formData.get('OrderMerchantReference');
+          OrderNotificationType = formData.get('OrderNotificationType');
+        } catch (e) {
+          console.warn('[IPN] Could not parse form data');
+        }
       }
     }
 
+    // 3️⃣ Verify we have what we need
     if (!OrderTrackingId || !OrderMerchantReference) {
-      console.warn('[IPN] Missing required fields', { OrderTrackingId, OrderMerchantReference, OrderNotificationType });
-      return new Response('OK', { status: 200 }); // ACK to Pesapal
+      console.warn('[IPN] Missing required fields after parsing:', { OrderTrackingId, OrderMerchantReference });
+      return new Response('OK', { status: 200 }); 
     }
 
     console.log('[IPN] Received:', { OrderTrackingId, OrderMerchantReference, OrderNotificationType });
@@ -433,3 +442,4 @@ async function retryVoucherAssignment(env, OrderMerchantReference, packageType, 
 
   return null; // All retries exhausted
 }
+
