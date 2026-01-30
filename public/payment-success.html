@@ -116,7 +116,7 @@
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const trackingId = urlParams.get('id') || urlParams.get('OrderTrackingId') || urlParams.get('tracking_id');
-    const API_URL = '';
+    const API_URL = window.location.origin;
 
     document.getElementById('displayOrderId').innerText = trackingId || 'N/A';
 
@@ -197,6 +197,7 @@
 
 </body>
 </html>
+
 
 
 
