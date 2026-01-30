@@ -84,21 +84,16 @@ if (pStatus !== 'COMPLETED' && pStatus !== 'SUCCESS') {
     console.log(`[SUCCESS] Voucher ${voucher.code} issued for ${OrderMerchantReference}`);
 
     // 7. Required Pesapal ACK response
-    return new Response(
-      JSON.stringify({
-        orderNotificationType: OrderNotificationType,
-        orderTrackingId: OrderTrackingId,
-        orderMerchantReference: OrderMerchantReference,
-        status: 200
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      }
-    );
+    // Simplified response for Pesapal
+return new Response(JSON.stringify({
+    "orderNotificationType": OrderNotificationType,
+    "orderTrackingId": OrderTrackingId,
+    "orderMerchantReference": OrderMerchantReference,
+    "status": 200
+}), { 
+    status: 200, 
+    headers: { "Content-Type": "application/json" } 
+});
 
   } catch (err) {
     console.error('[IPN ERROR]', err);
@@ -127,5 +122,6 @@ async function getPesapalToken(env) {
   return data.token;
 
 }
+
 
 
