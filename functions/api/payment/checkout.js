@@ -86,7 +86,7 @@ export async function onRequestPost({ request, env }) {
       currency: 'UGX',
       amount,
       description: `HotSpotCentral - ${package_type}`,
-      callback_url: `${baseUrl}/payment-success.html?tracking_id=${tracking_id}`,
+      callback_url: `${baseUrl}/payment-success.html?id=${tracking_id}`,
       notification_id: env.PESAPAL_IPN_ID,
       billing_address: {
         phone_number: normalizedPhone,
@@ -158,3 +158,4 @@ async function getPesapalToken(env) {
   }
   return data.token;
 }
+
