@@ -6,28 +6,32 @@ export async function onRequestPost({ request, env }) {
   };
 
   try {
-    const { package_type, phone_number, email } = await request.json();
+    // UPDATED: Extraction to match your index.html keys (package_id and phone)
+    const { package_id, phone, email } = await request.json();
 
     /* ============================================
-       1. PACKAGE VALIDATION
+       1. PACKAGE VALIDATION (Mapped to index.html IDs)
        ============================================ */
     const packages = {
-      '250ugx-35min': 250,
-      '500ugx-2hrs': 500,
-      '1000ugx-24hrs': 1000,
-      '1500ugx-24hrs': 1500
+      'p1': 250,
+      'p2': 500,
+      'p3': 1000,
+      'p4': 1500
     };
 
-    const amount = packages[package_type];
+    const amount = packages[package_id];
+    // We'll use package_type internally to keep your DB logic consistent
+    const package_type = package_id; 
+
     if (!amount) {
       return new Response(
-        JSON.stringify({ error: 'Invalid package selected. Please refresh and try again.' }),
+        JSON.stringify({ error: `Invalid package (${package_id}) selected. Please refresh and try again.` }),
         { status: 400, headers: jsonHeader }
       );
     }
 
     /* ============================================
-       2. VOUCHER STOCK CHECK (PREVENT PAYMENT IF EMPTY)
+       2. VOUCHER STOCK CHECK
        ============================================ */
     const stockCheck = await env.DB.prepare(
       `SELECT COUNT(*) as count 
@@ -46,12 +50,13 @@ export async function onRequestPost({ request, env }) {
     }
 
     /* ============================================
-       3. PHONE VALIDATION (UGANDAN NUMBERS)
+       3. PHONE VALIDATION
        ============================================ */
-    const normalizedPhone = phone_number.replace(/\D/g, '');
+    // Using 'phone' from the frontend
+    const normalizedPhone = (phone || "").replace(/\D/g, '');
     if (!/^((256|0)\d{9})$/.test(normalizedPhone)) {
       return new Response(
-        JSON.stringify({ error: 'Please enter a valid Ugandan phone number (e.g., 0771999302 or 256771999302).' }),
+        JSON.stringify({ error: 'Please enter a valid Ugandan phone number (e.g., 0771999302).' }),
         { status: 400, headers: jsonHeader }
       );
     }
@@ -119,7 +124,6 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
-    // If Pesapal responds with an error
     throw new Error(result.message || 'Payment gateway did not respond correctly.');
 
   } catch (error) {
@@ -134,9 +138,6 @@ export async function onRequestPost({ request, env }) {
   }
 }
 
-/* ============================================
-   PESAPAL TOKEN FUNCTION (STABLE + SAFE)
-   ============================================ */
 async function getPesapalToken(env) {
   const res = await fetch('https://pay.pesapal.com/v3/api/Auth/RequestToken', {
     method: 'POST',
