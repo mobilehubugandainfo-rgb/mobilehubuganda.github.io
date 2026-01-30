@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hotspot Central | Buy Internet Vouchers</title>
     <style>
+        /* Your original styles kept exactly as they were */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
@@ -14,10 +14,8 @@
             color: #e0e0e0;
             padding: 20px;
         }
-
         .container { max-width: 1000px; margin: 0 auto; animation: fadeIn 0.8s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
         .header {
             text-align: center;
             padding: 40px 20px;
@@ -27,7 +25,6 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             margin-bottom: 30px;
         }
-
         .logo {
             font-size: 2.5rem;
             background: linear-gradient(135deg, #4ecdc4, #44a08d);
@@ -36,8 +33,6 @@
             font-weight: 800;
             letter-spacing: 1px;
         }
-
-        /* Free Trial Section */
         .trial-card {
             background: linear-gradient(135deg, rgba(78, 205, 196, 0.2), rgba(68, 160, 141, 0.1));
             border: 2px dashed #4ecdc4;
@@ -46,15 +41,12 @@
             margin-bottom: 30px;
             text-align: center;
         }
-
-        /* Grid */
         .packages-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 20px;
             margin-bottom: 40px;
         }
-
         .package-card {
             background: rgba(30, 30, 46, 0.95);
             border-radius: 15px;
@@ -64,18 +56,14 @@
             cursor: pointer;
             text-align: center;
         }
-
         .package-card:hover, .package-card.selected {
             border-color: #4ecdc4;
             transform: translateY(-5px);
             background: rgba(78, 205, 196, 0.1);
         }
-
         .price-tag { font-size: 1.8rem; font-weight: 800; color: #4ecdc4; margin-bottom: 5px; }
         .pkg-name { font-weight: 600; margin-bottom: 15px; color: white; }
         .pkg-features { list-style: none; font-size: 0.85rem; color: #b8b8b8; line-height: 1.8; }
-
-        /* Checkout Form */
         .checkout-section {
             background: rgba(30, 30, 46, 0.95);
             padding: 30px;
@@ -84,7 +72,6 @@
             display: none;
             margin-bottom: 50px;
         }
-
         input {
             width: 100%;
             padding: 15px;
@@ -95,7 +82,6 @@
             margin-top: 10px;
             margin-bottom: 20px;
         }
-
         .btn {
             width: 100%;
             padding: 15px;
@@ -105,12 +91,9 @@
             cursor: pointer;
             transition: 0.3s;
         }
-
         .btn-trial { background: #4ecdc4; color: #1a1a2e; }
         .btn-pay { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; font-size: 1.1rem; }
         .btn:hover { opacity: 0.9; transform: scale(1.02); }
-
-        /* Floating WhatsApp */
         .whatsapp-btn {
             position: fixed;
             bottom: 20px;
@@ -124,7 +107,6 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             z-index: 1000;
         }
-
         @media (max-width: 600px) { .logo { font-size: 1.8rem; } }
     </style>
 </head>
@@ -144,8 +126,7 @@
 
     <h2 style="text-align:center; margin-bottom: 25px;">Select a Data Plan</h2>
 
-    <div class="packages-grid" id="pkgGrid">
-        </div>
+    <div class="packages-grid" id="pkgGrid"></div>
 
     <div class="checkout-section" id="checkout">
         <h2 id="selectedTitle" style="color:#f093fb; margin-bottom: 15px;">Complete Purchase</h2>
@@ -170,6 +151,7 @@
 </a>
 
 <script>
+    // Configuration
     const API_BASE = 'https://voucher-api.mobilehubugandainfo.workers.dev';
     
     const packages = [
@@ -197,26 +179,29 @@
 
     function selectPkg(id) {
         selectedPkg = packages.find(p => p.id === id);
-        
-        // UI reset
         document.querySelectorAll('.package-card').forEach(c => c.classList.remove('selected'));
         document.getElementById(`card-${id}`).classList.add('selected');
-        
-        // Show checkout
         document.getElementById('checkout').style.display = 'block';
         document.getElementById('selectedTitle').innerText = `Buy ${selectedPkg.name}`;
         document.getElementById('selectedSummary').innerText = `Total: ${selectedPkg.price} UGX for ${selectedPkg.dur} access.`;
-        
         document.getElementById('checkout').scrollIntoView({ behavior: 'smooth' });
     }
 
+    // UPDATED: Security fingerprinting for Trial
     async function startFreeTrial() {
         const btn = document.getElementById('trialBtn');
         btn.disabled = true;
         btn.innerText = "Checking Device...";
 
+        // Generate a fingerprint based on browser data
+        const fingerprint = btoa(navigator.userAgent + navigator.language).substring(0, 16);
+
         try {
-            const res = await fetch(`${API_BASE}/api/voucher/free-trial`, { method: 'POST' });
+            const res = await fetch(`${API_BASE}/api/voucher/free-trial`, { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ deviceId: fingerprint }) 
+            });
             const data = await res.json();
             
             if(data.success) {
@@ -227,11 +212,13 @@
                 btn.innerText = "ACTIVATE FREE TRIAL";
             }
         } catch(e) {
-            alert("Connection error. Try again.");
+            alert("Connection error. Ensure you are connected to Hotspot Central.");
             btn.disabled = false;
+            btn.innerText = "ACTIVATE FREE TRIAL";
         }
     }
 
+    // UPDATED: Sync with checkout.js keys
     async function initiatePesapal() {
         const phone = document.getElementById('customerPhone').value;
         const email = document.getElementById('customerEmail').value;
@@ -248,7 +235,6 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     package_id: selectedPkg.id,
-                    amount: selectedPkg.price,
                     phone: phone,
                     email: email
                 })
@@ -257,10 +243,12 @@
             if(data.redirect_url) {
                 window.location.href = data.redirect_url;
             } else {
-                throw new Error();
+                alert(data.error || "Payment error. Please try again.");
+                btn.disabled = false;
+                btn.innerText = "💳 PAY WITH PESAPAL";
             }
         } catch(e) {
-            alert("Error starting payment. Please try again.");
+            alert("Error starting payment. Check your connection.");
             btn.disabled = false;
             btn.innerText = "💳 PAY WITH PESAPAL";
         }
