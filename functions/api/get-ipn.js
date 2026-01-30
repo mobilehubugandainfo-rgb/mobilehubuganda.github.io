@@ -1,17 +1,15 @@
 // functions/api/get-ipn.js
 export async function onRequestGet({ env }) {
-  if (env.ALLOW_IPN_REGISTER !== 'true') {
-    return new Response(
-      JSON.stringify({
-        disabled: true,
-        message: 'IPN registration is disabled in production'
-      }),
-      { status: 403 }
-    );
-  }
-
-  // 🔽 registration code lives below
-}
+  try {
+    if (env.ALLOW_IPN_REGISTER !== 'true') {
+      return new Response(
+        JSON.stringify({
+          disabled: true,
+          message: 'IPN registration is disabled in production'
+        }),
+        { status: 403 }
+      );
+    }
 
     // 1️⃣ Authenticate with Pesapal
     const authRes = await fetch(
@@ -43,7 +41,7 @@ export async function onRequestGet({ env }) {
 
     const token = authData.token;
 
-    // 2️⃣ Register IPN URL
+    // 2️⃣ Register IPN URL for mobilehubuganda
     const ipnUrl = 'https://mobilehubuganda.pages.dev/api/payment/ipn';
 
     const regRes = await fetch(
