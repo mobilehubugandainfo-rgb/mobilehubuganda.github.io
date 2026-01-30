@@ -13,9 +13,9 @@ export async function onRequestPost({ request, env }) {
     if (!OrderTrackingId || !OrderMerchantReference || !OrderNotificationType) {
       const raw = await request.text();
       const params = new URLSearchParams(raw);
-      OrderTrackingId ||= params.get('OrderTrackingId');
-      OrderMerchantReference ||= params.get('OrderMerchantReference');
-      OrderNotificationType ||= params.get('OrderNotificationType');
+      OrderTrackingId || params.get('OrderTrackingId');
+      OrderMerchantReference || params.get('OrderMerchantReference');
+      OrderNotificationType || params.get('OrderNotificationType');
     }
 
     if (!OrderTrackingId || !OrderMerchantReference) {
@@ -44,10 +44,14 @@ export async function onRequestPost({ request, env }) {
     // 4️⃣ Fetch payment status with retry and timeout
     const pStatus = await fetchPesapalStatus(OrderTrackingId, token);
 
-    if (pStatus !== 'COMPLETED' && pStatus !== 'SUCCESS') {
-      console.log(`[IPN] Payment not completed: ${pStatus} (NotificationType: ${OrderNotificationType})`);
-      return new Response('OK', { status: 200 });
-    }
+    // Accept multiple success status variations (COMPLETED, SUCCESS, COMPLETE)
+const successStatuses = ['COMPLETED', 'SUCCESS', 'COMPLETE'];
+const isPaymentSuccessful = successStatuses.includes(pStatus);
+
+if (!isPaymentSuccessful) {
+  console.log(`[IPN] Payment not completed: ${pStatus} (NotificationType: ${OrderNotificationType})`);
+  return new Response('OK', { status: 200 });
+}
 
     // 5️⃣ Fetch transaction details
     const tx = await env.DB.prepare(
@@ -67,24 +71,12 @@ export async function onRequestPost({ request, env }) {
       return new Response('OK', { status: 200 });
     }
 
-    // 6️⃣ Atomic voucher assignment using single UPDATE with RETURNING
-    // This prevents race conditions by updating in one operation
-    const voucher = await env.DB.prepare(
-      `UPDATE vouchers
-       SET status = 'assigned',
-           transaction_id = ?,
-           used_at = CURRENT_TIMESTAMP
-       WHERE id = (
-         SELECT id FROM vouchers
-         WHERE package_type = ? AND status = 'unused'
-         ORDER BY id
-         LIMIT 1
-       )
-       RETURNING id, code`
-    ).bind(tx.id, tx.package_type).first();
+  
+    // 6️⃣ Atomic voucher assignment with retry logic (6 attempts, 3s intervals)
+    const voucher = await retryVoucherAssignment(env, OrderMerchantReference, tx.package_type, 6);
 
     if (!voucher) {
-      console.error(`[IPN] ⚠️ CRITICAL: No unused vouchers left for package: ${tx.package_type}`);
+      console.error(`[IPN] ⚠️ CRITICAL: No unused vouchers after 6 retries for package: ${tx.package_type}`);
       
       // Alert for voucher depletion
       await sendAlert(env, {
@@ -379,7 +371,46 @@ async function logError(env, errorData) {
         level: 'error',
         service: 'ipn-handler',
         ...errorData
+        //
       })
     });
   }
+}//
+
+/**
+ * Retry voucher retrieval with exponential backoff
+ */
+async function retryVoucherAssignment(env, OrderMerchantReference, packageType, maxRetries = 6) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    
+    try { //
+    const voucher = await env.DB.prepare(
+      `UPDATE vouchers
+       SET status = 'assigned',
+           transaction_id = ?,
+           used_at = CURRENT_TIMESTAMP
+       WHERE id = (
+         SELECT id FROM vouchers
+         WHERE package_type = ? AND status = 'unused'
+         ORDER BY id
+         LIMIT 1
+       )
+       RETURNING id, code`
+    ).bind(OrderMerchantReference, packageType).first();
+
+    if (voucher) {
+      console.log(`[VOUCHER] Retrieved on attempt ${attempt}`);
+      return voucher;
+    }
+} catch (dbErr) { //
+      console.warn(`[VOUCHER DB BUSY] Attempt ${attempt}: ${dbErr.message}`);
+    } // 
+    
+    if (attempt < maxRetries) {
+   //   console.log(`[VOUCHER] Attempt ${attempt} failed, retrying in 3s...`);
+      await new Promise(r => setTimeout(r, 3000)); // Wait 3 seconds
+    }
+  }
+
+  return null; // All retries exhausted
 }
