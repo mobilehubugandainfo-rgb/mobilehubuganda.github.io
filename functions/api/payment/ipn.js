@@ -1,3 +1,4 @@
+// functions/api/payment/ipn.js
 export async function onRequestPost({ request, env }) {
   try {
     const url = new URL(request.url);
@@ -124,3 +125,4 @@ async function getPesapalToken(env) {
   if (!data.token) throw new Error('Pesapal auth failed');
   return data.token;
 }
+
