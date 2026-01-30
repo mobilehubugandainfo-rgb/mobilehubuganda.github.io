@@ -1,27 +1,36 @@
 // functions/api/voucher/free-trial.js
+// functions/api/voucher/free-trial.js
 export async function onRequestPost({ request, env }) {
   const headers = {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*', // Allow cross-origin calls
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type'
   };
 
   try {
-    // 1️⃣ Identify the user
+    // 1️⃣ Identify the user (Security: IP fallback if deviceId is missing)
     const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-    const payload = await request.json().catch(() => ({}));
-    const deviceId = payload.deviceId || ip; // Prefer deviceId if provided
+    
+    // Safety: try/catch the JSON parsing in case body is empty
+    let payload = {};
+    try {
+      payload = await request.json();
+    } catch (e) {
+      payload = {};
+    }
+
+    const deviceId = payload.deviceId || ip; 
 
     if (deviceId === 'unknown') {
       throw new Error('Unable to identify client');
     }
 
-    // 2️⃣ Check 24-hour limit
+    // 2️⃣ Check 24-hour limit (Security: Prevents multiple uses per device)
     const recentTrial = await env.DB.prepare(
       `SELECT 1 FROM vouchers
        WHERE device_id = ? 
-       AND package_type = 'free-trial-5min'
+       AND package_type = 'free-trial'
        AND created_at > datetime('now','-1 day')
        LIMIT 1`
     ).bind(deviceId).first();
@@ -34,6 +43,7 @@ export async function onRequestPost({ request, env }) {
     }
 
     // 3️⃣ Assign voucher atomically
+    // We update the timestamp to 'now' so the 24-hr lockout starts from this exact moment
     const voucher = await env.DB.prepare(
       `UPDATE vouchers
        SET status = 'assigned',
@@ -42,7 +52,7 @@ export async function onRequestPost({ request, env }) {
            created_at = datetime('now')
        WHERE id = (
          SELECT id FROM vouchers
-         WHERE package_type = 'free-trial-5min'
+         WHERE package_type = 'free-trial'
          AND status = 'unused'
          LIMIT 1
        )
@@ -71,7 +81,6 @@ export async function onRequestPost({ request, env }) {
   }
 }
 
-// Optional: handle CORS preflight
 export function onRequestOptions() {
   return new Response(null, {
     status: 204,
