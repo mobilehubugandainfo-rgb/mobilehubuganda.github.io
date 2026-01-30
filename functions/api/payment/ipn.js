@@ -74,13 +74,17 @@ if (pStatus !== 'COMPLETED' && pStatus !== 'SUCCESS') {
     }
 
     // 6. Atomic DB update (voucher + transaction)
+if (pStatus === 'COMPLETED' || pStatus === 'SUCCESS') {
+  try {
     await env.DB.batch([
       // 1. Assign voucher
       env.DB.prepare(
-        `UPDATE vouchers SET status = 'assigned', transaction_id = ?, used_at = datetime('now') WHERE id = ?`
+        `UPDATE vouchers 
+         SET status = 'assigned', transaction_id = ?, used_at = datetime('now') 
+         WHERE id = ?`
       ).bind(OrderMerchantReference, voucher.id),
 
-      // 2. Finalize transaction - We ensure BOTH IDs are stored so either can be used for lookup
+      // 2. Finalize transaction
       env.DB.prepare(
         `UPDATE transactions
          SET status = 'COMPLETED',
@@ -92,6 +96,11 @@ if (pStatus !== 'COMPLETED' && pStatus !== 'SUCCESS') {
     ]);
 
     console.log(`[SUCCESS] Voucher ${voucher.code} issued for ${OrderMerchantReference}`);
+  } catch (err) {
+    console.error('[IPN ERROR] DB update failed', err);
+    return new Response('Internal Error', { status: 500 });
+  }
+}
 
     // 7. Required Pesapal ACK response
     // Simplified response for Pesapal
@@ -132,6 +141,7 @@ async function getPesapalToken(env) {
   return data.token;
 
 }
+
 
 
 
