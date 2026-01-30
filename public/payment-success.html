@@ -120,36 +120,55 @@
 
     document.getElementById('displayOrderId').innerText = trackingId || 'N/A';
 
+    let attempts = 0;
+    const maxAttempts = 6;
+
     async function getVoucher() {
         if (!trackingId) return;
 
-        let width = 0;
-        const interval = setInterval(() => {
-            if (width >= 90) clearInterval(interval);
-            width += 10;
-            document.getElementById('bar').style.width = width + '%';
-            document.getElementById('percent').innerText = width;
-        }, 300);
+        attempts++;
+
+        // Start progress bar only once
+        if (attempts === 1) {
+            let width = 0;
+            const interval = setInterval(() => {
+                if (width >= 90 || document.getElementById('processingUI').style.display === 'none') {
+                    clearInterval(interval);
+                } else {
+                    width += 10;
+                    document.getElementById('bar').style.width = width + '%';
+                    document.getElementById('percent').innerText = width;
+                }
+            }, 300);
+        }
 
         try {
             const response = await fetch(`${API_URL}/api/payment/status?id=${trackingId}`);
             const data = await response.json();
 
-            if (data.status === 'COMPLETED' || data.status === 'SUCCESS') {
-                clearInterval(interval);
+            if ((data.status === 'COMPLETED' || data.status === 'SUCCESS') && data.voucherCode) {
                 document.getElementById('bar').style.width = '100%';
                 document.getElementById('percent').innerText = '100';
-                
-                // SAVE TO PHONE MEMORY BEFORE SHOWING
+
                 localStorage.setItem('last_voucher', data.voucherCode);
                 localStorage.setItem('voucher_date', new Date().toLocaleString());
-                
+
                 showVoucher(data.voucherCode);
+                return;
+            }
+
+            if (attempts < maxAttempts) {
+                setTimeout(getVoucher, 3000);
             } else {
                 showError();
             }
+
         } catch (error) {
-            showError();
+            if (attempts < maxAttempts) {
+                setTimeout(getVoucher, 3000);
+            } else {
+                showError();
+            }
         }
     }
 
@@ -158,10 +177,10 @@
             document.getElementById('processingUI').style.display = 'none';
             document.getElementById('voucherDisplay').style.display = 'block';
             document.getElementById('codeText').innerText = code;
-            
+
             const btn = document.getElementById('connectBtn');
             btn.style.display = 'block';
-            
+
             btn.onclick = () => {
                 window.location.href = `login.html?voucher=${code}`;
             };
@@ -175,5 +194,6 @@
 
     getVoucher();
 </script>
+
 </body>
 </html>
