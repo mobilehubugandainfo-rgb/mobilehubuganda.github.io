@@ -9,6 +9,16 @@ const OrderTrackingId = params.get('OrderTrackingId');
 const OrderMerchantReference = params.get('OrderMerchantReference');
 const OrderNotificationType = params.get('OrderNotificationType');
 
+    // Check if any required field is missing
+if (!OrderTrackingId || !OrderMerchantReference || !OrderNotificationType) {
+    console.warn('[IPN] Missing required fields', { OrderTrackingId, OrderMerchantReference, OrderNotificationType });
+    // Still respond OK so Pesapal can retry later
+    return new Response('OK', { status: 200 });
+}
+
+// Optional: log all parameters for debugging
+console.log('[IPN RAW PARAMS]', { OrderTrackingId, OrderMerchantReference, OrderNotificationType });
+
     console.log(`[IPN] Received: ${OrderMerchantReference}`);
 
     // Pesapal mainly sends IPNCHANGE — acknowledge others
@@ -122,6 +132,7 @@ async function getPesapalToken(env) {
   return data.token;
 
 }
+
 
 
 
