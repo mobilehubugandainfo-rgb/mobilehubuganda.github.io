@@ -32,9 +32,11 @@ export async function onRequestPost({ request, env }) {
 
     const statusData = await statusRes.json();
 
-    if (statusData.payment_status_description?.toUpperCase() !== 'COMPLETED') {
-      return new Response('OK', { status: 200 });
-    }
+    const pStatus = statusData.payment_status_description?.toUpperCase();
+if (pStatus !== 'COMPLETED' && pStatus !== 'SUCCESS') {
+    console.log(`[IPN] Payment not ready: ${pStatus}`);
+    return new Response('OK', { status: 200 });
+}
 
     // 4. Ensure transaction exists and is not already completed
     const tx = await env.DB.prepare(
@@ -125,3 +127,4 @@ async function getPesapalToken(env) {
   return data.token;
 
 }
+
