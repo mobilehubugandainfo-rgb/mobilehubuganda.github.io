@@ -1,57 +1,65 @@
 // functions/api/payment/ipn.js
 // Production-ready Pesapal IPN handler for hotspot billing system
+// Fixed version with improved body parsing and error logging
 
 export async function onRequestPost({ request, env }) {
   try {
     const url = new URL(request.url);
+    const contentType = request.headers.get('content-type') || '';
 
-    // 1️⃣ Initialize variables
+    // 1️⃣ Initialize variables from URL parameters first
     let OrderTrackingId = url.searchParams.get('OrderTrackingId');
     let OrderMerchantReference = url.searchParams.get('OrderMerchantReference');
     let OrderNotificationType = url.searchParams.get('OrderNotificationType');
 
-    // 2️⃣ If URL is empty, clone and parse the Body
-    if (!OrderTrackingId) {
-      const contentType = request.headers.get('content-type') || '';
-      
-      // Clone the request so we don't "drain" the stream for other parts of the app
-      const clonedRequest = request.clone();
+    console.log('[IPN] Initial URL params:', { OrderTrackingId, OrderMerchantReference, OrderNotificationType });
 
-      if (contentType.includes('application/json')) {
-        try {
-          const body = await clonedRequest.json();
-          console.log('[IPN DEBUG] JSON Body:', JSON.stringify(body));
-          OrderTrackingId = body.OrderTrackingId || body.orderTrackingId || body.order_tracking_id;
-          OrderMerchantReference = body.OrderMerchantReference || body.orderMerchantReference || body.order_merchant_reference;
-          OrderNotificationType = body.OrderNotificationType || body.orderNotificationType || body.order_notification_type;
-        } catch (e) {
-          console.error('[IPN ERROR] JSON parse failed');
-        }
-      } else {
-        try {
-          const formData = await clonedRequest.formData();
-          OrderTrackingId = formData.get('OrderTrackingId');
-          OrderMerchantReference = formData.get('OrderMerchantReference');
-          OrderNotificationType = formData.get('OrderNotificationType');
-        } catch (e) {
-          console.warn('[IPN] Form data parse failed');
-        }
+    // 2️⃣ ALWAYS try to parse body for POST requests (Pesapal V3 sends data in body)
+    if (contentType.includes('application/json')) {
+      try {
+        const body = await request.json();
+        console.log('[IPN DEBUG] ✅ JSON Body received:', JSON.stringify(body));
+        
+        // Use body values if URL params are empty (fallback strategy)
+        OrderTrackingId = OrderTrackingId || body.OrderTrackingId || body.orderTrackingId || body.order_tracking_id;
+        OrderMerchantReference = OrderMerchantReference || body.OrderMerchantReference || body.orderMerchantReference || body.order_merchant_reference;
+        OrderNotificationType = OrderNotificationType || body.OrderNotificationType || body.orderNotificationType || body.order_notification_type;
+        
+        console.log('[IPN DEBUG] ✅ Parsed values:', { OrderTrackingId, OrderMerchantReference, OrderNotificationType });
+      } catch (e) {
+        console.error('[IPN ERROR] ❌ JSON parse failed:', e.message);
+        console.error('[IPN ERROR] Full error:', e.stack);
       }
+    } else if (contentType.includes('application/x-www-form-urlencoded')) {
+      // Fallback for form data
+      try {
+        const formData = await request.formData();
+        OrderTrackingId = OrderTrackingId || formData.get('OrderTrackingId');
+        OrderMerchantReference = OrderMerchantReference || formData.get('OrderMerchantReference');
+        OrderNotificationType = OrderNotificationType || formData.get('OrderNotificationType');
+        console.log('[IPN DEBUG] Form data parsed:', { OrderTrackingId, OrderMerchantReference, OrderNotificationType });
+      } catch (e) {
+        console.error('[IPN ERROR] Form data parse failed:', e.message);
+      }
+    } else {
+      console.warn('[IPN] Unexpected content-type:', contentType);
     }
 
-    // 3️⃣ Final check before proceeding
+    // 3️⃣ Final validation check
     if (!OrderTrackingId || !OrderMerchantReference) {
-      console.warn('[IPN] Missing required fields after parsing:', { 
+      console.warn('[IPN] ⚠️ Missing required fields after all parsing attempts:', { 
         OrderTrackingId, 
         OrderMerchantReference,
-        contentType: request.headers.get('content-type') 
+        OrderNotificationType,
+        contentType,
+        url: request.url
       });
-      return new Response('OK', { status: 200 }); 
+      return new Response('OK', { status: 200 }); // ACK to Pesapal
     }
     
-    console.log('[IPN] Received:', { OrderTrackingId, OrderMerchantReference, OrderNotificationType });
+    console.log('[IPN] ✅ Received valid notification:', { OrderTrackingId, OrderMerchantReference, OrderNotificationType });
 
-    // 4 Idempotency check - prevent duplicate processing
+    // 4️⃣ Idempotency check - prevent duplicate processing
     const existingTx = await env.DB.prepare(
       `SELECT id, status, voucher_id 
        FROM transactions 
@@ -60,14 +68,14 @@ export async function onRequestPost({ request, env }) {
     ).bind(OrderTrackingId).first();
 
     if (existingTx) {
-      console.log(`[IPN] Already processed Pesapal transaction: ${OrderTrackingId}`);
+      console.log(`[IPN] ℹ️ Already processed Pesapal transaction: ${OrderTrackingId}`);
       return new Response('OK', { status: 200 });
     }
 
-    // 5 Get Pesapal token from KV cache or fetch new
+    // 5️⃣ Get Pesapal token from KV cache or fetch new
     const token = await getPesapalToken(env);
 
-    // 6 Fetch payment status with retry and timeout
+    // 6️⃣ Fetch payment status with retry and timeout
     const pStatus = await fetchPesapalStatus(OrderTrackingId, token);
 
     // Accept multiple success status variations (COMPLETED, SUCCESS, COMPLETE)
@@ -75,11 +83,11 @@ export async function onRequestPost({ request, env }) {
     const isPaymentSuccessful = successStatuses.includes(pStatus);
 
     if (!isPaymentSuccessful) {
-      console.log(`[IPN] Payment not completed: ${pStatus} (NotificationType: ${OrderNotificationType})`);
+      console.log(`[IPN] ℹ️ Payment not completed: ${pStatus} (NotificationType: ${OrderNotificationType})`);
       return new Response('OK', { status: 200 });
     }
 
-    // 7 Fetch transaction details
+    // 7️⃣ Fetch transaction details
     const tx = await env.DB.prepare(
       `SELECT id, tracking_id, package_type, status, email, phone_number
        FROM transactions
@@ -88,16 +96,16 @@ export async function onRequestPost({ request, env }) {
     ).bind(OrderMerchantReference).first();
 
     if (!tx) {
-      console.warn(`[IPN] Transaction not found: ${OrderMerchantReference}`);
+      console.warn(`[IPN] ⚠️ Transaction not found: ${OrderMerchantReference}`);
       return new Response('OK', { status: 200 });
     }
 
     if (tx.status === 'COMPLETED') {
-      console.log(`[IPN] Transaction already completed: ${OrderMerchantReference}`);
+      console.log(`[IPN] ℹ️ Transaction already completed: ${OrderMerchantReference}`);
       return new Response('OK', { status: 200 });
     }
 
-    // 8 Atomic voucher assignment with retry logic (6 attempts, 3s intervals)
+    // 8️⃣ Atomic voucher assignment with retry logic (6 attempts, 3s intervals)
     const voucher = await retryVoucherAssignment(env, OrderMerchantReference, tx.package_type, 6);
 
     if (!voucher) {
@@ -114,7 +122,7 @@ export async function onRequestPost({ request, env }) {
       return new Response('OK', { status: 200 });
     }
 
-    // 9 Update transaction with voucher info
+    // 9️⃣ Update transaction with voucher info
     await env.DB.prepare(
       `UPDATE transactions
        SET status = 'COMPLETED',
@@ -126,11 +134,11 @@ export async function onRequestPost({ request, env }) {
 
     console.log(`[IPN SUCCESS] ✅ Voucher ${voucher.code} assigned to transaction ${OrderMerchantReference}`);
 
-    // 10 Send voucher to customer (async, non-blocking)
+    // 🔟 Send voucher to customer (async, non-blocking)
     notifyCustomer(env, tx.email, tx.phone_number, voucher.code, tx.package_type)
       .catch(err => console.error('[NOTIFY ERROR]', err));
 
-    // 11 Always ACK to Pesapal
+    // 1️⃣1️⃣ Always ACK to Pesapal
     return new Response(JSON.stringify({
       status: 200,
       orderTrackingId: OrderTrackingId,
@@ -144,7 +152,8 @@ export async function onRequestPost({ request, env }) {
     });
 
   } catch (err) {
-    console.error('[IPN ERROR] ❌ Critical:', err);
+    console.error('[IPN ERROR] ❌ Critical:', err.message);
+    console.error('[IPN ERROR] Stack:', err.stack);
     
     // Log to monitoring service if available
     try {
@@ -174,16 +183,16 @@ async function getPesapalToken(env) {
     try {
       const cached = await env.KV.get('pesapal_token', 'json');
       if (cached && cached.expiry > Date.now()) {
-        console.log('[TOKEN] Using cached token');
+        console.log('[TOKEN] ✅ Using cached token');
         return cached.token;
       }
     } catch (err) {
-      console.warn('[TOKEN] KV fetch failed, fetching new token:', err);
+      console.warn('[TOKEN] ⚠️ KV fetch failed, fetching new token:', err.message);
     }
   }
 
   // Fetch new token from Pesapal
-  console.log('[TOKEN] Fetching new token from Pesapal');
+  console.log('[TOKEN] 🔄 Fetching new token from Pesapal');
   const res = await fetch('https://pay.pesapal.com/v3/api/Auth/RequestToken', {
     method: 'POST',
     headers: { 
@@ -197,11 +206,14 @@ async function getPesapalToken(env) {
   });
 
   if (!res.ok) {
+    const errorText = await res.text();
+    console.error('[TOKEN] ❌ Pesapal auth failed:', res.status, errorText);
     throw new Error(`Pesapal auth failed: ${res.status}`);
   }
 
   const data = await res.json();
   if (!data.token) {
+    console.error('[TOKEN] ❌ Pesapal response missing token:', JSON.stringify(data));
     throw new Error('Pesapal auth response missing token');
   }
 
@@ -215,9 +227,9 @@ async function getPesapalToken(env) {
       }), {
         expirationTtl: 3600 // 1 hour TTL as backup
       });
-      console.log('[TOKEN] Cached new token');
+      console.log('[TOKEN] ✅ Cached new token');
     } catch (err) {
-      console.warn('[TOKEN] Failed to cache token:', err);
+      console.warn('[TOKEN] ⚠️ Failed to cache token:', err.message);
     }
   }
 
@@ -257,17 +269,19 @@ async function fetchPesapalStatus(orderTrackingId, token, retries = 3) {
       clearTimeout(timeoutId);
 
       if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`[Pesapal] ❌ API error ${res.status}:`, errorText);
         throw new Error(`Pesapal API returned ${res.status}`);
       }
 
       const data = await res.json();
       const status = data.payment_status_description?.toUpperCase() || 'PENDING';
       
-      console.log(`[Pesapal] Status fetched: ${status} (attempt ${attempt})`);
+      console.log(`[Pesapal] ✅ Status fetched: ${status} (attempt ${attempt})`);
       return status;
 
     } catch (err) {
-      console.warn(`[Pesapal Retry ${attempt}/${retries}] Failed:`, err.message);
+      console.warn(`[Pesapal Retry ${attempt}/${retries}] ⚠️ Failed:`, err.message);
       
       if (attempt < retries) {
         // Exponential backoff: 500ms, 1000ms, 1500ms
@@ -287,16 +301,16 @@ async function fetchPesapalStatus(orderTrackingId, token, retries = 3) {
  */
 async function notifyCustomer(env, email, phone, voucherCode, packageType) {
   if (!email && !phone) {
-    console.warn('[NOTIFY] No contact info available');
+    console.warn('[NOTIFY] ⚠️ No contact info available');
     return;
   }
 
-  console.log(`[NOTIFY] Sending voucher ${voucherCode} to email: ${email}, phone: ${phone}`);
+  console.log(`[NOTIFY] 📧 Sending voucher ${voucherCode} to email: ${email}, phone: ${phone}`);
 
   try {
     // Example: Email notification using Resend
     if (email && env.RESEND_API_KEY) {
-      await fetch('https://api.resend.com/emails', {
+      const emailRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${env.RESEND_API_KEY}`,
@@ -315,12 +329,18 @@ async function notifyCustomer(env, email, phone, voucherCode, packageType) {
           `
         })
       });
-      console.log('[NOTIFY] Email sent successfully');
+      
+      if (emailRes.ok) {
+        console.log('[NOTIFY] ✅ Email sent successfully');
+      } else {
+        const errorText = await emailRes.text();
+        console.error('[NOTIFY] ❌ Email failed:', emailRes.status, errorText);
+      }
     }
 
     // Example: SMS notification using Twilio or Africa's Talking
     if (phone && env.SMS_API_KEY) {
-      await fetch(env.SMS_API_URL || 'https://api.africastalking.com/version1/messaging', {
+      const smsRes = await fetch(env.SMS_API_URL || 'https://api.africastalking.com/version1/messaging', {
         method: 'POST',
         headers: {
           'apiKey': env.SMS_API_KEY,
@@ -332,11 +352,17 @@ async function notifyCustomer(env, email, phone, voucherCode, packageType) {
           message: `Your hotspot voucher code: ${voucherCode}. Package: ${packageType}. Enter this code to connect.`
         })
       });
-      console.log('[NOTIFY] SMS sent successfully');
+      
+      if (smsRes.ok) {
+        console.log('[NOTIFY] ✅ SMS sent successfully');
+      } else {
+        const errorText = await smsRes.text();
+        console.error('[NOTIFY] ❌ SMS failed:', smsRes.status, errorText);
+      }
     }
 
   } catch (err) {
-    console.error('[NOTIFY] Failed to send notification:', err);
+    console.error('[NOTIFY] ❌ Failed to send notification:', err.message);
     // Don't throw - notification failure shouldn't break the payment flow
   }
 }
@@ -346,7 +372,7 @@ async function notifyCustomer(env, email, phone, voucherCode, packageType) {
  */
 async function sendAlert(env, alertData) {
   try {
-    console.error('[ALERT]', JSON.stringify(alertData));
+    console.error('[ALERT] 🚨', JSON.stringify(alertData));
     
     // Example: Send to Slack webhook
     if (env.SLACK_WEBHOOK_URL) {
@@ -385,7 +411,7 @@ async function sendAlert(env, alertData) {
       });
     }
   } catch (err) {
-    console.error('[ALERT] Failed to send alert:', err);
+    console.error('[ALERT] ❌ Failed to send alert:', err.message);
   }
 }
 
@@ -431,20 +457,18 @@ async function retryVoucherAssignment(env, OrderMerchantReference, packageType, 
       ).bind(OrderMerchantReference, packageType).first();
 
       if (voucher) {
-        console.log(`[VOUCHER] Retrieved on attempt ${attempt}`);
+        console.log(`[VOUCHER] ✅ Retrieved on attempt ${attempt}`);
         return voucher;
       }
     } catch (dbErr) {
-      console.warn(`[VOUCHER DB BUSY] Attempt ${attempt}: ${dbErr.message}`);
+      console.warn(`[VOUCHER DB BUSY] ⚠️ Attempt ${attempt}: ${dbErr.message}`);
     }
 
     if (attempt < maxRetries) {
-      console.log(`[VOUCHER] Attempt ${attempt} failed, retrying in 3s...`);
+      console.log(`[VOUCHER] 🔄 Attempt ${attempt} failed, retrying in 3s...`);
       await new Promise(r => setTimeout(r, 3000)); // Wait 3 seconds
     }
   }
 
   return null; // All retries exhausted
 }
-
-
