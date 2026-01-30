@@ -14,14 +14,16 @@ export async function onRequestPost({ request, env }) {
       const contentType = request.headers.get('content-type') || '';
       
       if (contentType.includes('application/json')) {
-        // Handle JSON body
+        // Handle JSON body - Pesapal may use different field names
         const body = await request.json();
-        OrderTrackingId = OrderTrackingId || body.OrderTrackingId;
-        OrderMerchantReference = OrderMerchantReference || body.OrderMerchantReference;
-        OrderNotificationType = OrderNotificationType || body.OrderNotificationType;
+        console.log('[IPN DEBUG] Received JSON body:', JSON.stringify(body));
+        OrderTrackingId = OrderTrackingId || body.OrderTrackingId || body.orderTrackingId || body.order_tracking_id;
+        OrderMerchantReference = OrderMerchantReference || body.OrderMerchantReference || body.orderMerchantReference || body.order_merchant_reference;
+        OrderNotificationType = OrderNotificationType || body.OrderNotificationType || body.orderNotificationType || body.order_notification_type;
       } else {
         // Handle form-encoded body
         const raw = await request.text();
+        console.log('[IPN DEBUG] Received form body:', raw);
         const params = new URLSearchParams(raw);
         OrderTrackingId = OrderTrackingId || params.get('OrderTrackingId');
         OrderMerchantReference = OrderMerchantReference || params.get('OrderMerchantReference');
