@@ -143,7 +143,7 @@
         }
 
         try {
-            const response = await fetch(`${API_URL}/api/payment/status?id=${trackingId}`);
+            const response = await fetch(`${API_URL}/api/payment/status?tracking_id=${trackingId}`);
             const data = await response.json();
 
             if ((data.status === 'COMPLETED' || data.status === 'SUCCESS') && data.voucherCode) {
@@ -197,5 +197,6 @@
 
 </body>
 </html>
+
 
 
