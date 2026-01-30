@@ -5,49 +5,53 @@ export async function onRequestPost({ request, env }) {
   try {
     const url = new URL(request.url);
 
-    // 1️⃣ Try URL parameters first
+    // 1️⃣ Initialize variables
     let OrderTrackingId = url.searchParams.get('OrderTrackingId');
     let OrderMerchantReference = url.searchParams.get('OrderMerchantReference');
     let OrderNotificationType = url.searchParams.get('OrderNotificationType');
 
-    // FIX: If URL is empty, parse the Body (Fixes the "Missing Required Fields" error from your logs)
+    // 2️⃣ If URL is empty, clone and parse the Body
     if (!OrderTrackingId) {
       const contentType = request.headers.get('content-type') || '';
       
+      // Clone the request so we don't "drain" the stream for other parts of the app
+      const clonedRequest = request.clone();
+
       if (contentType.includes('application/json')) {
-        const rawBody = await request.text(); 
-        console.log('[IPN DEBUG] RAW JSON BODY:', rawBody);
-        
         try {
-          const body = JSON.parse(rawBody);
-          // Look for every possible variation of the name
+          const body = await clonedRequest.json();
+          console.log('[IPN DEBUG] JSON Body:', JSON.stringify(body));
           OrderTrackingId = body.OrderTrackingId || body.orderTrackingId || body.order_tracking_id;
           OrderMerchantReference = body.OrderMerchantReference || body.orderMerchantReference || body.order_merchant_reference;
           OrderNotificationType = body.OrderNotificationType || body.orderNotificationType || body.order_notification_type;
         } catch (e) {
-          console.error('[IPN ERROR] JSON Parse failed:', e.message);
+          console.error('[IPN ERROR] JSON parse failed');
         }
       } else {
         try {
-          const formData = await request.formData();
+          const formData = await clonedRequest.formData();
           OrderTrackingId = formData.get('OrderTrackingId');
           OrderMerchantReference = formData.get('OrderMerchantReference');
           OrderNotificationType = formData.get('OrderNotificationType');
         } catch (e) {
-          console.warn('[IPN] Could not parse form data');
+          console.warn('[IPN] Form data parse failed');
         }
       }
     }
 
-    // 3️⃣ Verify we have what we need
+    // 3️⃣ Final check before proceeding
     if (!OrderTrackingId || !OrderMerchantReference) {
-      console.warn('[IPN] Missing required fields after parsing:', { OrderTrackingId, OrderMerchantReference });
+      console.warn('[IPN] Missing required fields after parsing:', { 
+        OrderTrackingId, 
+        OrderMerchantReference,
+        contentType: request.headers.get('content-type') 
+      });
       return new Response('OK', { status: 200 }); 
     }
-
+    
     console.log('[IPN] Received:', { OrderTrackingId, OrderMerchantReference, OrderNotificationType });
 
-    // 2️⃣ Idempotency check - prevent duplicate processing
+    // 4 Idempotency check - prevent duplicate processing
     const existingTx = await env.DB.prepare(
       `SELECT id, status, voucher_id 
        FROM transactions 
@@ -60,10 +64,10 @@ export async function onRequestPost({ request, env }) {
       return new Response('OK', { status: 200 });
     }
 
-    // 3️⃣ Get Pesapal token from KV cache or fetch new
+    // 5 Get Pesapal token from KV cache or fetch new
     const token = await getPesapalToken(env);
 
-    // 4️⃣ Fetch payment status with retry and timeout
+    // 6 Fetch payment status with retry and timeout
     const pStatus = await fetchPesapalStatus(OrderTrackingId, token);
 
     // Accept multiple success status variations (COMPLETED, SUCCESS, COMPLETE)
@@ -75,7 +79,7 @@ export async function onRequestPost({ request, env }) {
       return new Response('OK', { status: 200 });
     }
 
-    // 5️⃣ Fetch transaction details
+    // 7 Fetch transaction details
     const tx = await env.DB.prepare(
       `SELECT id, tracking_id, package_type, status, email, phone_number
        FROM transactions
@@ -93,7 +97,7 @@ export async function onRequestPost({ request, env }) {
       return new Response('OK', { status: 200 });
     }
 
-    // 6️⃣ Atomic voucher assignment with retry logic (6 attempts, 3s intervals)
+    // 8 Atomic voucher assignment with retry logic (6 attempts, 3s intervals)
     const voucher = await retryVoucherAssignment(env, OrderMerchantReference, tx.package_type, 6);
 
     if (!voucher) {
@@ -110,7 +114,7 @@ export async function onRequestPost({ request, env }) {
       return new Response('OK', { status: 200 });
     }
 
-    // 7️⃣ Update transaction with voucher info
+    // 9 Update transaction with voucher info
     await env.DB.prepare(
       `UPDATE transactions
        SET status = 'COMPLETED',
@@ -122,11 +126,11 @@ export async function onRequestPost({ request, env }) {
 
     console.log(`[IPN SUCCESS] ✅ Voucher ${voucher.code} assigned to transaction ${OrderMerchantReference}`);
 
-    // 8️⃣ Send voucher to customer (async, non-blocking)
+    // 10 Send voucher to customer (async, non-blocking)
     notifyCustomer(env, tx.email, tx.phone_number, voucher.code, tx.package_type)
       .catch(err => console.error('[NOTIFY ERROR]', err));
 
-    // 9️⃣ Always ACK to Pesapal
+    // 11 Always ACK to Pesapal
     return new Response(JSON.stringify({
       status: 200,
       orderTrackingId: OrderTrackingId,
@@ -442,4 +446,5 @@ async function retryVoucherAssignment(env, OrderMerchantReference, packageType, 
 
   return null; // All retries exhausted
 }
+
 
