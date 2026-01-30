@@ -80,19 +80,19 @@ export async function onRequestPost({ request, env }) {
     /* ============================================
        6. PREPARE ORDER REQUEST
        ============================================ */
-    const baseUrl = new URL(request.url).origin;
     const orderRequest = {
-      id: tracking_id,
-      currency: 'UGX',
-      amount,
-      description: `HotSpotCentral - ${package_type}`,
-      callback_url: `${baseUrl}/payment-success.html?id=${tracking_id}`,
-      notification_id: env.PESAPAL_IPN_ID,
-      billing_address: {
-        phone_number: normalizedPhone,
-        email_address: email || `customer-${tracking_id}@hotspotcentral.com`
-      }
-    };
+  id: tracking_id,
+  currency: 'UGX',
+  amount,
+  description: `HotSpotCentral - ${package_type}`,
+  // We hardcode this to ensure it matches your PesaPal IPN registration domain
+  callback_url: "https://mobilehubuganda-github-io.pages.dev/payment-success.html?id=" + tracking_id,
+  notification_id: env.PESAPAL_IPN_ID,
+  billing_address: {
+    phone_number: normalizedPhone,
+    email_address: email || `customer-${tracking_id}@hotspotcentral.com`
+  }
+};
 
     /* ============================================
        7. SUBMIT TO PESAPAL
@@ -158,4 +158,5 @@ async function getPesapalToken(env) {
   }
   return data.token;
 }
+
 
