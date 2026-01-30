@@ -63,20 +63,16 @@ export async function onRequestPost({ request, env }) {
 
     // 6. Atomic DB update (voucher + transaction)
     await env.DB.batch([
-      // Assign voucher and link transaction
+      // 1. Assign voucher
       env.DB.prepare(
-        `UPDATE vouchers
-         SET status = 'assigned',
-             transaction_id = ?,
-             used_at = datetime('now')
-         WHERE id = ?`
+        `UPDATE vouchers SET status = 'assigned', transaction_id = ?, used_at = datetime('now') WHERE id = ?`
       ).bind(OrderMerchantReference, voucher.id),
 
-      // Finalize transaction
+      // 2. Finalize transaction - We ensure BOTH IDs are stored so either can be used for lookup
       env.DB.prepare(
         `UPDATE transactions
          SET status = 'COMPLETED',
-             pesapal_transaction_id = ?,
+             pesapal_transaction_id = ?, 
              voucher_id = ?,
              completed_at = datetime('now')
          WHERE tracking_id = ?`
@@ -127,4 +123,5 @@ async function getPesapalToken(env) {
   const data = await res.json();
   if (!data.token) throw new Error('Pesapal auth failed');
   return data.token;
+
 }
