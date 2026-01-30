@@ -18,13 +18,13 @@ export async function onRequestGet({ request, env }) {
       });
     }
 
-    // Improved: Joins transactions and vouchers to get the code and status at once
+    // We check BOTH tracking_id (TRK-...) AND pesapal_transaction_id (GUID)
     const data = await env.DB.prepare(`
       SELECT t.status, v.code as voucherCode 
       FROM transactions t 
       LEFT JOIN vouchers v ON t.voucher_id = v.id 
-      WHERE t.tracking_id = ?
-    `).bind(tracking_id).first();
+      WHERE t.tracking_id = ? OR t.pesapal_transaction_id = ?
+    `).bind(tracking_id, tracking_id).first();
 
     if (!data) { // Use 'data' here to match the variable above
       return new Response(JSON.stringify({ status: 'NOT_FOUND', message: 'Transaction not found' }), {
@@ -63,3 +63,4 @@ export function onRequestOptions() {
   });
 
 }
+
