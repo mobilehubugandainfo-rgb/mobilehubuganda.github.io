@@ -76,6 +76,21 @@ if (pStatus !== 'COMPLETED' && pStatus !== 'SUCCESS') {
     // 6. Atomic DB update (voucher + transaction)
 if (pStatus === 'COMPLETED' || pStatus === 'SUCCESS') {
   try {
+    // 5a. Get an unused voucher for the purchased package
+    const voucher = await env.DB.prepare(
+      `SELECT id, code
+       FROM vouchers
+       WHERE package_type = ?
+       AND status = 'unused'
+       LIMIT 1`
+    ).bind(tx.package_type).first();
+
+    if (!voucher) {
+      console.error(`[CRITICAL] No vouchers left for ${tx.package_type}`);
+      return new Response('OK', { status: 200 });
+    }
+
+    // 6a. Assign voucher + mark transaction completed in one batch
     await env.DB.batch([
       // 1. Assign voucher
       env.DB.prepare(
@@ -101,7 +116,7 @@ if (pStatus === 'COMPLETED' || pStatus === 'SUCCESS') {
     return new Response('Internal Error', { status: 500 });
   }
 }
-
+    
     // 7. Required Pesapal ACK response
     // Simplified response for Pesapal
 return new Response(JSON.stringify({
@@ -141,6 +156,7 @@ async function getPesapalToken(env) {
   return data.token;
 
 }
+
 
 
 
