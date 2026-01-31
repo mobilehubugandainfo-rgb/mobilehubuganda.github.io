@@ -42,44 +42,92 @@
             border: 2px solid #4ecdc4;
             font-size: 40px;
             color: #4ecdc4;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         h1 { color: #4ecdc4; font-size: 1.8rem; margin-bottom: 10px; }
         .status-text { color: #b8b8b8; margin-bottom: 30px; font-size: 1rem; }
 
-        #voucherDisplay {
-            display: none;
-            background: rgba(240, 147, 251, 0.1);
-            border: 2px dashed #f093fb;
-            padding: 25px;
-            border-radius: 20px;
-            margin: 20px 0;
-            position: relative;
+        .progress-container { 
+            width: 100%; 
+            background: rgba(255,255,255,0.05); 
+            height: 6px; 
+            border-radius: 10px; 
+            margin-top: 30px; 
+            overflow: hidden; 
+        }
+        
+        .progress-bar { 
+            width: 0%; 
+            height: 100%; 
+            background: linear-gradient(90deg, #4ecdc4, #44a08d);
+            transition: width 0.5s ease; 
+            animation: shimmer 2s infinite;
         }
 
-        .voucher-label { font-size: 0.75rem; color: #f093fb; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
-        .voucher-code { font-size: 2.2rem; font-weight: 800; color: #ffffff; letter-spacing: 5px; }
+        @keyframes shimmer {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
 
-        .progress-container { width: 100%; background: rgba(255,255,255,0.05); height: 6px; border-radius: 10px; margin-top: 30px; overflow: hidden; }
-        .progress-bar { width: 0%; height: 100%; background: #4ecdc4; transition: width 0.5s ease; }
+        .footer-note { 
+            font-size: 0.8rem; 
+            color: #666; 
+            margin-top: 20px; 
+        }
 
-        .btn {
+        .error-container {
             display: none;
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+        }
+
+        .error-container.show {
+            display: block;
+        }
+
+        .support-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #25d366, #128c7e);
             color: white;
             text-decoration: none;
             border-radius: 12px;
             font-weight: 700;
-            margin-top: 20px;
-            border: none;
-            cursor: pointer;
             transition: 0.3s;
         }
 
-        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(78, 205, 196, 0.3); }
-        .footer-note { font-size: 0.8rem; color: #666; margin-top: 20px; }
+        .support-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
+        }
+
+        .loading-dots {
+            display: inline-block;
+        }
+
+        .loading-dots span {
+            animation: blink 1.4s infinite both;
+            display: inline-block;
+        }
+
+        .loading-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes blink {
+            0%, 80%, 100% { opacity: 0; }
+            40% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -87,29 +135,36 @@
 <div class="card">
     <div id="processingUI">
         <div class="check-container">✓</div>
-        <h1>Payment Verified</h1>
-        <p class="status-text">Generating your access code... <span id="percent">0</span>%</p>
+        <h1>Payment Successful!</h1>
+        <p class="status-text">
+            Activating your internet access<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>
+        </p>
         <div class="progress-container">
             <div class="progress-bar" id="bar"></div>
         </div>
+        <p style="font-size: 0.75rem; color: #888; margin-top: 15px;">
+            Please wait while we prepare your voucher code
+        </p>
     </div>
 
-    <div id="readyUI">
-        <div id="voucherDisplay">
-            <p class="voucher-label">Your WiFi Voucher</p>
-            <div class="voucher-code" id="codeText">------</div>
-        </div>
-        <p style="font-size: 0.9rem; color: #b8b8b8;">The code has been saved to this phone automatically.</p>
-        <button id="connectBtn" class="btn">ACTIVATE INTERNET NOW</button>
-        <div class="footer-note">
+    <div id="errorUI" class="error-container">
+        <div class="check-container" style="border-color: #ff4757; color: #ff4757;">⚠</div>
+        <h1 style="color: #ff4757;">Connection Delayed</h1>
+        <p class="status-text">
+            Your payment was successful! However, there's a delay in generating your voucher code.
+        </p>
+        <p style="font-size: 0.9rem; color: #b8b8b8; margin: 20px 0;">
+            Don't worry - your code will be sent via SMS to your phone shortly.
+        </p>
+        <p style="font-size: 0.85rem; color: #888;">
+            If you don't receive it within 5 minutes, please contact support.
+        </p>
+        <a href="https://wa.me/256771999302" class="support-btn">
+            📱 Contact Support on WhatsApp
+        </a>
+        <div class="footer-note" style="margin-top: 30px;">
             Order ID: <span id="displayOrderId" style="color:#888;"></span>
         </div>
-    </div>
-
-    <div id="errorUI" style="display:none;">
-        <h1 style="color: #ff4757;">⚠️ Connection Delayed</h1>
-        <p class="status-text">Payment was successful, but the voucher generation timed out.</p>
-        <a href="https://wa.me/256771999302" class="btn" style="display:block; background:#25d366;">Chat with Support</a>
     </div>
 </div>
 
@@ -118,86 +173,116 @@
     const trackingId = urlParams.get('id') || urlParams.get('OrderTrackingId') || urlParams.get('tracking_id');
     const API_URL = window.location.origin;
 
-    document.getElementById('displayOrderId').innerText = trackingId || 'N/A';
+    // Log for debugging (in browser console, not visible to user)
+    console.log('[Payment Success] Tracking ID:', trackingId);
+    console.log('[Payment Success] Full URL:', window.location.href);
 
     let attempts = 0;
-    const maxAttempts = 6;
+    const maxAttempts = 8; // Increased to 24 seconds total
+    let progressInterval;
 
-    async function getVoucher() {
-        if (!trackingId) return;
+    // Start smooth progress bar
+    function startProgressBar() {
+        let width = 0;
+        progressInterval = setInterval(() => {
+            if (width >= 95) {
+                clearInterval(progressInterval);
+            } else {
+                width += 2;
+                document.getElementById('bar').style.width = width + '%';
+            }
+        }, 300);
+    }
+
+    // Complete progress bar
+    function completeProgress() {
+        clearInterval(progressInterval);
+        document.getElementById('bar').style.width = '100%';
+    }
+
+    // Main function to check voucher status
+    async function checkVoucherStatus() {
+        if (!trackingId) {
+            console.error('[Payment Success] No tracking ID found');
+            showError();
+            return;
+        }
 
         attempts++;
+        console.log(`[Payment Success] Attempt ${attempts}/${maxAttempts}`);
 
-        // Start progress bar only once
+        // Start progress on first attempt
         if (attempts === 1) {
-            let width = 0;
-            const interval = setInterval(() => {
-                if (width >= 90 || document.getElementById('processingUI').style.display === 'none') {
-                    clearInterval(interval);
-                } else {
-                    width += 10;
-                    document.getElementById('bar').style.width = width + '%';
-                    document.getElementById('percent').innerText = width;
-                }
-            }, 300);
+            startProgressBar();
         }
 
         try {
             const response = await fetch(`${API_URL}/api/payment/status?tracking_id=${trackingId}`);
-            const data = await response.json();
-
-            if ((data.status === 'COMPLETED' || data.status === 'SUCCESS') && data.voucherCode) {
-                document.getElementById('bar').style.width = '100%';
-                document.getElementById('percent').innerText = '100';
-
-                localStorage.setItem('last_voucher', data.voucherCode);
-                localStorage.setItem('voucher_date', new Date().toLocaleString());
-
-                showVoucher(data.voucherCode);
-                return;
+            
+            if (!response.ok) {
+                console.error('[Payment Success] API error:', response.status);
+                throw new Error(`HTTP ${response.status}`);
             }
 
+            const data = await response.json();
+            console.log('[Payment Success] Response:', data);
+
+            // Check if payment is completed and voucher exists
+            if ((data.status === 'COMPLETED' || data.status === 'SUCCESS') && data.voucherCode) {
+                console.log('[Payment Success] ✅ Voucher received:', data.voucherCode);
+                
+                // Save to localStorage for backup
+                localStorage.setItem('last_voucher', data.voucherCode);
+                localStorage.setItem('voucher_date', new Date().toLocaleString());
+                localStorage.setItem('package_type', data.package_type || 'Unknown');
+                
+                // Complete progress
+                completeProgress();
+                
+                // AUTOMATICALLY redirect to login page with voucher
+                setTimeout(() => {
+                    console.log('[Payment Success] Redirecting to login...');
+                    window.location.href = `login.html?voucher=${data.voucherCode}`;
+                }, 1000);
+                
+                return; // Stop checking
+            }
+
+            // Log current status
+            console.log(`[Payment Success] Status: ${data.status}, Voucher: ${data.voucherCode || 'null'}`);
+
+            // Retry if we haven't hit max attempts
             if (attempts < maxAttempts) {
-                setTimeout(getVoucher, 3000);
+                setTimeout(checkVoucherStatus, 3000); // Check again in 3 seconds
             } else {
+                console.error('[Payment Success] Max attempts reached');
                 showError();
             }
 
         } catch (error) {
+            console.error('[Payment Success] Error:', error.message);
+            
+            // Retry on error too
             if (attempts < maxAttempts) {
-                setTimeout(getVoucher, 3000);
+                setTimeout(checkVoucherStatus, 3000);
             } else {
                 showError();
             }
         }
     }
 
-    function showVoucher(code) {
-        setTimeout(() => {
-            document.getElementById('processingUI').style.display = 'none';
-            document.getElementById('voucherDisplay').style.display = 'block';
-            document.getElementById('codeText').innerText = code;
-
-            const btn = document.getElementById('connectBtn');
-            btn.style.display = 'block';
-
-            btn.onclick = () => {
-                window.location.href = `login.html?voucher=${code}`;
-            };
-        }, 800);
-    }
-
+    // Show error state
     function showError() {
+        completeProgress();
         document.getElementById('processingUI').style.display = 'none';
-        document.getElementById('errorUI').style.display = 'block';
+        document.getElementById('errorUI').classList.add('show');
+        document.getElementById('displayOrderId').textContent = trackingId || 'N/A';
     }
 
-    getVoucher();
+    // Start checking immediately
+    console.log('[Payment Success] Starting voucher check...');
+    checkVoucherStatus();
 </script>
 
 </body>
 </html>
-
-
-
-
