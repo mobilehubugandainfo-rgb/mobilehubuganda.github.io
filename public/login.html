@@ -290,7 +290,7 @@
                     setTimeout(() => {
                         console.log('[Login] Redirecting to MikroTik...');
                         const password = result.password || 'hub123';
-                        window.location.href = `http://10.5.5.1/login?username=${code}&password=${password}`;
+                        window.location.href = `http://10.0.0.1/login?username=${code}&password=${password}`;
                     }, 1500);
                 } else {
                     console.error('[Login] Validation failed:', result.message || 'Invalid code');
@@ -330,3 +330,4 @@
     </script>
 </body>
 </html>
+
