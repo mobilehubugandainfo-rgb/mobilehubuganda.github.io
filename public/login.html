@@ -51,6 +51,14 @@
             font-size: 1.2rem;
             text-align: center;
             letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            background: rgba(255, 255, 255, 0.08);
         }
 
         .connect-btn {
@@ -66,11 +74,22 @@
             transition: 0.3s;
         }
 
+        .connect-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(78, 205, 196, 0.3);
+        }
+
+        .connect-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         /* Recovery Link Styling */
         .recovery-box {
             margin-top: 15px;
-            padding: 10px;
-            background: rgba(240, 147, 251, 0.05);
+            padding: 12px;
+            background: rgba(240, 147, 251, 0.08);
+            border: 1px dashed rgba(240, 147, 251, 0.3);
             border-radius: 8px;
             display: none;
         }
@@ -82,6 +101,11 @@
             text-decoration: underline;
             font-size: 0.85rem;
             cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .recovery-btn:hover {
+            color: #ff6ec7;
         }
 
         /* WhatsApp Button Styling */
@@ -101,10 +125,50 @@
             transition: 0.3s;
         }
 
-        .whatsapp-btn:hover { background: #1ebe57; transform: scale(1.02); }
+        .whatsapp-btn:hover { 
+            background: #1ebe57; 
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+        }
 
-        .status-msg { margin-top: 20px; padding: 12px; border-radius: 8px; font-size: 0.9rem; display: none; }
-        .help-link { margin-top: 15px; display: block; color: #b8b8b8; text-decoration: none; font-size: 0.8rem; }
+        .status-msg { 
+            margin-top: 20px; 
+            padding: 12px; 
+            border-radius: 8px; 
+            font-size: 0.9rem; 
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .help-link { 
+            margin-top: 15px; 
+            display: block; 
+            color: #b8b8b8; 
+            text-decoration: none; 
+            font-size: 0.8rem;
+            transition: 0.3s;
+        }
+
+        .help-link:hover {
+            color: #4ecdc4;
+        }
+
+        /* Success animation */
+        .success-checkmark {
+            display: inline-block;
+            animation: scaleIn 0.3s ease-in-out;
+        }
+
+        @keyframes scaleIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -115,13 +179,21 @@
 
         <div class="form-group">
             <label>Voucher Code</label>
-            <input type="text" id="voucherCode" placeholder="Enter Code" autocomplete="off">
+            <input 
+                type="text" 
+                id="voucherCode" 
+                placeholder="Enter Code" 
+                autocomplete="off"
+                maxlength="50"
+            >
         </div>
 
         <button onclick="connectWiFi()" class="connect-btn" id="loginBtn">CONNECT NOW</button>
 
         <div id="recoverySection" class="recovery-box">
-            <p style="font-size: 0.75rem; color: #b8b8b8; margin-bottom: 5px;">Found a saved voucher from <span id="savedDate" style="color:#f093fb;"></span></p>
+            <p style="font-size: 0.75rem; color: #b8b8b8; margin-bottom: 5px;">
+                Found a saved voucher from <span id="savedDate" style="color:#f093fb;"></span>
+            </p>
             <button onclick="restoreVoucher()" class="recovery-btn">Restore Code Automatically</button>
         </div>
 
@@ -130,69 +202,110 @@
         <a href="index.html" class="help-link">Need a voucher? Buy one here.</a>
 
         <a href="https://wa.me/256771999302?text=Hello%20Mobile%20Hub,%20I%20am%20having%20trouble%20with%20my%20WiFi%20voucher." class="whatsapp-btn">
-            <span>Chat with Support on WhatsApp</span>
+            <span>💬 Chat with Support on WhatsApp</span>
         </a>
     </div>
 
     <script>
+        // Dynamic API URL (works in dev, staging, and production)
+        const API_URL = window.location.origin;
+        
+        console.log('[Login] Page loaded');
+        console.log('[Login] API URL:', API_URL);
+
         // ON LOAD: CHECK URL AND LOCAL STORAGE
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const codeFromUrl = urlParams.get('voucher'); // Grabs from Success Page
+            const codeFromUrl = urlParams.get('voucher'); // Matches payment-success.html redirect
             const savedCode = localStorage.getItem('last_voucher');
             const savedDate = localStorage.getItem('voucher_date');
 
-            // 1. If code is in URL, auto-fill it
+            console.log('[Login] URL voucher:', codeFromUrl);
+            console.log('[Login] Saved voucher:', savedCode);
+
+            // 1. If code is in URL, auto-fill it (from payment success redirect)
             if (codeFromUrl) {
+                console.log('[Login] ✅ Auto-filling voucher from URL');
                 document.getElementById('voucherCode').value = codeFromUrl;
+                document.getElementById('voucherCode').focus();
             } 
-            // 2. If no code in URL but code exists in phone memory, show recovery
+            // 2. If no code in URL but code exists in localStorage, show recovery
             else if (savedCode) {
+                console.log('[Login] Found saved voucher, showing recovery option');
                 document.getElementById('recoverySection').style.display = 'block';
-                document.getElementById('savedDate').innerText = savedDate.split(',')[0];
+                const dateStr = savedDate ? savedDate.split(',')[0] : 'recently';
+                document.getElementById('savedDate').innerText = dateStr;
             }
         };
 
         function restoreVoucher() {
             const savedCode = localStorage.getItem('last_voucher');
             if (savedCode) {
+                console.log('[Login] Restoring saved voucher');
                 document.getElementById('voucherCode').value = savedCode;
-                showStatus('Voucher Restored!', '#4ecdc4');
+                document.getElementById('voucherCode').focus();
+                showStatus('✅ Voucher Restored!', '#4ecdc4');
+                document.getElementById('recoverySection').style.display = 'none';
             }
         }
 
         async function connectWiFi() {
-            const code = document.getElementById('voucherCode').value.trim();
+            const code = document.getElementById('voucherCode').value.trim().toUpperCase();
             const btn = document.getElementById('loginBtn');
 
+            console.log('[Login] Attempting connection with code:', code);
+
             if (!code) {
-                showStatus('Please enter a code', '#ff4757');
+                showStatus('⚠️ Please enter a voucher code', '#ffa502');
+                document.getElementById('voucherCode').focus();
                 return;
             }
 
             btn.disabled = true;
-            btn.textContent = 'CONNECTING...';
-
+            btn.textContent = 'VALIDATING...';
+            
             try {
-                // Change URL to your real Worker address
-                const response = await fetch('https://voucher-api.mobilehubugandainfo.workers.dev/api/voucher/validate', {
+                // Use dynamic API URL instead of hardcoded URL
+                const validateUrl = `${API_URL}/api/voucher/validate`;
+                console.log('[Login] Calling:', validateUrl);
+
+                const response = await fetch(validateUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code: code })
                 });
 
+                console.log('[Login] Validation response status:', response.status);
                 const result = await response.json();
+                console.log('[Login] Validation result:', result);
 
                 if (result.success) {
-                    showStatus('✅ Connecting to Internet...', '#4ecdc4');
-                    // Point to your MikroTik IP
-                    window.location.href = `http://10.5.5.1/login?username=${code}&password=${result.password || 'hub123'}`;
+                    showStatus('<span class="success-checkmark">✅</span> Connecting to Internet...', '#4ecdc4');
+                    
+                    // Save to localStorage for future use
+                    localStorage.setItem('last_voucher', code);
+                    localStorage.setItem('voucher_date', new Date().toLocaleString());
+                    
+                    // Redirect to MikroTik login
+                    setTimeout(() => {
+                        console.log('[Login] Redirecting to MikroTik...');
+                        const password = result.password || 'hub123';
+                        window.location.href = `http://10.5.5.1/login?username=${code}&password=${password}`;
+                    }, 1500);
                 } else {
+                    console.error('[Login] Validation failed:', result.message || 'Invalid code');
                     showStatus('❌ Invalid or Expired Code', '#ff4757');
                     btn.disabled = false;
                     btn.textContent = 'CONNECT NOW';
+                    
+                    // Clear invalid code after 2 seconds
+                    setTimeout(() => {
+                        document.getElementById('voucherCode').value = '';
+                        document.getElementById('voucherCode').focus();
+                    }, 2000);
                 }
             } catch (err) {
+                console.error('[Login] Error:', err);
                 showStatus('❌ Network Error. Please try again.', '#ff4757');
                 btn.disabled = false;
                 btn.textContent = 'CONNECT NOW';
@@ -201,11 +314,19 @@
 
         function showStatus(text, color) {
             const status = document.getElementById('status');
-            status.textContent = text;
+            status.innerHTML = text;
             status.style.display = 'block';
             status.style.color = color;
             status.style.border = `1px solid ${color}`;
+            status.style.background = `${color}15`; // 15 = 15% opacity
         }
+
+        // Allow Enter key to submit
+        document.getElementById('voucherCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                connectWiFi();
+            }
+        });
     </script>
 </body>
 </html>
