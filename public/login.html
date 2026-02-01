@@ -211,35 +211,27 @@
         // 🔧 CONFIGURATION
         // ============================================
         const API_URL = window.location.origin; // Cloudflare Workers API
-        const MIKROTIK_IP = '10.0.0.1'; // ✅ Your MikroTik gateway
-        const MIKROTIK_PORT = '8728'; // MikroTik REST API port
-        const API_USER = 'api-user'; // MikroTik API username
-        const API_PASS = 'YourNewPassword123'; // MikroTik API password
         
         console.log('[Login] Page loaded');
         console.log('[Login] API URL:', API_URL);
-        console.log('[Login] MikroTik Gateway:', MIKROTIK_IP);
 
         // ============================================
         // ON LOAD: CHECK URL AND LOCAL STORAGE
         // ============================================
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const codeFromUrl = urlParams.get('voucher'); // Matches payment-success.html redirect
+            const codeFromUrl = urlParams.get('voucher');
             const savedCode = localStorage.getItem('last_voucher');
             const savedDate = localStorage.getItem('voucher_date');
 
             console.log('[Login] URL voucher:', codeFromUrl);
             console.log('[Login] Saved voucher:', savedCode);
 
-            // 1. If code is in URL, auto-fill it (from payment success redirect)
             if (codeFromUrl) {
                 console.log('[Login] ✅ Auto-filling voucher from URL');
                 document.getElementById('voucherCode').value = codeFromUrl;
                 document.getElementById('voucherCode').focus();
-            } 
-            // 2. If no code in URL but code exists in localStorage, show recovery
-            else if (savedCode) {
+            } else if (savedCode) {
                 console.log('[Login] Found saved voucher, showing recovery option');
                 document.getElementById('recoverySection').style.display = 'block';
                 const dateStr = savedDate ? savedDate.split(',')[0] : 'recently';
@@ -259,7 +251,10 @@
         }
 
         // ============================================
-        // MAIN CONNECTION FUNCTION (YOUR ORIGINAL TERMINOLOGY)
+        // MAIN CONNECTION FUNCTION - UPDATED!
+        // ✅ Uses standard HTML form submission
+        // ✅ No REST API calls
+        // ✅ No CORS issues
         // ============================================
         async function connectWiFi() {
             const code = document.getElementById('voucherCode').value.trim().toUpperCase();
@@ -274,11 +269,11 @@
             }
 
             btn.disabled = true;
-            btn.textContent = 'VALIDATING...'; // ✅ YOUR ORIGINAL TEXT
+            btn.textContent = 'VALIDATING...';
             
             try {
                 // ============================================
-                // STEP 1: VALIDATE VOUCHER WITH CLOUDFLARE
+                // STEP 1: VALIDATE WITH CLOUDFLARE (check if paid)
                 // ============================================
                 const validateUrl = `${API_URL}/api/voucher/validate`;
                 console.log('[Login] Calling:', validateUrl);
@@ -293,51 +288,67 @@
                 const result = await response.json();
                 console.log('[Login] Validation result:', result);
 
-                if (!result.success) {
+                if (result.success) {
+                    // ============================================
+                    // STEP 2: SUBMIT STANDARD HTML FORM TO MIKROTIK
+                    // ✅ This works! No CORS, no mixed content issues!
+                    // ============================================
+                    showStatus('<span class="success-checkmark">✅</span> Connecting to Internet...', '#4ecdc4');
+                    
+                    // Save to localStorage
+                    localStorage.setItem('last_voucher', code);
+                    localStorage.setItem('voucher_date', new Date().toLocaleString());
+                    
+                    setTimeout(() => {
+                        console.log('[Login] Submitting form to MikroTik...');
+                        
+                        // Create hidden form (standard HTML - works everywhere!)
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = 'http://10.0.0.1/login'; // MikroTik login endpoint
+                        
+                        // Add username field
+                        const usernameField = document.createElement('input');
+                        usernameField.type = 'hidden';
+                        usernameField.name = 'username';
+                        usernameField.value = code;
+                        form.appendChild(usernameField);
+                        
+                        // Add password field
+                        const passwordField = document.createElement('input');
+                        passwordField.type = 'hidden';
+                        passwordField.name = 'password';
+                        passwordField.value = result.password || 'hub123';
+                        form.appendChild(passwordField);
+                        
+                        // Add dst field (optional - where to redirect after login)
+                        const dstField = document.createElement('input');
+                        dstField.type = 'hidden';
+                        dstField.name = 'dst';
+                        dstField.value = '';
+                        form.appendChild(dstField);
+                        
+                        // Submit form to MikroTik
+                        document.body.appendChild(form);
+                        console.log('[Login] Form created and submitting...');
+                        form.submit();
+                        
+                        // MikroTik will authenticate and grant internet access!
+                        
+                    }, 1500);
+                    
+                } else {
                     console.error('[Login] Validation failed:', result.error || 'Invalid code');
-                    showStatus('❌ Invalid or Expired Code', '#ff4757');
+                    showStatus('❌ ' + (result.error || 'Invalid or Expired Code'), '#ff4757');
                     btn.disabled = false;
                     btn.textContent = 'CONNECT NOW';
                     
-                    // Clear invalid code after 2 seconds
                     setTimeout(() => {
                         document.getElementById('voucherCode').value = '';
                         document.getElementById('voucherCode').focus();
                     }, 2000);
-                    return;
                 }
-
-                // ============================================
-                // STEP 2: CREATE USER IN MIKROTIK (NEW!)
-                // ============================================
-                console.log('[Login] ✅ Voucher validated, creating MikroTik user...');
-                const password = result.password || 'hub123';
-                const packageType = result.package || 'p2';
-
-                // Try to create user in MikroTik
-                const mikrotikCreated = await createMikroTikUser(code, password, packageType);
                 
-                if (!mikrotikCreated) {
-                    console.warn('[Login] ⚠️ MikroTik user creation had issues, but continuing...');
-                    // Don't fail - user might already exist
-                }
-
-                // ============================================
-                // STEP 3: REDIRECT TO MIKROTIK (YOUR ORIGINAL FLOW)
-                // ============================================
-                showStatus('<span class="success-checkmark">✅</span> Connecting to Internet...', '#4ecdc4'); // ✅ YOUR ORIGINAL TEXT
-                
-                // Save to localStorage for future use
-                localStorage.setItem('last_voucher', code);
-                localStorage.setItem('voucher_date', new Date().toLocaleString());
-                
-                // Redirect to MikroTik login (YOUR ORIGINAL LOGIC)
-                setTimeout(() => {
-                    console.log('[Login] Redirecting to MikroTik...');
-                    // ✅ FIXED: Using correct IP 10.0.0.1 instead of 10.5.5.1
-                    window.location.href = `http://${MIKROTIK_IP}/login?username=${code}&password=${password}`;
-                }, 1500);
-
             } catch (err) {
                 console.error('[Login] Error:', err);
                 showStatus('❌ Network Error. Please try again.', '#ff4757');
@@ -347,101 +358,7 @@
         }
 
         // ============================================
-        // MIKROTIK API: CREATE HOTSPOT USER (NEW FUNCTION)
-        // ============================================
-        async function createMikroTikUser(username, password, packageType) {
-            try {
-                console.log('[MikroTik] Creating user:', { username, packageType });
-
-                // Map package type to MikroTik profile
-                const profileMap = {
-                    'p1': 'p1',
-                    'p2': 'p2',
-                    'p3': 'p3',
-                    'p4': 'p4',
-                    '250ugx-35min': 'p1',
-                    '500ugx-2hrs': 'p2',
-                    '1000ugx-24hrs': 'p3',
-                    '1500ugx-24hrs': 'p4',
-                    'free-trial-5min': 'p1'
-                };
-
-                const profile = profileMap[packageType.toLowerCase()] || 'p2';
-                console.log('[MikroTik] Using profile:', profile);
-
-                // Create Basic Auth header
-                const auth = btoa(`${API_USER}:${API_PASS}`);
-
-                // First, check if user already exists
-                const checkUrl = `http://${MIKROTIK_IP}:${MIKROTIK_PORT}/rest/ip/hotspot/user/print`;
-                console.log('[MikroTik] Checking if user exists...');
-
-                try {
-                    const checkResponse = await fetch(checkUrl, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Basic ${auth}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (checkResponse.ok) {
-                        const users = await checkResponse.json();
-                        const userExists = users.some(u => u.name === username);
-                        
-                        if (userExists) {
-                            console.log('[MikroTik] ✅ User already exists, skipping creation');
-                            return true; // User exists, that's fine
-                        }
-                    }
-                } catch (checkError) {
-                    console.warn('[MikroTik] ⚠️ Check failed:', checkError.message);
-                    // Continue to creation anyway
-                }
-
-                // Create new user
-                const createUrl = `http://${MIKROTIK_IP}:${MIKROTIK_PORT}/rest/ip/hotspot/user/add`;
-                console.log('[MikroTik] Creating new user...');
-
-                const createResponse = await fetch(createUrl, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Basic ${auth}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name: username,
-                        password: password,
-                        profile: profile,
-                        disabled: 'no',
-                        comment: `Package: ${packageType} | Created: ${new Date().toISOString()}`
-                    })
-                });
-
-                if (createResponse.ok) {
-                    console.log('[MikroTik] ✅ User created successfully');
-                    return true;
-                } else {
-                    const errorText = await createResponse.text();
-                    console.error('[MikroTik] ❌ Creation failed:', errorText);
-                    
-                    // Check if error is "user already exists"
-                    if (errorText.includes('already have') || errorText.includes('already exists')) {
-                        console.log('[MikroTik] User already exists (from error message)');
-                        return true; // That's okay
-                    }
-                    
-                    return false;
-                }
-
-            } catch (error) {
-                console.error('[MikroTik] ❌ API Error:', error.message);
-                return false; // Don't fail the whole process
-            }
-        }
-
-        // ============================================
-        // UI HELPER FUNCTION (YOUR ORIGINAL)
+        // UI HELPER FUNCTION
         // ============================================
         function showStatus(text, color) {
             const status = document.getElementById('status');
@@ -449,10 +366,10 @@
             status.style.display = 'block';
             status.style.color = color;
             status.style.border = `1px solid ${color}`;
-            status.style.background = `${color}15`; // 15 = 15% opacity
+            status.style.background = `${color}15`;
         }
 
-        // Allow Enter key to submit (YOUR ORIGINAL)
+        // Allow Enter key to submit
         document.getElementById('voucherCode').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 connectWiFi();
