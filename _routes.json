@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "routes": [
+    {
+      "src": "/api/voucher/validate",
+      "dest": "/functions/api/voucher/validate.js"
+    }
+  ]
+}
