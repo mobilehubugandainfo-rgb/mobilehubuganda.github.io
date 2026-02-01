@@ -1,6 +1,6 @@
 // functions/api/payment/ipn.js
 // Production-ready Pesapal IPN handler for hotspot billing system
-// Fixed version with improved body parsing and error logging
+// ✅ FIXED: Now saves vouchers to KV storage for validate.js
 
 export async function onRequestPost({ request, env }) {
   try {
@@ -122,7 +122,7 @@ export async function onRequestPost({ request, env }) {
       return new Response('OK', { status: 200 });
     }
 
-    // 9️⃣ Update transaction with voucher info
+    // 9️⃣ Update transaction with voucher info in DATABASE
     await env.DB.prepare(
       `UPDATE transactions
        SET status = 'COMPLETED',
@@ -131,6 +131,24 @@ export async function onRequestPost({ request, env }) {
            completed_at = CURRENT_TIMESTAMP
        WHERE tracking_id = ?`
     ).bind(OrderTrackingId, voucher.id, OrderMerchantReference).run();
+
+    // 🆕 CRITICAL FIX: Save voucher to KV storage
+    // This is what validate.js will check!
+    try {
+      await env.KV.put(voucher.code, JSON.stringify({
+        package: tx.package_type,
+        paid: true,        // ✅ Customer paid for this voucher
+        used: false,       // ✅ Not logged in yet
+        paidAt: new Date().toISOString(),
+        transaction: OrderMerchantReference,
+        email: tx.email,
+        phone: tx.phone_number
+      }));
+      console.log(`[IPN] ✅ Voucher ${voucher.code} saved to KV storage`);
+    } catch (kvError) {
+      console.error(`[IPN] ❌ Failed to save voucher to KV:`, kvError.message);
+      // Don't fail the whole transaction - voucher is still in DB
+    }
 
     console.log(`[IPN SUCCESS] ✅ Voucher ${voucher.code} assigned to transaction ${OrderMerchantReference}`);
 
