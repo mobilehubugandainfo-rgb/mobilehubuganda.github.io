@@ -36,25 +36,10 @@
             letter-spacing: 1px;
         }
 
-        h2 { 
-            color: white; 
-            margin-bottom: 30px; 
-            font-weight: 400; 
-            font-size: 1.1rem; 
-            opacity: 0.8; 
-        }
+        h2 { color: white; margin-bottom: 30px; font-weight: 400; font-size: 1.1rem; opacity: 0.8; }
 
-        .form-group { 
-            margin-bottom: 20px; 
-            text-align: left; 
-        }
-
-        label { 
-            display: block; 
-            color: #b8b8b8; 
-            margin-bottom: 8px; 
-            font-size: 0.9rem; 
-        }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; color: #b8b8b8; margin-bottom: 8px; font-size: 0.9rem; }
 
         input {
             width: 100%;
@@ -99,7 +84,7 @@
             cursor: not-allowed;
         }
 
-        /* Recovery Box */
+        /* Recovery Link Styling */
         .recovery-box {
             margin-top: 15px;
             padding: 12px;
@@ -123,104 +108,7 @@
             color: #ff6ec7;
         }
 
-        /* Progress Steps */
-        .progress-steps {
-            display: none;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 10px;
-            font-size: 0.85rem;
-        }
-
-        .progress-steps.active {
-            display: block;
-        }
-
-        .step {
-            padding: 8px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #b8b8b8;
-        }
-
-        .step-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            border: 2px solid #555;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            flex-shrink: 0;
-        }
-
-        .step.active {
-            color: #ffa502;
-        }
-
-        .step.active .step-icon {
-            border-color: #ffa502;
-            animation: pulse 1s infinite;
-        }
-
-        .step.complete {
-            color: #4ecdc4;
-        }
-
-        .step.complete .step-icon {
-            background: #4ecdc4;
-            border-color: #4ecdc4;
-            color: white;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        /* Status Message */
-        .status-msg { 
-            margin-top: 20px; 
-            padding: 12px; 
-            border-radius: 8px; 
-            font-size: 0.9rem; 
-            display: none;
-            animation: fadeIn 0.3s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .success-checkmark {
-            display: inline-block;
-            animation: scaleIn 0.3s ease-in-out;
-        }
-
-        @keyframes scaleIn {
-            0% { transform: scale(0); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-
-        /* Links */
-        .help-link { 
-            margin-top: 15px; 
-            display: block; 
-            color: #b8b8b8; 
-            text-decoration: none; 
-            font-size: 0.8rem;
-            transition: 0.3s;
-        }
-
-        .help-link:hover {
-            color: #4ecdc4;
-        }
-
+        /* WhatsApp Button Styling */
         .whatsapp-btn {
             margin-top: 25px;
             display: flex;
@@ -241,6 +129,45 @@
             background: #1ebe57; 
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+        }
+
+        .status-msg { 
+            margin-top: 20px; 
+            padding: 12px; 
+            border-radius: 8px; 
+            font-size: 0.9rem; 
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .help-link { 
+            margin-top: 15px; 
+            display: block; 
+            color: #b8b8b8; 
+            text-decoration: none; 
+            font-size: 0.8rem;
+            transition: 0.3s;
+        }
+
+        .help-link:hover {
+            color: #4ecdc4;
+        }
+
+        /* Success animation */
+        .success-checkmark {
+            display: inline-block;
+            animation: scaleIn 0.3s ease-in-out;
+        }
+
+        @keyframes scaleIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
@@ -270,27 +197,11 @@
             <button onclick="restoreVoucher()" class="recovery-btn">Restore Code Automatically</button>
         </div>
 
-        <!-- Progress Steps -->
-        <div id="progressSteps" class="progress-steps">
-            <div id="step1" class="step">
-                <div class="step-icon">1</div>
-                <span>Validating voucher...</span>
-            </div>
-            <div id="step2" class="step">
-                <div class="step-icon">2</div>
-                <span>Activating your account...</span>
-            </div>
-            <div id="step3" class="step">
-                <div class="step-icon">3</div>
-                <span>Connecting to internet...</span>
-            </div>
-        </div>
-
         <div id="status" class="status-msg"></div>
 
         <a href="index.html" class="help-link">Need a voucher? Buy one here.</a>
 
-        <a href="https://wa.me/256771999302?text=Hello%20Mobile%20Hub,%20I%20need%20help%20with%20my%20WiFi%20voucher." class="whatsapp-btn">
+        <a href="https://wa.me/256771999302?text=Hello%20Mobile%20Hub,%20I%20am%20having%20trouble%20with%20my%20WiFi%20voucher." class="whatsapp-btn">
             <span>💬 Chat with Support on WhatsApp</span>
         </a>
     </div>
@@ -299,33 +210,36 @@
         // ============================================
         // 🔧 CONFIGURATION
         // ============================================
-        const CLOUDFLARE_API = window.location.origin; // Dynamic API URL
-        const MIKROTIK_IP = '10.0.0.1';
-        const MIKROTIK_PORT = '8728';
-        const API_USER = 'api-user';
-        const API_PASS = 'YourNewPassword123';
+        const API_URL = window.location.origin; // Cloudflare Workers API
+        const MIKROTIK_IP = '10.0.0.1'; // ✅ Your MikroTik gateway
+        const MIKROTIK_PORT = '8728'; // MikroTik REST API port
+        const API_USER = 'api-user'; // MikroTik API username
+        const API_PASS = 'YourNewPassword123'; // MikroTik API password
         
         console.log('[Login] Page loaded');
-        console.log('[Login] Cloudflare API:', CLOUDFLARE_API);
-        console.log('[Login] MikroTik IP:', MIKROTIK_IP);
+        console.log('[Login] API URL:', API_URL);
+        console.log('[Login] MikroTik Gateway:', MIKROTIK_IP);
 
         // ============================================
         // ON LOAD: CHECK URL AND LOCAL STORAGE
         // ============================================
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const codeFromUrl = urlParams.get('voucher');
+            const codeFromUrl = urlParams.get('voucher'); // Matches payment-success.html redirect
             const savedCode = localStorage.getItem('last_voucher');
             const savedDate = localStorage.getItem('voucher_date');
 
             console.log('[Login] URL voucher:', codeFromUrl);
             console.log('[Login] Saved voucher:', savedCode);
 
+            // 1. If code is in URL, auto-fill it (from payment success redirect)
             if (codeFromUrl) {
                 console.log('[Login] ✅ Auto-filling voucher from URL');
                 document.getElementById('voucherCode').value = codeFromUrl;
                 document.getElementById('voucherCode').focus();
-            } else if (savedCode) {
+            } 
+            // 2. If no code in URL but code exists in localStorage, show recovery
+            else if (savedCode) {
                 console.log('[Login] Found saved voucher, showing recovery option');
                 document.getElementById('recoverySection').style.display = 'block';
                 const dateStr = savedDate ? savedDate.split(',')[0] : 'recently';
@@ -345,12 +259,11 @@
         }
 
         // ============================================
-        // MAIN CONNECTION FUNCTION
+        // MAIN CONNECTION FUNCTION (YOUR ORIGINAL TERMINOLOGY)
         // ============================================
         async function connectWiFi() {
             const code = document.getElementById('voucherCode').value.trim().toUpperCase();
             const btn = document.getElementById('loginBtn');
-            const progressSteps = document.getElementById('progressSteps');
 
             console.log('[Login] Attempting connection with code:', code);
 
@@ -360,97 +273,87 @@
                 return;
             }
 
-            // Reset UI
             btn.disabled = true;
-            btn.textContent = 'PROCESSING...';
-            progressSteps.classList.add('active');
-            document.getElementById('status').style.display = 'none';
-
+            btn.textContent = 'VALIDATING...'; // ✅ YOUR ORIGINAL TEXT
+            
             try {
                 // ============================================
                 // STEP 1: VALIDATE VOUCHER WITH CLOUDFLARE
                 // ============================================
-                setStepActive('step1');
-                console.log('[Step 1] Validating voucher with Cloudflare...');
+                const validateUrl = `${API_URL}/api/voucher/validate`;
+                console.log('[Login] Calling:', validateUrl);
 
-                const validateUrl = `${CLOUDFLARE_API}/api/voucher/validate`;
-                const validateResponse = await fetch(validateUrl, {
+                const response = await fetch(validateUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code: code })
                 });
 
-                const validateResult = await validateResponse.json();
-                console.log('[Step 1] Validation result:', validateResult);
+                console.log('[Login] Validation response status:', response.status);
+                const result = await response.json();
+                console.log('[Login] Validation result:', result);
 
-                if (!validateResult.success) {
-                    throw new Error(validateResult.error || 'Invalid voucher code');
+                if (!result.success) {
+                    console.error('[Login] Validation failed:', result.error || 'Invalid code');
+                    showStatus('❌ Invalid or Expired Code', '#ff4757');
+                    btn.disabled = false;
+                    btn.textContent = 'CONNECT NOW';
+                    
+                    // Clear invalid code after 2 seconds
+                    setTimeout(() => {
+                        document.getElementById('voucherCode').value = '';
+                        document.getElementById('voucherCode').focus();
+                    }, 2000);
+                    return;
                 }
 
-                setStepComplete('step1');
-                const password = validateResult.password || 'hub123';
-                const packageType = validateResult.package || 'p2';
-
-                console.log('[Step 1] ✅ Voucher validated:', { code, packageType, password });
-
                 // ============================================
-                // STEP 2: CREATE USER IN MIKROTIK
+                // STEP 2: CREATE USER IN MIKROTIK (NEW!)
                 // ============================================
-                setStepActive('step2');
-                console.log('[Step 2] Creating MikroTik user...');
+                console.log('[Login] ✅ Voucher validated, creating MikroTik user...');
+                const password = result.password || 'hub123';
+                const packageType = result.package || 'p2';
 
+                // Try to create user in MikroTik
                 const mikrotikCreated = await createMikroTikUser(code, password, packageType);
                 
                 if (!mikrotikCreated) {
-                    console.warn('[Step 2] ⚠️ MikroTik user creation had issues, but continuing...');
+                    console.warn('[Login] ⚠️ MikroTik user creation had issues, but continuing...');
                     // Don't fail - user might already exist
                 }
 
-                setStepComplete('step2');
-
                 // ============================================
-                // STEP 3: AUTO-LOGIN TO MIKROTIK HOTSPOT
+                // STEP 3: REDIRECT TO MIKROTIK (YOUR ORIGINAL FLOW)
                 // ============================================
-                setStepActive('step3');
-                console.log('[Step 3] Logging into hotspot...');
-
-                // Save to localStorage
+                showStatus('<span class="success-checkmark">✅</span> Connecting to Internet...', '#4ecdc4'); // ✅ YOUR ORIGINAL TEXT
+                
+                // Save to localStorage for future use
                 localStorage.setItem('last_voucher', code);
                 localStorage.setItem('voucher_date', new Date().toLocaleString());
-
-                showStatus('<span class="success-checkmark">✅</span> Connected! Redirecting...', '#4ecdc4');
                 
-                // Redirect to MikroTik login
+                // Redirect to MikroTik login (YOUR ORIGINAL LOGIC)
                 setTimeout(() => {
-                    console.log('[Step 3] Redirecting to MikroTik hotspot login...');
-                    const loginUrl = `http://${MIKROTIK_IP}/login?username=${encodeURIComponent(code)}&password=${encodeURIComponent(password)}`;
-                    console.log('[Step 3] Login URL:', loginUrl);
-                    window.location.href = loginUrl;
+                    console.log('[Login] Redirecting to MikroTik...');
+                    // ✅ FIXED: Using correct IP 10.0.0.1 instead of 10.5.5.1
+                    window.location.href = `http://${MIKROTIK_IP}/login?username=${code}&password=${password}`;
                 }, 1500);
 
-            } catch (error) {
-                console.error('[ERROR] ❌', error);
-                progressSteps.classList.remove('active');
-                showStatus(`❌ ${error.message}`, '#ff4757');
+            } catch (err) {
+                console.error('[Login] Error:', err);
+                showStatus('❌ Network Error. Please try again.', '#ff4757');
                 btn.disabled = false;
                 btn.textContent = 'CONNECT NOW';
-                
-                // Clear invalid code after 3 seconds
-                setTimeout(() => {
-                    document.getElementById('voucherCode').value = '';
-                    document.getElementById('voucherCode').focus();
-                }, 3000);
             }
         }
 
         // ============================================
-        // MIKROTIK API: CREATE HOTSPOT USER
+        // MIKROTIK API: CREATE HOTSPOT USER (NEW FUNCTION)
         // ============================================
         async function createMikroTikUser(username, password, packageType) {
             try {
                 console.log('[MikroTik] Creating user:', { username, packageType });
 
-                // Map package type to profile
+                // Map package type to MikroTik profile
                 const profileMap = {
                     'p1': 'p1',
                     'p2': 'p2',
@@ -469,9 +372,9 @@
                 // Create Basic Auth header
                 const auth = btoa(`${API_USER}:${API_PASS}`);
 
-                // Check if user already exists
+                // First, check if user already exists
                 const checkUrl = `http://${MIKROTIK_IP}:${MIKROTIK_PORT}/rest/ip/hotspot/user/print`;
-                console.log('[MikroTik] Checking existing users...');
+                console.log('[MikroTik] Checking if user exists...');
 
                 try {
                     const checkResponse = await fetch(checkUrl, {
@@ -488,11 +391,12 @@
                         
                         if (userExists) {
                             console.log('[MikroTik] ✅ User already exists, skipping creation');
-                            return true;
+                            return true; // User exists, that's fine
                         }
                     }
                 } catch (checkError) {
-                    console.warn('[MikroTik] ⚠️ Check failed, will try to create anyway:', checkError.message);
+                    console.warn('[MikroTik] ⚠️ Check failed:', checkError.message);
+                    // Continue to creation anyway
                 }
 
                 // Create new user
@@ -510,7 +414,7 @@
                         password: password,
                         profile: profile,
                         disabled: 'no',
-                        comment: `Pkg:${packageType} | ${new Date().toISOString()}`
+                        comment: `Package: ${packageType} | Created: ${new Date().toISOString()}`
                     })
                 });
 
@@ -521,10 +425,10 @@
                     const errorText = await createResponse.text();
                     console.error('[MikroTik] ❌ Creation failed:', errorText);
                     
-                    // Check if error indicates user already exists
-                    if (errorText.includes('already') || errorText.includes('exists')) {
-                        console.log('[MikroTik] User already exists (from error)');
-                        return true;
+                    // Check if error is "user already exists"
+                    if (errorText.includes('already have') || errorText.includes('already exists')) {
+                        console.log('[MikroTik] User already exists (from error message)');
+                        return true; // That's okay
                     }
                     
                     return false;
@@ -532,36 +436,23 @@
 
             } catch (error) {
                 console.error('[MikroTik] ❌ API Error:', error.message);
-                // Don't throw - allow process to continue
-                return false;
+                return false; // Don't fail the whole process
             }
         }
 
         // ============================================
-        // UI HELPER FUNCTIONS
+        // UI HELPER FUNCTION (YOUR ORIGINAL)
         // ============================================
-        function setStepActive(stepId) {
-            const step = document.getElementById(stepId);
-            step.classList.add('active');
-        }
-
-        function setStepComplete(stepId) {
-            const step = document.getElementById(stepId);
-            step.classList.remove('active');
-            step.classList.add('complete');
-            step.querySelector('.step-icon').textContent = '✓';
-        }
-
         function showStatus(text, color) {
             const status = document.getElementById('status');
             status.innerHTML = text;
             status.style.display = 'block';
             status.style.color = color;
             status.style.border = `1px solid ${color}`;
-            status.style.background = `${color}15`;
+            status.style.background = `${color}15`; // 15 = 15% opacity
         }
 
-        // Allow Enter key to submit
+        // Allow Enter key to submit (YOUR ORIGINAL)
         document.getElementById('voucherCode').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 connectWiFi();
