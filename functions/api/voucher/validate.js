@@ -1,6 +1,5 @@
 // functions/api/voucher/validate.js
 
-```javascript
 export async function onRequest(context) {
     const { request, env } = context;
     
@@ -55,3 +54,4 @@ export async function onRequest(context) {
         });
     }
 }
+
