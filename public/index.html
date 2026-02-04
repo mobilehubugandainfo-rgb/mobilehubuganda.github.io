@@ -205,7 +205,8 @@
             const data = await res.json();
             
             if(data.success) {
-                window.location.href = `login.html?code=${data.code}&type=trial`;
+                // UPDATED: Changed from 'code' to 'voucher' parameter to match login.html
+                window.location.href = `login.html?voucher=${data.code}`;
             } else {
                 alert(data.message || "Trial already used today!");
                 btn.disabled = false;
@@ -257,4 +258,3 @@
 
 </body>
 </html>
-
