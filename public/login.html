@@ -289,11 +289,11 @@
                 usernameField.value = code;
                 form.appendChild(usernameField);
                 
-                // Password = empty (standard for MikroTik hotspot vouchers)
+                // Password = same as voucher code (FIXED)
                 const passwordField = document.createElement('input');
                 passwordField.type = 'hidden';
                 passwordField.name = 'password';
-                passwordField.value = '';
+                passwordField.value = code;  // ← UPDATED: Now uses voucher code as password
                 form.appendChild(passwordField);
                 
                 // Optional: destination after login
