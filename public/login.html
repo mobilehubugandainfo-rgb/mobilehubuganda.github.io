@@ -15,6 +15,9 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+            /* Allow screenshots */
+            -webkit-user-select: text;
+            user-select: text;
         }
 
         .login-card {
@@ -138,6 +141,9 @@
             font-size: 0.9rem; 
             display: none;
             animation: fadeIn 0.3s;
+            /* Allow screenshots of status messages */
+            -webkit-user-select: text;
+            user-select: text;
         }
 
         @keyframes fadeIn {
@@ -207,13 +213,7 @@
     </div>
 
     <script>
-        // ============================================
-        // 🔧 CONFIGURATION
-        // ============================================
-        const API_URL = window.location.origin; // Cloudflare Workers API
-        
-        console.log('[Login] Page loaded');
-        console.log('[Login] API URL:', API_URL);
+        console.log('[Login] Page loaded - Direct MikroTik submission mode');
 
         // ============================================
         // ON LOAD: CHECK URL AND LOCAL STORAGE
@@ -251,16 +251,13 @@
         }
 
         // ============================================
-        // MAIN CONNECTION FUNCTION - UPDATED!
-        // ✅ Uses standard HTML form submission
-        // ✅ No REST API calls
-        // ✅ No CORS issues
+        // MAIN CONNECTION FUNCTION - DIRECT TO MIKROTIK
         // ============================================
-        async function connectWiFi() {
+        function connectWiFi() {
             const code = document.getElementById('voucherCode').value.trim().toUpperCase();
             const btn = document.getElementById('loginBtn');
 
-            console.log('[Login] Attempting connection with code:', code);
+            console.log('[Login] Attempting direct connection with code:', code);
 
             if (!code) {
                 showStatus('⚠️ Please enter a voucher code', '#ffa502');
@@ -269,92 +266,54 @@
             }
 
             btn.disabled = true;
-            btn.textContent = 'VALIDATING...';
+            btn.textContent = 'CONNECTING...';
+            showStatus('<span class="success-checkmark">✅</span> Connecting to Internet...', '#4ecdc4');
             
-            try {
-                // ============================================
-                // STEP 1: VALIDATE WITH CLOUDFLARE (check if paid)
-                // ============================================
-                const validateUrl = `${API_URL}/api/voucher/validate`;
-                console.log('[Login] Calling:', validateUrl);
-
-                const response = await fetch(validateUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: code })
-                });
-
-                console.log('[Login] Validation response status:', response.status);
-                const result = await response.json();
-                console.log('[Login] Validation result:', result);
-
-                if (result.success) {
-                    // ============================================
-                    // STEP 2: SUBMIT STANDARD HTML FORM TO MIKROTIK
-                    // ✅ This works! No CORS, no mixed content issues!
-                    // ============================================
-                    showStatus('<span class="success-checkmark">✅</span> Connecting to Internet...', '#4ecdc4');
-                    
-                    // Save to localStorage
-                    localStorage.setItem('last_voucher', code);
-                    localStorage.setItem('voucher_date', new Date().toLocaleString());
-                    
-                    setTimeout(() => {
-                        console.log('[Login] Submitting form to MikroTik...');
-                        
-                        // Create hidden form (standard HTML - works everywhere!)
-                        const form = document.createElement('form');
-                        form.method = 'POST';
-                        form.action = 'http://10.0.0.1/login'; // MikroTik login endpoint
-                        
-                        // Add username field
-                        const usernameField = document.createElement('input');
-                        usernameField.type = 'hidden';
-                        usernameField.name = 'username';
-                        usernameField.value = code;
-                        form.appendChild(usernameField);
-                        
-                        // Add password field
-                        const passwordField = document.createElement('input');
-                        passwordField.type = 'hidden';
-                        passwordField.name = 'password';
-                        passwordField.value = result.password || 'hub123';
-                        form.appendChild(passwordField);
-                        
-                        // Add dst field (optional - where to redirect after login)
-                        const dstField = document.createElement('input');
-                        dstField.type = 'hidden';
-                        dstField.name = 'dst';
-                        dstField.value = '';
-                        form.appendChild(dstField);
-                        
-                        // Submit form to MikroTik
-                        document.body.appendChild(form);
-                        console.log('[Login] Form created and submitting...');
-                        form.submit();
-                        
-                        // MikroTik will authenticate and grant internet access!
-                        
-                    }, 1500);
-                    
-                } else {
-                    console.error('[Login] Validation failed:', result.error || 'Invalid code');
-                    showStatus('❌ ' + (result.error || 'Invalid or Expired Code'), '#ff4757');
-                    btn.disabled = false;
-                    btn.textContent = 'CONNECT NOW';
-                    
-                    setTimeout(() => {
-                        document.getElementById('voucherCode').value = '';
-                        document.getElementById('voucherCode').focus();
-                    }, 2000);
-                }
+            // Save to localStorage
+            localStorage.setItem('last_voucher', code);
+            localStorage.setItem('voucher_date', new Date().toLocaleString());
+            
+            // Submit directly to MikroTik after short delay
+            setTimeout(() => {
+                console.log('[Login] Submitting to MikroTik at 10.0.0.1/login');
                 
-            } catch (err) {
-                console.error('[Login] Error:', err);
-                showStatus('❌ Network Error. Please try again.', '#ff4757');
-                btn.disabled = false;
-                btn.textContent = 'CONNECT NOW';
-            }
+                // Create hidden form
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'http://10.0.0.1/login';
+                
+                // Username = voucher code
+                const usernameField = document.createElement('input');
+                usernameField.type = 'hidden';
+                usernameField.name = 'username';
+                usernameField.value = code;
+                form.appendChild(usernameField);
+                
+                // Password = empty (standard for MikroTik hotspot vouchers)
+                const passwordField = document.createElement('input');
+                passwordField.type = 'hidden';
+                passwordField.name = 'password';
+                passwordField.value = '';
+                form.appendChild(passwordField);
+                
+                // Optional: destination after login
+                const dstField = document.createElement('input');
+                dstField.type = 'hidden';
+                dstField.name = 'dst';
+                dstField.value = '';
+                form.appendChild(dstField);
+                
+                // Submit form to MikroTik
+                document.body.appendChild(form);
+                console.log('[Login] Form created and submitting...');
+                form.submit();
+                
+                // MikroTik will handle validation:
+                // - Check if voucher exists
+                // - Check if voucher is already used
+                // - Grant internet access if valid
+                
+            }, 1000);
         }
 
         // ============================================
@@ -378,5 +337,3 @@
     </script>
 </body>
 </html>
-
-
