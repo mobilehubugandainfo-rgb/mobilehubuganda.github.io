@@ -76,6 +76,55 @@
             100% { opacity: 0.6; }
         }
 
+        .voucher-display {
+            display: none;
+            margin: 30px 0;
+        }
+
+        .voucher-display.show {
+            display: block;
+        }
+
+        .voucher-code {
+            background: rgba(78, 205, 196, 0.1);
+            border: 2px dashed #4ecdc4;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4ecdc4;
+            letter-spacing: 3px;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            margin: 10px 5px;
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
+        }
+
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .copy-btn.copied {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+
         .footer-note { 
             font-size: 0.8rem; 
             color: #666; 
@@ -128,43 +177,107 @@
             0%, 80%, 100% { opacity: 0; }
             40% { opacity: 1; }
         }
+
+        .redirect-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            transition: 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .redirect-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(78, 205, 196, 0.3);
+        }
+
+        .package-info {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+
+        .package-info strong {
+            color: #4ecdc4;
+        }
     </style>
 </head>
 <body>
 
 <div class="card">
+    <!-- PROCESSING STATE -->
     <div id="processingUI">
         <div class="check-container">✓</div>
         <h1>Payment Successful!</h1>
         <p class="status-text">
-            Activating your internet access<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>
+            Preparing your voucher code<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>
         </p>
         <div class="progress-container">
             <div class="progress-bar" id="bar"></div>
         </div>
         <p style="font-size: 0.75rem; color: #888; margin-top: 15px;">
-            Please wait while we prepare your voucher code
+            Please wait while we activate your internet access
         </p>
     </div>
 
+    <!-- SUCCESS STATE - VOUCHER READY -->
+    <div id="voucherUI" class="voucher-display">
+        <div class="check-container">✓</div>
+        <h1>Your Voucher is Ready!</h1>
+        <p class="status-text">Use this code to connect to the internet</p>
+        
+        <div class="voucher-code" id="voucherCode">
+            LOADING...
+        </div>
+
+        <div class="package-info">
+            <strong>Package:</strong> <span id="packageType">-</span><br>
+            <strong>Order ID:</strong> <span id="orderId">-</span>
+        </div>
+
+        <button class="copy-btn" id="copyBtn" onclick="copyVoucher()">
+            📋 Copy Voucher Code
+        </button>
+
+        <br>
+
+        <button class="redirect-btn" onclick="redirectToLogin()">
+            🌐 Connect to Internet Now
+        </button>
+
+        <p class="footer-note">
+            This code has been saved. You can also find it in your SMS/email.
+        </p>
+    </div>
+
+    <!-- ERROR STATE -->
     <div id="errorUI" class="error-container">
         <div class="check-container" style="border-color: #ff4757; color: #ff4757;">⚠</div>
-        <h1 style="color: #ff4757;">Connection Delayed</h1>
+        <h1 style="color: #ff4757;">Voucher Delayed</h1>
         <p class="status-text">
             Your payment was successful! However, there's a delay in generating your voucher code.
         </p>
         <p style="font-size: 0.9rem; color: #b8b8b8; margin: 20px 0;">
-            Don't worry - your code will be sent via SMS to your phone shortly.
+            Don't worry - your code will be sent via SMS to your phone within 5 minutes.
         </p>
         <p style="font-size: 0.85rem; color: #888;">
-            If you don't receive it within 5 minutes, please contact support.
+            If you don't receive it, please contact support with your Order ID below.
         </p>
+        <div class="package-info">
+            <strong>Order ID:</strong> <span id="displayOrderId">-</span>
+        </div>
         <a href="https://wa.me/256771999302" class="support-btn">
             📱 Contact Support on WhatsApp
         </a>
-        <div class="footer-note" style="margin-top: 30px;">
-            Order ID: <span id="displayOrderId" style="color:#888;"></span>
-        </div>
     </div>
 </div>
 
@@ -173,13 +286,13 @@
     const trackingId = urlParams.get('id') || urlParams.get('OrderTrackingId') || urlParams.get('tracking_id');
     const API_URL = window.location.origin;
 
-    // Log for debugging (in browser console, not visible to user)
     console.log('[Payment Success] Tracking ID:', trackingId);
     console.log('[Payment Success] Full URL:', window.location.href);
 
     let attempts = 0;
-    const maxAttempts = 8; // Increased to 24 seconds total
+    const maxAttempts = 10; // 30 seconds total (10 attempts × 3 seconds)
     let progressInterval;
+    let currentVoucherCode = '';
 
     // Start smooth progress bar
     function startProgressBar() {
@@ -200,6 +313,66 @@
         document.getElementById('bar').style.width = '100%';
     }
 
+    // Show voucher to user
+    function showVoucher(voucherCode, packageType) {
+        currentVoucherCode = voucherCode;
+        
+        // Update UI
+        document.getElementById('voucherCode').textContent = voucherCode;
+        document.getElementById('packageType').textContent = packageType || 'Standard';
+        document.getElementById('orderId').textContent = trackingId || 'N/A';
+        
+        // Save to localStorage
+        localStorage.setItem('last_voucher', voucherCode);
+        localStorage.setItem('voucher_date', new Date().toLocaleString());
+        localStorage.setItem('package_type', packageType || 'Unknown');
+        localStorage.setItem('tracking_id', trackingId);
+        
+        // Complete progress
+        completeProgress();
+        
+        // Hide processing, show voucher
+        document.getElementById('processingUI').style.display = 'none';
+        document.getElementById('voucherUI').classList.add('show');
+        
+        console.log('[Payment Success] ✅ Voucher displayed:', voucherCode);
+    }
+
+    // Copy voucher to clipboard
+    function copyVoucher() {
+        const btn = document.getElementById('copyBtn');
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(currentVoucherCode).then(() => {
+            // Update button
+            btn.textContent = '✓ Copied!';
+            btn.classList.add('copied');
+            
+            // Reset after 2 seconds
+            setTimeout(() => {
+                btn.textContent = '📋 Copy Voucher Code';
+                btn.classList.remove('copied');
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            // Fallback: select the text
+            const codeElement = document.getElementById('voucherCode');
+            const range = document.createRange();
+            range.selectNode(codeElement);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+        });
+    }
+
+    // Redirect to login page
+    function redirectToLogin() {
+        if (currentVoucherCode) {
+            window.location.href = `login.html?voucher=${currentVoucherCode}`;
+        } else {
+            window.location.href = 'login.html';
+        }
+    }
+
     // Main function to check voucher status
     async function checkVoucherStatus() {
         if (!trackingId) {
@@ -217,7 +390,12 @@
         }
 
         try {
-            const response = await fetch(`${API_URL}/api/payment/status?tracking_id=${trackingId}`);
+            const response = await fetch(`${API_URL}/api/payment/status?tracking_id=${trackingId}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
             
             if (!response.ok) {
                 console.error('[Payment Success] API error:', response.status);
@@ -230,26 +408,12 @@
             // Check if payment is completed and voucher exists
             if ((data.status === 'COMPLETED' || data.status === 'SUCCESS') && data.voucherCode) {
                 console.log('[Payment Success] ✅ Voucher received:', data.voucherCode);
-                
-                // Save to localStorage for backup
-                localStorage.setItem('last_voucher', data.voucherCode);
-                localStorage.setItem('voucher_date', new Date().toLocaleString());
-                localStorage.setItem('package_type', data.package_type || 'Unknown');
-                
-                // Complete progress
-                completeProgress();
-                
-                // AUTOMATICALLY redirect to login page with voucher
-                setTimeout(() => {
-                    console.log('[Payment Success] Redirecting to login...');
-                    window.location.href = `login.html?voucher=${data.voucherCode}`;
-                }, 1000);
-                
+                showVoucher(data.voucherCode, data.package_type);
                 return; // Stop checking
             }
 
             // Log current status
-            console.log(`[Payment Success] Status: ${data.status}, Voucher: ${data.voucherCode || 'null'}`);
+            console.log(`[Payment Success] Status: ${data.status}, Voucher: ${data.voucherCode || 'pending'}`);
 
             // Retry if we haven't hit max attempts
             if (attempts < maxAttempts) {
