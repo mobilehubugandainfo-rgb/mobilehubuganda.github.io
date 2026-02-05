@@ -91,7 +91,7 @@ export async function onRequestPost({ request, env }) {
     return new Response(JSON.stringify({
       success: true,
       code: voucherCode,
-      password: 'hub123',
+      password: 'voucherCode',
       package: voucher.package_type,
       profile: profile
     }), { 
@@ -124,3 +124,4 @@ export function onRequestOptions() {
     }
   });
 }
+
