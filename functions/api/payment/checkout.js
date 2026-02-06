@@ -76,23 +76,25 @@ export async function onRequestPost({ request, env }) {
        5. GET PESAPAL TOKEN
        ============================================ */
     const token = await getPesapalToken(env);
+    console.log('Token obtained successfully');
 
     /* ============================================
        6. PREPARE ORDER REQUEST
        ============================================ */
     const orderRequest = {
-  id: tracking_id,
-  currency: 'UGX',
-  amount,
-  description: `HotSpotCentral - ${package_type}`,
-  // We hardcode this to ensure it matches your PesaPal IPN registration domain
-  callback_url: "https://mobilehubuganda-github-io.pages.dev/payment-success.html?id=" + tracking_id,
-  notification_id: env.PESAPAL_IPN_ID,
-  billing_address: {
-    phone_number: normalizedPhone,
-    email_address: email || `customer-${tracking_id}@hotspotcentral.com`
-  }
-};
+      id: tracking_id,
+      currency: 'UGX',
+      amount,
+      description: `HotSpotCentral - ${package_type}`,
+      callback_url: "https://mobilehubuganda-github-io.pages.dev/payment-success.html?id=" + tracking_id,
+      notification_id: env.PESAPAL_IPN_ID,
+      billing_address: {
+        phone_number: normalizedPhone,
+        email_address: email || `customer-${tracking_id}@hotspotcentral.com`
+      }
+    };
+
+    console.log('Order request prepared:', JSON.stringify(orderRequest));
 
     /* ============================================
        7. SUBMIT TO PESAPAL
@@ -111,6 +113,10 @@ export async function onRequestPost({ request, env }) {
     );
 
     const result = await pesapalResponse.json();
+    
+    // LOG THE ACTUAL RESPONSE FROM PESAPAL
+    console.log('Pesapal response status:', pesapalResponse.status);
+    console.log('Pesapal response body:', JSON.stringify(result));
 
     if (pesapalResponse.ok && result.redirect_url) {
       return new Response(
@@ -124,7 +130,10 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
-    throw new Error(result.message || 'Payment gateway did not respond correctly.');
+    // BETTER ERROR MESSAGE WITH ACTUAL PESAPAL ERROR
+    const errorMsg = result.error?.message || result.message || result.error_description || 'Payment gateway did not respond correctly.';
+    console.error('Pesapal rejected order:', errorMsg, 'Full response:', result);
+    throw new Error(errorMsg);
 
   } catch (error) {
     console.error('Checkout error:', error);
@@ -152,11 +161,14 @@ async function getPesapalToken(env) {
   });
 
   const data = await res.json();
+  
+  // ADD LOGGING FOR TOKEN REQUEST
+  console.log('Token request response status:', res.status);
+  console.log('Token request response:', JSON.stringify(data));
+  
   if (!data.token) {
     console.error('Pesapal token error:', data);
     throw new Error('Failed to authenticate with payment gateway.');
   }
   return data.token;
 }
-
-
