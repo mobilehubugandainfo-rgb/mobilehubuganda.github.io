@@ -1,6 +1,9 @@
 // functions/api/payment/checkout.js
-// ✅ FIX: Saves Pesapal's order_tracking_id to DB immediately at checkout
-//         so status.js can query Pesapal directly without waiting for IPN
+// ✅ Saves Pesapal's order_tracking_id to DB immediately at checkout
+// ✅ Token fetch failure rolls back voucher + transaction
+// ✅ Pesapal submit failure rolls back voucher + transaction
+// ✅ Guards against HTML error responses from Pesapal
+// ✅ KV write is non-fatal — never crashes checkout
 
 export async function onRequestPost({ request, env }) {
   const jsonHeader = {
@@ -63,6 +66,10 @@ export async function onRequestPost({ request, env }) {
 
     /* ============================================
        5. SAVE TRANSACTION FIRST
+       ──────────────────────────────────────────
+       Transaction row must exist before voucher
+       reservation so IPN/status.js can always
+       find it when they query by tracking_id.
        ============================================ */
     await env.DB.prepare(
       `INSERT INTO transactions
@@ -74,6 +81,9 @@ export async function onRequestPost({ request, env }) {
 
     /* ============================================
        6. RESERVE VOUCHER ATOMICALLY
+       ──────────────────────────────────────────
+       Single atomic UPDATE prevents two concurrent
+       checkouts grabbing the same voucher row.
        ============================================ */
     const voucher = await env.DB.prepare(
       `UPDATE vouchers
@@ -88,7 +98,6 @@ export async function onRequestPost({ request, env }) {
     ).bind(tracking_id, package_type).first();
 
     if (!voucher) {
-      // Roll back transaction row
       await env.DB.prepare(`DELETE FROM transactions WHERE tracking_id = ?`)
         .bind(tracking_id).run();
       return new Response(
@@ -101,11 +110,32 @@ export async function onRequestPost({ request, env }) {
 
     /* ============================================
        7. GET PESAPAL TOKEN
+       ──────────────────────────────────────────
+       If token fetch fails, roll back immediately.
+       A stale cached token gets a 401 — we clear
+       it and retry with a fresh one automatically.
        ============================================ */
-    const token = await getPesapalToken(env);
+    let token;
+    try {
+      token = await getPesapalToken(env);
+    } catch (tokenErr) {
+      await env.DB.prepare(`UPDATE vouchers SET status='unused', transaction_id=NULL WHERE id=?`)
+        .bind(voucher.id).run();
+      await env.DB.prepare(`DELETE FROM transactions WHERE tracking_id=?`)
+        .bind(tracking_id).run();
+      console.error('[CHECKOUT] Token fetch failed, rolled back:', tokenErr.message);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Payment gateway authentication failed. Please try again.' }),
+        { status: 500, headers: jsonHeader }
+      );
+    }
 
     /* ============================================
        8. SUBMIT TO PESAPAL
+       ──────────────────────────────────────────
+       If Pesapal returns HTML (error page) instead
+       of JSON, we catch it before .json() explodes
+       and roll back cleanly.
        ============================================ */
     const orderRequest = {
       id: tracking_id,
@@ -120,36 +150,56 @@ export async function onRequestPost({ request, env }) {
       }
     };
 
-    const pesapalResponse = await fetch(
-      'https://pay.pesapal.com/v3/api/Transactions/SubmitOrderRequest',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json'
-        },
-        body: JSON.stringify(orderRequest)
+    let pesapalResponse, result;
+    try {
+      pesapalResponse = await fetch(
+        'https://pay.pesapal.com/v3/api/Transactions/SubmitOrderRequest',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json'
+          },
+          body: JSON.stringify(orderRequest)
+        }
+      );
+
+      // Guard: Pesapal sometimes returns an HTML error page instead of JSON.
+      // Parsing HTML as JSON causes the cryptic "Unexpected token '<'" crash.
+      // Check content-type first and log the raw response before failing.
+      const contentType = pesapalResponse.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const rawText = await pesapalResponse.text();
+        console.error('[CHECKOUT] Pesapal returned non-JSON:', pesapalResponse.status, rawText.slice(0, 300));
+        throw new Error(`Pesapal returned unexpected response (HTTP ${pesapalResponse.status})`);
       }
-    );
 
-    const result = await pesapalResponse.json();
-    console.log('[CHECKOUT] Pesapal status:', pesapalResponse.status);
-    console.log('[CHECKOUT] Pesapal response:', JSON.stringify(result));
+      result = await pesapalResponse.json();
+      console.log('[CHECKOUT] Pesapal status:', pesapalResponse.status);
+      console.log('[CHECKOUT] Pesapal response:', JSON.stringify(result));
 
+    } catch (submitErr) {
+      // Roll back on any Pesapal submit failure
+      await env.DB.prepare(`UPDATE vouchers SET status='unused', transaction_id=NULL WHERE id=?`)
+        .bind(voucher.id).run();
+      await env.DB.prepare(`DELETE FROM transactions WHERE tracking_id=?`)
+        .bind(tracking_id).run();
+      console.error('[CHECKOUT] Pesapal submit failed, rolled back:', submitErr.message);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Payment gateway unavailable. Please try again in a moment.' }),
+        { status: 500, headers: jsonHeader }
+      );
+    }
+
+    /* ============================================
+       9. HANDLE PESAPAL SUCCESS
+       ============================================ */
     if (pesapalResponse.ok && result.redirect_url) {
 
-      /* ============================================
-         9. SAVE PESAPAL ORDER_TRACKING_ID TO DB
-         ────────────────────────────────────────────
-         This is the critical fix. Pesapal returns
-         order_tracking_id in the submit response.
-         We save it immediately so status.js can
-         query Pesapal directly on every poll —
-         completely removing the IPN dependency.
-         Without this, pesapal_transaction_id stays
-         NULL and self-healing can never run.
-         ============================================ */
+      // CRITICAL: Save Pesapal's order_tracking_id to DB immediately.
+      // This is what status.js uses to query Pesapal directly on every
+      // poll, completely bypassing the IPN dependency.
       const pesapalTrackingId = result.order_tracking_id;
 
       if (pesapalTrackingId) {
@@ -158,12 +208,10 @@ export async function onRequestPost({ request, env }) {
         ).bind(pesapalTrackingId, tracking_id).run();
         console.log(`[CHECKOUT] Saved pesapal_transaction_id: ${pesapalTrackingId}`);
       } else {
-        console.warn('[CHECKOUT] Pesapal did not return order_tracking_id in submit response');
+        console.warn('[CHECKOUT] Pesapal did not return order_tracking_id — status.js fallback will rely on URL param');
       }
 
-      /* ============================================
-         10. SAVE RESERVATION TO KV (NON-FATAL)
-         ============================================ */
+      // Save to KV (non-fatal convenience cache for validate.js)
       try {
         await env.KV.put(tracking_id, JSON.stringify({
           voucher: voucher.code,
@@ -188,7 +236,7 @@ export async function onRequestPost({ request, env }) {
     }
 
     /* ============================================
-       11. PESAPAL REJECTED — ROLLBACK
+       10. PESAPAL REJECTED ORDER — ROLLBACK
        ============================================ */
     await env.DB.prepare(
       `UPDATE vouchers SET status = 'unused', transaction_id = NULL WHERE id = ?`
@@ -198,9 +246,10 @@ export async function onRequestPost({ request, env }) {
       `DELETE FROM transactions WHERE tracking_id = ?`
     ).bind(tracking_id).run();
 
-    console.warn('[CHECKOUT] Pesapal rejected — rolled back voucher and transaction');
+    console.warn('[CHECKOUT] Pesapal rejected order — rolled back voucher and transaction');
 
-    const errorMsg = result.error?.message || result.message || result.error_description || 'Payment gateway did not respond correctly.';
+    const errorMsg = result?.error?.message || result?.message || result?.error_description || 'Payment gateway rejected the order.';
+    console.error('[CHECKOUT] Pesapal rejection reason:', errorMsg);
     throw new Error(errorMsg);
 
   } catch (error) {
@@ -212,23 +261,48 @@ export async function onRequestPost({ request, env }) {
   }
 }
 
+/* ============================================
+   PESAPAL TOKEN HELPER
+   ──────────────────────────────────────────
+   Caches token in KV for 50 min.
+   On 401, the caller (status.js) clears the
+   cache and calls this again for a fresh token.
+   ============================================ */
 async function getPesapalToken(env) {
+  // Try KV cache first
   if (env.KV) {
     try {
       const cached = await env.KV.get('pesapal_token', 'json');
-      if (cached && cached.expiry > Date.now()) return cached.token;
+      if (cached && cached.expiry > Date.now()) {
+        return cached.token;
+      }
     } catch {}
   }
 
+  // Fetch fresh token from Pesapal
   const res = await fetch('https://pay.pesapal.com/v3/api/Auth/RequestToken', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({ consumer_key: env.PESAPAL_KEY, consumer_secret: env.PESAPAL_SECRET })
   });
 
-  const data = await res.json();
-  if (!data.token) throw new Error('Failed to authenticate with payment gateway.');
+  // Guard against HTML error response here too
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const raw = await res.text();
+    console.error('[TOKEN] Pesapal auth returned non-JSON:', res.status, raw.slice(0, 200));
+    throw new Error(`Pesapal auth failed with HTTP ${res.status}`);
+  }
 
+  const data = await res.json();
+  console.log('[TOKEN] Auth response status:', res.status);
+
+  if (!data.token) {
+    console.error('[TOKEN] No token in response:', JSON.stringify(data));
+    throw new Error('Failed to authenticate with payment gateway.');
+  }
+
+  // Cache for 50 minutes
   if (env.KV) {
     try {
       await env.KV.put('pesapal_token', JSON.stringify({
