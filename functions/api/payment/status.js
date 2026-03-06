@@ -80,7 +80,7 @@ export async function onRequestGet({ request, env }) {
     console.log('[STATUS] Querying Pesapal for:', pesapalTxId);
 
     const token = await getPesapalToken(env);
-    const pStatus = await fetchPesapalStatus(pesapalTxId, token);
+    const pStatus = await fetchPesapalStatus(pesapalTxId, token, env);
 
     console.log('[STATUS] Pesapal says:', pStatus);
 
@@ -231,7 +231,9 @@ async function getPesapalToken(env) {
   return data.token;
 }
 
-async function fetchPesapalStatus(orderTrackingId, token, retries = 3) {
+async function fetchPesapalStatus(orderTrackingId, token, env, retries = 3) {
+  let currentToken = token;
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const controller = new AbortController();
@@ -239,9 +241,17 @@ async function fetchPesapalStatus(orderTrackingId, token, retries = 3) {
 
       const res = await fetch(
         `https://pay.pesapal.com/v3/api/Transactions/GetTransactionStatus?orderTrackingId=${orderTrackingId}`,
-        { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }, signal: controller.signal }
+        { headers: { Authorization: `Bearer ${currentToken}`, Accept: 'application/json' }, signal: controller.signal }
       );
       clearTimeout(timeoutId);
+
+      // 401 = token expired or invalid — delete cache and get a fresh one
+      if (res.status === 401) {
+        console.warn(`[STATUS] Got 401 — clearing cached token and fetching fresh one (attempt ${attempt})`);
+        try { await env.KV.delete('pesapal_token'); } catch {}
+        currentToken = await getPesapalToken(env);
+        continue; // retry immediately with new token, don't count as a failed attempt
+      }
 
       if (!res.ok) throw new Error(`Pesapal returned ${res.status}`);
       const d = await res.json();
