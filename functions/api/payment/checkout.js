@@ -31,23 +31,50 @@ export async function onRequestPost({ request, env }) {
     }
 
     /* ============================================
-       2. VOUCHER STOCK CHECK
+       2. VOUCHER STOCK CHECK & RESERVATION
        ============================================ */
-    const stockCheck = await env.DB.prepare(
-      `SELECT COUNT(*) as count 
-       FROM vouchers 
-       WHERE package_type = ? 
-       AND status = 'unused'`
-    ).bind(package_type).first();
+    // Check if any unused vouchers exist
+const stockCheck = await env.DB.prepare(
+  `SELECT COUNT(*) as count 
+   FROM vouchers 
+   WHERE package_type = ? AND status = 'unused'`
+).bind(package_type).first();
 
-    if (!stockCheck || stockCheck.count === 0) {
-      return new Response(
-        JSON.stringify({
-          error: 'Sorry, vouchers for this package are currently out of stock. Try another package or contact support.'
-        }),
-        { status: 400, headers: jsonHeader }
-      );
-    }
+if (!stockCheck || stockCheck.count === 0) {
+  return new Response(
+    JSON.stringify({
+      error: 'Sorry, vouchers for this package are currently out of stock. Try another package or contact support.'
+    }),
+    { status: 400, headers: jsonHeader }
+  );
+}
+
+// Reserve a voucher immediately for this transaction
+const voucher = await env.DB.prepare(
+  `UPDATE vouchers
+   SET status = 'reserved', transaction_id = ?
+   WHERE id = (
+     SELECT id FROM vouchers
+     WHERE package_type = ? AND status = 'unused'
+     ORDER BY id
+     LIMIT 1
+   )
+   RETURNING id, code`
+).bind(tracking_id, package_type).first();
+
+if (!voucher) {
+  return new Response(
+    JSON.stringify({ error: 'Unable to reserve voucher. Please try again.' }),
+    { status: 500, headers: jsonHeader }
+  );
+}
+
+// Optional: save reserved voucher in KV so validate.js can see it
+await env.KV.put(tracking_id, JSON.stringify({
+  voucher: voucher.code,
+  package: package_type,
+  reservedAt: new Date().toISOString()
+}));
 
     /* ============================================
        3. PHONE VALIDATION
@@ -172,3 +199,4 @@ async function getPesapalToken(env) {
   }
   return data.token;
 }
+
