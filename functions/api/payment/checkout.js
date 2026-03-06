@@ -31,55 +31,13 @@ export async function onRequestPost({ request, env }) {
     }
 
     /* ============================================
-       2. VOUCHER STOCK CHECK & RESERVATION
+       2. GENERATE TRACKING ID
        ============================================ */
-    // Check if any unused vouchers exist
-const stockCheck = await env.DB.prepare(
-  `SELECT COUNT(*) as count 
-   FROM vouchers 
-   WHERE package_type = ? AND status = 'unused'`
-).bind(package_type).first();
-
-if (!stockCheck || stockCheck.count === 0) {
-  return new Response(
-    JSON.stringify({
-      error: 'Sorry, vouchers for this package are currently out of stock. Try another package or contact support.'
-    }),
-    { status: 400, headers: jsonHeader }
-  );
-}
-
-// Reserve a voucher immediately for this transaction
-const voucher = await env.DB.prepare(
-  `UPDATE vouchers
-   SET status = 'reserved', transaction_id = ?
-   WHERE id = (
-     SELECT id FROM vouchers
-     WHERE package_type = ? AND status = 'unused'
-     ORDER BY id
-     LIMIT 1
-   )
-   RETURNING id, code`
-).bind(tracking_id, package_type).first();
-
-if (!voucher) {
-  return new Response(
-    JSON.stringify({ error: 'Unable to reserve voucher. Please try again.' }),
-    { status: 500, headers: jsonHeader }
-  );
-}
-
-// Optional: save reserved voucher in KV so validate.js can see it
-await env.KV.put(tracking_id, JSON.stringify({
-  voucher: voucher.code,
-  package: package_type,
-  reservedAt: new Date().toISOString()
-}));
+    const tracking_id = `TRK-${crypto.randomUUID().split('-')[0].toUpperCase()}`;
 
     /* ============================================
        3. PHONE VALIDATION
        ============================================ */
-    // Using 'phone' from the frontend
     const normalizedPhone = (phone || "").replace(/\D/g, '');
     if (!/^((256|0)\d{9})$/.test(normalizedPhone)) {
       return new Response(
@@ -88,10 +46,54 @@ await env.KV.put(tracking_id, JSON.stringify({
       );
     }
 
-    const tracking_id = `TRK-${crypto.randomUUID().split('-')[0].toUpperCase()}`;
+    /* ============================================
+       4. VOUCHER STOCK CHECK & RESERVATION
+       ============================================ */
+    // Check if any unused vouchers exist
+    const stockCheck = await env.DB.prepare(
+      `SELECT COUNT(*) as count 
+       FROM vouchers 
+       WHERE package_type = ? AND status = 'unused'`
+    ).bind(package_type).first();
+
+    if (!stockCheck || stockCheck.count === 0) {
+      return new Response(
+        JSON.stringify({
+          error: 'Sorry, vouchers for this package are currently out of stock. Try another package or contact support.'
+        }),
+        { status: 400, headers: jsonHeader }
+      );
+    }
+
+    // Reserve a voucher immediately for this transaction
+    const voucher = await env.DB.prepare(
+      `UPDATE vouchers
+       SET status = 'reserved', transaction_id = ?
+       WHERE id = (
+         SELECT id FROM vouchers
+         WHERE package_type = ? AND status = 'unused'
+         ORDER BY id
+         LIMIT 1
+       )
+       RETURNING id, code`
+    ).bind(tracking_id, package_type).first();
+
+    if (!voucher) {
+      return new Response(
+        JSON.stringify({ error: 'Unable to reserve voucher. Please try again.' }),
+        { status: 500, headers: jsonHeader }
+      );
+    }
+
+    // Optional: save reserved voucher in KV so validate.js can see it
+    await env.KV.put(tracking_id, JSON.stringify({
+      voucher: voucher.code,
+      package: package_type,
+      reservedAt: new Date().toISOString()
+    }));
 
     /* ============================================
-       4. SAVE TRANSACTION
+       5. SAVE TRANSACTION
        ============================================ */
     await env.DB.prepare(
       `INSERT INTO transactions 
@@ -100,13 +102,13 @@ await env.KV.put(tracking_id, JSON.stringify({
     ).bind(tracking_id, package_type, amount, normalizedPhone, email || null).run();
 
     /* ============================================
-       5. GET PESAPAL TOKEN
+       6. GET PESAPAL TOKEN
        ============================================ */
     const token = await getPesapalToken(env);
     console.log('Token obtained successfully');
 
     /* ============================================
-       6. PREPARE ORDER REQUEST
+       7. PREPARE ORDER REQUEST
        ============================================ */
     const orderRequest = {
       id: tracking_id,
@@ -124,7 +126,7 @@ await env.KV.put(tracking_id, JSON.stringify({
     console.log('Order request prepared:', JSON.stringify(orderRequest));
 
     /* ============================================
-       7. SUBMIT TO PESAPAL
+       8. SUBMIT TO PESAPAL
        ============================================ */
     const pesapalResponse = await fetch(
       'https://pay.pesapal.com/v3/api/Transactions/SubmitOrderRequest',
@@ -199,4 +201,3 @@ async function getPesapalToken(env) {
   }
   return data.token;
 }
-
