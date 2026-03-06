@@ -1,8 +1,6 @@
 // functions/api/payment/checkout.js
-// ✅ FIX: DB transaction INSERT happens BEFORE voucher reservation
-// ✅ FIX: KV write is non-fatal — never blocks or crashes checkout
-// ✅ FIX: Voucher reservation uses correct transaction tracking_id
-// ✅ FIX: Orphaned reservation cleanup on Pesapal failure
+// ✅ FIX: Saves Pesapal's order_tracking_id to DB immediately at checkout
+//         so status.js can query Pesapal directly without waiting for IPN
 
 export async function onRequestPost({ request, env }) {
   const jsonHeader = {
@@ -65,13 +63,6 @@ export async function onRequestPost({ request, env }) {
 
     /* ============================================
        5. SAVE TRANSACTION FIRST
-       ──────────────────────────────────────────
-       CRITICAL ORDER FIX: The transaction row MUST
-       exist in the DB before we reserve a voucher.
-       Previously KV.put() ran before this INSERT —
-       if KV threw, the transaction was never saved,
-       so IPN would find no transaction and silently
-       exit, leaving the client on indefinite pending.
        ============================================ */
     await env.DB.prepare(
       `INSERT INTO transactions
@@ -83,12 +74,6 @@ export async function onRequestPost({ request, env }) {
 
     /* ============================================
        6. RESERVE VOUCHER ATOMICALLY
-       ──────────────────────────────────────────
-       Atomic UPDATE...WHERE id=(SELECT...)...RETURNING
-       ensures two simultaneous checkouts for the same
-       package can never grab the same voucher row.
-       The transaction row already exists above so IPN
-       will always find it when it fires.
        ============================================ */
     const voucher = await env.DB.prepare(
       `UPDATE vouchers
@@ -103,11 +88,9 @@ export async function onRequestPost({ request, env }) {
     ).bind(tracking_id, package_type).first();
 
     if (!voucher) {
-      // Stock was available a moment ago but is now gone (race between stock check and reservation).
-      // Roll back the transaction row so it doesn't litter the DB as a ghost PENDING entry.
+      // Roll back transaction row
       await env.DB.prepare(`DELETE FROM transactions WHERE tracking_id = ?`)
         .bind(tracking_id).run();
-
       return new Response(
         JSON.stringify({ error: 'Unable to reserve voucher. Please try again.' }),
         { status: 500, headers: jsonHeader }
@@ -117,34 +100,12 @@ export async function onRequestPost({ request, env }) {
     console.log(`[CHECKOUT] Voucher reserved: ${voucher.code} → ${tracking_id}`);
 
     /* ============================================
-       7. SAVE RESERVATION TO KV (NON-FATAL)
-       ──────────────────────────────────────────
-       KV is a convenience cache for validate.js.
-       It must NEVER block or crash checkout — if KV
-       is down or throws, we log and move on. The DB
-       is the source of truth; IPN will re-save to KV
-       after payment is confirmed anyway.
-       ============================================ */
-    try {
-      await env.KV.put(tracking_id, JSON.stringify({
-        voucher: voucher.code,
-        package: package_type,
-        status: 'reserved',
-        reservedAt: new Date().toISOString()
-      }));
-    } catch (kvErr) {
-      // Non-fatal — log and continue
-      console.warn('[CHECKOUT] KV reservation save failed (non-fatal):', kvErr.message);
-    }
-
-    /* ============================================
-       8. GET PESAPAL TOKEN
+       7. GET PESAPAL TOKEN
        ============================================ */
     const token = await getPesapalToken(env);
-    console.log('[CHECKOUT] Token obtained');
 
     /* ============================================
-       9. PREPARE ORDER REQUEST
+       8. SUBMIT TO PESAPAL
        ============================================ */
     const orderRequest = {
       id: tracking_id,
@@ -159,11 +120,6 @@ export async function onRequestPost({ request, env }) {
       }
     };
 
-    console.log('[CHECKOUT] Order request:', JSON.stringify(orderRequest));
-
-    /* ============================================
-       10. SUBMIT TO PESAPAL
-       ============================================ */
     const pesapalResponse = await fetch(
       'https://pay.pesapal.com/v3/api/Transactions/SubmitOrderRequest',
       {
@@ -182,6 +138,44 @@ export async function onRequestPost({ request, env }) {
     console.log('[CHECKOUT] Pesapal response:', JSON.stringify(result));
 
     if (pesapalResponse.ok && result.redirect_url) {
+
+      /* ============================================
+         9. SAVE PESAPAL ORDER_TRACKING_ID TO DB
+         ────────────────────────────────────────────
+         This is the critical fix. Pesapal returns
+         order_tracking_id in the submit response.
+         We save it immediately so status.js can
+         query Pesapal directly on every poll —
+         completely removing the IPN dependency.
+         Without this, pesapal_transaction_id stays
+         NULL and self-healing can never run.
+         ============================================ */
+      const pesapalTrackingId = result.order_tracking_id;
+
+      if (pesapalTrackingId) {
+        await env.DB.prepare(
+          `UPDATE transactions SET pesapal_transaction_id = ? WHERE tracking_id = ?`
+        ).bind(pesapalTrackingId, tracking_id).run();
+        console.log(`[CHECKOUT] Saved pesapal_transaction_id: ${pesapalTrackingId}`);
+      } else {
+        console.warn('[CHECKOUT] Pesapal did not return order_tracking_id in submit response');
+      }
+
+      /* ============================================
+         10. SAVE RESERVATION TO KV (NON-FATAL)
+         ============================================ */
+      try {
+        await env.KV.put(tracking_id, JSON.stringify({
+          voucher: voucher.code,
+          package: package_type,
+          status: 'reserved',
+          pesapalTrackingId: pesapalTrackingId || null,
+          reservedAt: new Date().toISOString()
+        }));
+      } catch (kvErr) {
+        console.warn('[CHECKOUT] KV save failed (non-fatal):', kvErr.message);
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
@@ -194,13 +188,7 @@ export async function onRequestPost({ request, env }) {
     }
 
     /* ============================================
-       11. PESAPAL REJECTED — RELEASE RESERVED VOUCHER
-       ──────────────────────────────────────────
-       If Pesapal rejects the order, the client never
-       sees a payment page and will never pay. Release
-       the reserved voucher back to 'unused' so it's
-       available for the next client, and clean up the
-       transaction row.
+       11. PESAPAL REJECTED — ROLLBACK
        ============================================ */
     await env.DB.prepare(
       `UPDATE vouchers SET status = 'unused', transaction_id = NULL WHERE id = ?`
@@ -210,10 +198,9 @@ export async function onRequestPost({ request, env }) {
       `DELETE FROM transactions WHERE tracking_id = ?`
     ).bind(tracking_id).run();
 
-    console.warn('[CHECKOUT] Pesapal rejected order — voucher and transaction rolled back');
+    console.warn('[CHECKOUT] Pesapal rejected — rolled back voucher and transaction');
 
     const errorMsg = result.error?.message || result.message || result.error_description || 'Payment gateway did not respond correctly.';
-    console.error('[CHECKOUT] Pesapal error:', errorMsg, 'Full:', result);
     throw new Error(errorMsg);
 
   } catch (error) {
@@ -225,18 +212,11 @@ export async function onRequestPost({ request, env }) {
   }
 }
 
-/* ============================================
-   PESAPAL TOKEN HELPER
-   ============================================ */
 async function getPesapalToken(env) {
-  // Use cached token from KV if available (avoids extra auth call per checkout)
   if (env.KV) {
     try {
       const cached = await env.KV.get('pesapal_token', 'json');
-      if (cached && cached.expiry > Date.now()) {
-        console.log('[TOKEN] Using cached token');
-        return cached.token;
-      }
+      if (cached && cached.expiry > Date.now()) return cached.token;
     } catch {}
   }
 
@@ -247,15 +227,8 @@ async function getPesapalToken(env) {
   });
 
   const data = await res.json();
-  console.log('[TOKEN] Request status:', res.status);
-  console.log('[TOKEN] Response:', JSON.stringify(data));
+  if (!data.token) throw new Error('Failed to authenticate with payment gateway.');
 
-  if (!data.token) {
-    console.error('[TOKEN] Auth error:', data);
-    throw new Error('Failed to authenticate with payment gateway.');
-  }
-
-  // Cache token for 50 minutes
   if (env.KV) {
     try {
       await env.KV.put('pesapal_token', JSON.stringify({
