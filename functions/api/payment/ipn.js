@@ -105,22 +105,44 @@ export async function onRequestPost({ request, env }) {
       return new Response('OK', { status: 200 });
     }
 
-    // 8️⃣ Atomic voucher assignment with retry logic (6 attempts, 3s intervals)
-    const voucher = await retryVoucherAssignment(env, OrderMerchantReference, tx.package_type, 6);
+    // 8️⃣ Pick the voucher reserved during checkout
+let voucher;
 
-    if (!voucher) {
-      console.error(`[IPN] ⚠️ CRITICAL: No unused vouchers after 6 retries for package: ${tx.package_type}`);
-      
-      // Alert for voucher depletion
-      await sendAlert(env, {
-        type: 'VOUCHER_DEPLETED',
-        package: tx.package_type,
-        transaction: OrderMerchantReference,
-        timestamp: new Date().toISOString()
-      });
+// Try to get the reserved voucher for this transaction
+voucher = await env.DB.prepare(
+  `SELECT id, code 
+   FROM vouchers 
+   WHERE transaction_id = ? AND status = 'reserved'
+   LIMIT 1`
+).bind(OrderMerchantReference).first();
 
-      return new Response('OK', { status: 200 });
-    }
+// Fallback: assign a new unused voucher if reservation fails
+if (!voucher) {
+  console.warn(`[IPN] ⚠️ No reserved voucher found for ${OrderMerchantReference}, assigning a fresh one.`);
+
+  voucher = await env.DB.prepare(
+    `UPDATE vouchers
+     SET status = 'assigned', transaction_id = ?
+     WHERE id = (
+       SELECT id FROM vouchers
+       WHERE package_type = ? AND status = 'unused'
+       ORDER BY id
+       LIMIT 1
+     )
+     RETURNING id, code`
+  ).bind(OrderMerchantReference, tx.package_type).first();
+}
+
+if (!voucher) {
+  console.error(`[IPN] ❌ CRITICAL: No vouchers available for package ${tx.package_type}`);
+  await sendAlert(env, {
+    type: 'VOUCHER_DEPLETED',
+    package: tx.package_type,
+    transaction: OrderMerchantReference,
+    timestamp: new Date().toISOString()
+  });
+  return new Response('OK', { status: 200 });
+}
 
     // 9️⃣ Update transaction with voucher info in DATABASE
     await env.DB.prepare(
@@ -490,3 +512,4 @@ async function retryVoucherAssignment(env, OrderMerchantReference, packageType, 
 
   return null; // All retries exhausted
 }
+
