@@ -53,20 +53,20 @@
         h1 { color: #4ecdc4; font-size: 1.8rem; margin-bottom: 10px; }
         .status-text { color: #b8b8b8; margin-bottom: 30px; font-size: 1rem; }
 
-        .progress-container { 
-            width: 100%; 
-            background: rgba(255,255,255,0.05); 
-            height: 6px; 
-            border-radius: 10px; 
-            margin-top: 30px; 
-            overflow: hidden; 
+        .progress-container {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            height: 6px;
+            border-radius: 10px;
+            margin-top: 30px;
+            overflow: hidden;
         }
-        
-        .progress-bar { 
-            width: 0%; 
-            height: 100%; 
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
             background: linear-gradient(90deg, #4ecdc4, #44a08d);
-            transition: width 0.5s ease; 
+            transition: width 0.5s ease;
             animation: shimmer 2s infinite;
         }
 
@@ -76,14 +76,8 @@
             100% { opacity: 0.6; }
         }
 
-        .voucher-display {
-            display: none;
-            margin: 30px 0;
-        }
-
-        .voucher-display.show {
-            display: block;
-        }
+        .voucher-display { display: none; margin: 30px 0; }
+        .voucher-display.show { display: block; }
 
         .voucher-code {
             background: rgba(78, 205, 196, 0.1);
@@ -112,32 +106,14 @@
             margin: 10px 5px;
         }
 
-        .copy-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
-        }
+        .copy-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(78,205,196,0.4); }
+        .copy-btn:active { transform: translateY(0); }
+        .copy-btn.copied { background: linear-gradient(135deg, #2ecc71, #27ae60); }
 
-        .copy-btn:active {
-            transform: translateY(0);
-        }
+        .footer-note { font-size: 0.8rem; color: #666; margin-top: 20px; }
 
-        .copy-btn.copied {
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-        }
-
-        .footer-note { 
-            font-size: 0.8rem; 
-            color: #666; 
-            margin-top: 20px; 
-        }
-
-        .error-container {
-            display: none;
-        }
-
-        .error-container.show {
-            display: block;
-        }
+        .error-container { display: none; }
+        .error-container.show { display: block; }
 
         .support-btn {
             display: inline-block;
@@ -151,27 +127,12 @@
             transition: 0.3s;
         }
 
-        .support-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
-        }
+        .support-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(37,211,102,0.3); }
 
-        .loading-dots {
-            display: inline-block;
-        }
-
-        .loading-dots span {
-            animation: blink 1.4s infinite both;
-            display: inline-block;
-        }
-
-        .loading-dots span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .loading-dots span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
+        .loading-dots { display: inline-block; }
+        .loading-dots span { animation: blink 1.4s infinite both; display: inline-block; }
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
 
         @keyframes blink {
             0%, 80%, 100% { opacity: 0; }
@@ -193,10 +154,7 @@
             font-size: 1rem;
         }
 
-        .redirect-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(78, 205, 196, 0.3);
-        }
+        .redirect-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(78,205,196,0.3); }
 
         .package-info {
             background: rgba(255,255,255,0.05);
@@ -206,8 +164,12 @@
             font-size: 0.9rem;
         }
 
-        .package-info strong {
-            color: #4ecdc4;
+        .package-info strong { color: #4ecdc4; }
+
+        .attempt-info {
+            font-size: 0.75rem;
+            color: #555;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -224,20 +186,16 @@
         <div class="progress-container">
             <div class="progress-bar" id="bar"></div>
         </div>
-        <p style="font-size: 0.75rem; color: #888; margin-top: 15px;">
-            Please wait while we activate your internet access
-        </p>
+        <p class="attempt-info" id="attemptInfo">Connecting to payment system...</p>
     </div>
 
-    <!-- SUCCESS STATE - VOUCHER READY -->
+    <!-- SUCCESS STATE -->
     <div id="voucherUI" class="voucher-display">
         <div class="check-container">✓</div>
         <h1>Your Voucher is Ready!</h1>
         <p class="status-text">Use this code to connect to the internet</p>
-        
-        <div class="voucher-code" id="voucherCode">
-            LOADING...
-        </div>
+
+        <div class="voucher-code" id="voucherCode">LOADING...</div>
 
         <div class="package-info">
             <strong>Package:</strong> <span id="packageType">-</span><br>
@@ -247,9 +205,7 @@
         <button class="copy-btn" id="copyBtn" onclick="copyVoucher()">
             📋 Copy Voucher Code
         </button>
-
         <br>
-
         <button class="redirect-btn" onclick="redirectToLogin()">
             🌐 Connect to Internet Now
         </button>
@@ -261,16 +217,16 @@
 
     <!-- ERROR STATE -->
     <div id="errorUI" class="error-container">
-        <div class="check-container" style="border-color: #ff4757; color: #ff4757;">⚠</div>
-        <h1 style="color: #ff4757;">Voucher Delayed</h1>
+        <div class="check-container" style="border-color:#ff4757;color:#ff4757;">⚠</div>
+        <h1 style="color:#ff4757;">Voucher Delayed</h1>
         <p class="status-text">
-            Your payment was successful! However, there's a delay in generating your voucher code.
+            Your payment was successful! However, there's a delay generating your voucher.
         </p>
-        <p style="font-size: 0.9rem; color: #b8b8b8; margin: 20px 0;">
-            Don't worry - your code will be sent via SMS to your phone within 5 minutes.
+        <p style="font-size:0.9rem;color:#b8b8b8;margin:20px 0;">
+            Your code will be sent via SMS within 5 minutes.
         </p>
-        <p style="font-size: 0.85rem; color: #888;">
-            If you don't receive it, please contact support with your Order ID below.
+        <p style="font-size:0.85rem;color:#888;">
+            If you don't receive it, contact support with your Order ID below.
         </p>
         <div class="package-info">
             <strong>Order ID:</strong> <span id="displayOrderId">-</span>
@@ -283,159 +239,94 @@
 
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const trackingId = urlParams.get('id') || urlParams.get('OrderTrackingId') || urlParams.get('tracking_id');
-    const API_URL = window.location.origin;
 
-    console.log('[Payment Success] Tracking ID:', trackingId);
+    // ── Pull all three IDs Pesapal sends back in the callback URL ──
+    // callback_url = payment-success.html?id=TRK-xxx&OrderTrackingId=yyy&OrderMerchantReference=zzz
+    const trackingId       = urlParams.get('id') || urlParams.get('tracking_id') || urlParams.get('OrderMerchantReference');
+    const orderTrackingId  = urlParams.get('OrderTrackingId');   // Pesapal's own transaction ID
+    const API_URL          = window.location.origin;
+
+    console.log('[Payment Success] trackingId:', trackingId);
+    console.log('[Payment Success] orderTrackingId:', orderTrackingId);
     console.log('[Payment Success] Full URL:', window.location.href);
 
     let attempts = 0;
-    const maxAttempts = 10; // 30 seconds total (10 attempts × 3 seconds)
+
+    // ── Polling schedule ──────────────────────────────────────────
+    // First 3 attempts: every 3s  (normal IPN arrival window)
+    // Attempts 4-6:     every 5s  (give self-healing time to run)
+    // Attempts 7-12:    every 8s  (extended wait, Pesapal slow)
+    // Total: ~75 seconds before showing error
+    const schedule = [
+        3000, 3000, 3000,   // 0-9s
+        5000, 5000, 5000,   // 9-24s
+        8000, 8000, 8000,   // 24-48s
+        8000, 8000, 8000    // 48-72s
+    ];
+
     let progressInterval;
     let currentVoucherCode = '';
 
-    // Start smooth progress bar
     function startProgressBar() {
         let width = 0;
         progressInterval = setInterval(() => {
-            if (width >= 95) {
-                clearInterval(progressInterval);
-            } else {
-                width += 2;
-                document.getElementById('bar').style.width = width + '%';
-            }
-        }, 300);
+            if (width >= 92) clearInterval(progressInterval);
+            else { width += 1; document.getElementById('bar').style.width = width + '%'; }
+        }, 400);
     }
 
-    // Complete progress bar
     function completeProgress() {
         clearInterval(progressInterval);
         document.getElementById('bar').style.width = '100%';
     }
 
-    // Show voucher to user
-    function showVoucher(voucherCode, packageType) {
+    function showVoucher(voucherCode, packageType, wasHealed) {
         currentVoucherCode = voucherCode;
-        
-        // Update UI
+
         document.getElementById('voucherCode').textContent = voucherCode;
         document.getElementById('packageType').textContent = packageType || 'Standard';
         document.getElementById('orderId').textContent = trackingId || 'N/A';
-        
-        // Save to localStorage
-        localStorage.setItem('last_voucher', voucherCode);
-        localStorage.setItem('voucher_date', new Date().toLocaleString());
-        localStorage.setItem('package_type', packageType || 'Unknown');
-        localStorage.setItem('tracking_id', trackingId);
-        
-        // Complete progress
+
+        // Save to localStorage as backup
+        try {
+            localStorage.setItem('last_voucher', voucherCode);
+            localStorage.setItem('voucher_date', new Date().toLocaleString());
+            localStorage.setItem('package_type', packageType || 'Unknown');
+            localStorage.setItem('tracking_id', trackingId);
+        } catch(e) {}
+
         completeProgress();
-        
-        // Hide processing, show voucher
         document.getElementById('processingUI').style.display = 'none';
         document.getElementById('voucherUI').classList.add('show');
-        
-        console.log('[Payment Success] ✅ Voucher displayed:', voucherCode);
+
+        console.log('[Payment Success] Voucher displayed:', voucherCode, wasHealed ? '(self-healed)' : '(normal IPN)');
     }
 
-    // Copy voucher to clipboard
     function copyVoucher() {
         const btn = document.getElementById('copyBtn');
-        
-        // Copy to clipboard
         navigator.clipboard.writeText(currentVoucherCode).then(() => {
-            // Update button
             btn.textContent = '✓ Copied!';
             btn.classList.add('copied');
-            
-            // Reset after 2 seconds
             setTimeout(() => {
                 btn.textContent = '📋 Copy Voucher Code';
                 btn.classList.remove('copied');
             }, 2000);
-        }).catch(err => {
-            console.error('Failed to copy:', err);
-            // Fallback: select the text
-            const codeElement = document.getElementById('voucherCode');
+        }).catch(() => {
+            // Fallback for browsers without clipboard API
+            const el = document.getElementById('voucherCode');
             const range = document.createRange();
-            range.selectNode(codeElement);
+            range.selectNode(el);
             window.getSelection().removeAllRanges();
             window.getSelection().addRange(range);
         });
     }
 
-    // Redirect to login page
     function redirectToLogin() {
-        if (currentVoucherCode) {
-            window.location.href = `login.html?voucher=${currentVoucherCode}`;
-        } else {
-            window.location.href = 'login.html';
-        }
+        window.location.href = currentVoucherCode
+            ? `login.html?voucher=${currentVoucherCode}`
+            : 'login.html';
     }
 
-    // Main function to check voucher status
-    async function checkVoucherStatus() {
-        if (!trackingId) {
-            console.error('[Payment Success] No tracking ID found');
-            showError();
-            return;
-        }
-
-        attempts++;
-        console.log(`[Payment Success] Attempt ${attempts}/${maxAttempts}`);
-
-        // Start progress on first attempt
-        if (attempts === 1) {
-            startProgressBar();
-        }
-
-        try {
-            const response = await fetch(`${API_URL}/api/payment/status?tracking_id=${trackingId}`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-            
-            if (!response.ok) {
-                console.error('[Payment Success] API error:', response.status);
-                throw new Error(`HTTP ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('[Payment Success] Response:', data);
-
-            // Check if payment is completed and voucher exists
-            if ((data.status === 'COMPLETED' || data.status === 'SUCCESS') && data.voucherCode) {
-                console.log('[Payment Success] ✅ Voucher received:', data.voucherCode);
-                showVoucher(data.voucherCode, data.package_type);
-                return; // Stop checking
-            }
-
-            // Log current status
-            console.log(`[Payment Success] Status: ${data.status}, Voucher: ${data.voucherCode || 'pending'}`);
-
-            // Retry if we haven't hit max attempts
-            if (attempts < maxAttempts) {
-                setTimeout(checkVoucherStatus, 3000); // Check again in 3 seconds
-            } else {
-                console.error('[Payment Success] Max attempts reached');
-                showError();
-            }
-
-        } catch (error) {
-            console.error('[Payment Success] Error:', error.message);
-            
-            // Retry on error too
-            if (attempts < maxAttempts) {
-                setTimeout(checkVoucherStatus, 3000);
-            } else {
-                showError();
-            }
-        }
-    }
-
-    // Show error state
     function showError() {
         completeProgress();
         document.getElementById('processingUI').style.display = 'none';
@@ -443,8 +334,70 @@
         document.getElementById('displayOrderId').textContent = trackingId || 'N/A';
     }
 
-    // Start checking immediately
-    console.log('[Payment Success] Starting voucher check...');
+    async function checkVoucherStatus() {
+        if (!trackingId) {
+            console.error('[Payment Success] No tracking ID in URL');
+            showError();
+            return;
+        }
+
+        attempts++;
+        const maxAttempts = schedule.length;
+        console.log(`[Payment Success] Attempt ${attempts}/${maxAttempts}`);
+
+        // Update the subtle attempt counter shown under the progress bar
+        document.getElementById('attemptInfo').textContent =
+            attempts <= 3
+                ? 'Waiting for payment confirmation...'
+                : attempts <= 6
+                    ? 'Verifying with payment gateway...'
+                    : 'Still checking, almost there...';
+
+        if (attempts === 1) startProgressBar();
+
+        try {
+            // ── CRITICAL: pass OrderTrackingId so status.js can call Pesapal ──
+            // Without this, status.js has no Pesapal transaction ID to query
+            // and cannot run the self-healing fallback.
+            let statusUrl = `${API_URL}/api/payment/status?tracking_id=${trackingId}`;
+            if (orderTrackingId) {
+                statusUrl += `&OrderTrackingId=${orderTrackingId}`;
+            }
+
+            const response = await fetch(statusUrl, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const data = await response.json();
+            console.log(`[Payment Success] Response:`, data);
+
+            if ((data.status === 'COMPLETED' || data.status === 'SUCCESS') && data.voucherCode) {
+                showVoucher(data.voucherCode, data.package_type, data.healed);
+                return; // done
+            }
+
+            // Schedule next attempt
+            if (attempts < maxAttempts) {
+                setTimeout(checkVoucherStatus, schedule[attempts]);
+            } else {
+                console.error('[Payment Success] All attempts exhausted');
+                showError();
+            }
+
+        } catch (error) {
+            console.error('[Payment Success] Fetch error:', error.message);
+            if (attempts < schedule.length) {
+                setTimeout(checkVoucherStatus, schedule[attempts] || 5000);
+            } else {
+                showError();
+            }
+        }
+    }
+
+    // Kick off immediately
     checkVoucherStatus();
 </script>
 
