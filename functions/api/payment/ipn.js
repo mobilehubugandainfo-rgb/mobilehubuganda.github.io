@@ -2,6 +2,9 @@
 // Production-ready Pesapal IPN handler for hotspot billing system
 // ✅ FIXED: Now saves vouchers to KV storage for validate.js
 
+export async function onRequestGet(context) {
+  return onRequestPost(context);
+}
 export async function onRequestPost({ request, env }) {
   try {
     const url = new URL(request.url);
@@ -512,4 +515,5 @@ async function retryVoucherAssignment(env, OrderMerchantReference, packageType, 
 
   return null; // All retries exhausted
 }
+
 
