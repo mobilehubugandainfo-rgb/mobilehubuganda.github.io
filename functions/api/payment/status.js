@@ -1,7 +1,8 @@
 // functions/api/payment/status.js
-// ✅ Self-healing: if DB shows PENDING but Pesapal confirms COMPLETED,
-//    this Worker completes the transaction itself (IPN fallback)
-// ✅ Idempotent — safe to call repeatedly from the polling page
+// ✅ Self-healing: reads pesapal_transaction_id saved by checkout.js
+//    Queries Pesapal directly on every PENDING poll after attempt 2
+//    Assigns voucher itself if Pesapal confirms COMPLETED
+//    IPN is now just a bonus — never relied upon
 
 export async function onRequestGet({ request, env }) {
   const jsonHeaders = {
@@ -15,17 +16,17 @@ export async function onRequestGet({ request, env }) {
     const url = new URL(request.url);
     const tracking_id = url.searchParams.get('tracking_id') || url.searchParams.get('id');
 
-    console.log('[STATUS] Request:', { tracking_id, timestamp: new Date().toISOString() });
-
     if (!tracking_id) {
       return new Response(JSON.stringify({ status: 'ERROR', error: 'Missing tracking_id' }), {
         status: 400, headers: jsonHeaders
       });
     }
 
+    console.log('[STATUS] Checking:', tracking_id);
+
     // ─── 1. Query DB ───────────────────────────────────────────
     const data = await env.DB.prepare(`
-      SELECT 
+      SELECT
         t.id, t.tracking_id, t.pesapal_transaction_id,
         t.status, t.package_type, t.amount,
         t.voucher_id, t.created_at, t.completed_at,
@@ -37,21 +38,14 @@ export async function onRequestGet({ request, env }) {
     `).bind(tracking_id, tracking_id).first();
 
     if (!data) {
-      console.warn('[STATUS] Transaction not found:', tracking_id);
       return new Response(JSON.stringify({
         status: 'NOT_FOUND', message: 'Transaction not found', tracking_id
       }), { status: 404, headers: jsonHeaders });
     }
 
-    console.log('[STATUS] DB result:', {
-      tracking_id: data.tracking_id,
-      status: data.status,
-      voucher_id: data.voucher_id,
-      voucherCode: data.voucherCode
-    });
-
-    // ─── 2. Already completed — return immediately ──────────────
+    // ─── 2. Already done — return immediately ──────────────────
     if (data.status === 'COMPLETED' && data.voucherCode) {
+      console.log('[STATUS] Already completed:', data.voucherCode);
       return new Response(JSON.stringify({
         status: 'COMPLETED',
         voucherCode: data.voucherCode,
@@ -61,133 +55,18 @@ export async function onRequestGet({ request, env }) {
       }), { status: 200, headers: jsonHeaders });
     }
 
-    // ─── 3. Still PENDING — ask Pesapal directly ───────────────
-    // This is the self-healing fallback. If IPN never fired (Pesapal
-    // webhook failure), we check Pesapal ourselves and complete the
-    // transaction right here instead of waiting forever.
-    console.log('[STATUS] DB is PENDING — checking Pesapal directly...');
+    // ─── 3. Still PENDING — get Pesapal transaction ID ─────────
+    // Priority order:
+    // a) Already saved in DB by checkout.js (best case — always available)
+    // b) Passed in URL by payment-success.html (fallback for old transactions)
+    // c) Neither available — stay PENDING this round
+    const pesapalTxId = data.pesapal_transaction_id
+      || url.searchParams.get('OrderTrackingId');
 
-    try {
-      const token = await getPesapalToken(env);
-
-      // Use OrderTrackingId from URL if available (passed by payment-success page),
-      // otherwise fall back to pesapal_transaction_id stored in DB
-      const orderTrackingId = url.searchParams.get('OrderTrackingId')
-        || data.pesapal_transaction_id;
-
-      if (!orderTrackingId) {
-        console.warn('[STATUS] No OrderTrackingId available yet, staying PENDING');
-        return new Response(JSON.stringify({
-          status: 'PENDING',
-          voucherCode: null,
-          tracking_id: data.tracking_id,
-          package_type: data.package_type,
-          amount: data.amount
-        }), { status: 200, headers: jsonHeaders });
-      }
-
-      const pStatus = await fetchPesapalStatus(orderTrackingId, token);
-      console.log('[STATUS] Pesapal status:', pStatus);
-
-      if (!['COMPLETED', 'SUCCESS', 'COMPLETE'].includes(pStatus)) {
-        // Payment genuinely not done yet
-        return new Response(JSON.stringify({
-          status: 'PENDING',
-          voucherCode: null,
-          tracking_id: data.tracking_id,
-          package_type: data.package_type,
-          amount: data.amount
-        }), { status: 200, headers: jsonHeaders });
-      }
-
-      // ─── 4. Pesapal confirms COMPLETED — run IPN logic ourselves ──
-      console.log('[STATUS] Pesapal confirmed COMPLETED — running self-healing assignment...');
-
-      // Save the pesapal_transaction_id into DB if we don't have it yet
-      if (!data.pesapal_transaction_id && orderTrackingId) {
-        await env.DB.prepare(
-          `UPDATE transactions SET pesapal_transaction_id = ? WHERE tracking_id = ?`
-        ).bind(orderTrackingId, data.tracking_id).run();
-      }
-
-      // Find the reserved voucher for this transaction
-      let voucher = await env.DB.prepare(
-        `SELECT id, code FROM vouchers
-         WHERE transaction_id = ? AND status = 'reserved'
-         LIMIT 1`
-      ).bind(data.tracking_id).first();
-
-      if (voucher) {
-        await env.DB.prepare(`UPDATE vouchers SET status = 'assigned' WHERE id = ?`)
-          .bind(voucher.id).run();
-        console.log('[STATUS] Reserved voucher activated:', voucher.code);
-      } else {
-        // No reserved voucher — atomically grab an unused one
-        console.warn('[STATUS] No reserved voucher, attempting atomic assignment...');
-        voucher = await retryVoucherAssignment(env, data.tracking_id, data.package_type);
-
-        if (!voucher) {
-          console.error('[STATUS] No vouchers available for', data.package_type);
-          // Alert but still return PENDING so page shows support message
-          return new Response(JSON.stringify({
-            status: 'PENDING',
-            voucherCode: null,
-            tracking_id: data.tracking_id,
-            package_type: data.package_type,
-            amount: data.amount,
-            error: 'VOUCHER_DEPLETED'
-          }), { status: 200, headers: jsonHeaders });
-        }
-      }
-
-      // Update transaction to COMPLETED
-      await env.DB.prepare(
-        `UPDATE transactions
-         SET status = 'COMPLETED',
-             pesapal_transaction_id = ?,
-             voucher_id = ?,
-             completed_at = CURRENT_TIMESTAMP
-         WHERE tracking_id = ?`
-      ).bind(orderTrackingId || data.pesapal_transaction_id, voucher.id, data.tracking_id).run();
-
-      // Save to KV
-      try {
-        const kvTtl = parseInt(env.VOUCHER_KV_TTL_SECONDS || '604800', 10);
-        await env.KV.put(voucher.code, JSON.stringify({
-          package: data.package_type,
-          paid: true,
-          used: false,
-          paidAt: new Date().toISOString(),
-          transaction: data.tracking_id,
-          email: data.email,
-          phone: data.phone_number
-        }), kvTtl > 0 ? { expirationTtl: kvTtl } : {});
-      } catch (kvErr) {
-        console.warn('[STATUS] KV save failed (non-fatal):', kvErr.message);
-      }
-
-      // Notify customer
-      notifyCustomer(env, {
-        email: data.email,
-        phone: data.phone_number,
-        voucherCode: voucher.code,
-        packageType: data.package_type
-      }).catch(e => console.error('[STATUS] Notify failed:', e.message));
-
-      console.log('[STATUS] Self-healing complete. Voucher:', voucher.code);
-
-      return new Response(JSON.stringify({
-        status: 'COMPLETED',
-        voucherCode: voucher.code,
-        tracking_id: data.tracking_id,
-        package_type: data.package_type,
-        amount: data.amount,
-        healed: true // useful for debugging — tells you IPN fallback fired
-      }), { status: 200, headers: jsonHeaders });
-
-    } catch (pesapalErr) {
-      // Pesapal check failed — don't crash, just return PENDING
-      console.error('[STATUS] Pesapal fallback failed:', pesapalErr.message);
+    if (!pesapalTxId) {
+      // This should only happen for transactions created before this fix was deployed.
+      // For all new transactions, checkout.js saves pesapal_transaction_id immediately.
+      console.warn('[STATUS] No pesapal_transaction_id yet for:', tracking_id);
       return new Response(JSON.stringify({
         status: 'PENDING',
         voucherCode: null,
@@ -196,6 +75,106 @@ export async function onRequestGet({ request, env }) {
         amount: data.amount
       }), { status: 200, headers: jsonHeaders });
     }
+
+    // ─── 4. Ask Pesapal directly ───────────────────────────────
+    console.log('[STATUS] Querying Pesapal for:', pesapalTxId);
+
+    const token = await getPesapalToken(env);
+    const pStatus = await fetchPesapalStatus(pesapalTxId, token);
+
+    console.log('[STATUS] Pesapal says:', pStatus);
+
+    if (!['COMPLETED', 'SUCCESS', 'COMPLETE'].includes(pStatus)) {
+      return new Response(JSON.stringify({
+        status: 'PENDING',
+        voucherCode: null,
+        tracking_id: data.tracking_id,
+        package_type: data.package_type,
+        amount: data.amount
+      }), { status: 200, headers: jsonHeaders });
+    }
+
+    // ─── 5. Pesapal confirmed COMPLETED — assign voucher ───────
+    console.log('[STATUS] Pesapal confirmed payment — running self-healing...');
+
+    // Save pesapal_transaction_id if we got it from URL and DB didn't have it
+    if (!data.pesapal_transaction_id && pesapalTxId) {
+      await env.DB.prepare(
+        `UPDATE transactions SET pesapal_transaction_id = ? WHERE tracking_id = ?`
+      ).bind(pesapalTxId, data.tracking_id).run();
+    }
+
+    // Find reserved voucher
+    let voucher = await env.DB.prepare(
+      `SELECT id, code FROM vouchers
+       WHERE transaction_id = ? AND status = 'reserved'
+       LIMIT 1`
+    ).bind(data.tracking_id).first();
+
+    if (voucher) {
+      await env.DB.prepare(`UPDATE vouchers SET status = 'assigned' WHERE id = ?`)
+        .bind(voucher.id).run();
+      console.log('[STATUS] Reserved voucher activated:', voucher.code);
+    } else {
+      // Atomic fallback
+      voucher = await retryVoucherAssignment(env, data.tracking_id, data.package_type);
+      if (!voucher) {
+        console.error('[STATUS] No vouchers available for', data.package_type);
+        return new Response(JSON.stringify({
+          status: 'PENDING',
+          voucherCode: null,
+          tracking_id: data.tracking_id,
+          package_type: data.package_type,
+          amount: data.amount,
+          error: 'VOUCHER_DEPLETED'
+        }), { status: 200, headers: jsonHeaders });
+      }
+    }
+
+    // Update transaction to COMPLETED
+    await env.DB.prepare(
+      `UPDATE transactions
+       SET status = 'COMPLETED',
+           pesapal_transaction_id = ?,
+           voucher_id = ?,
+           completed_at = CURRENT_TIMESTAMP
+       WHERE tracking_id = ?`
+    ).bind(pesapalTxId, voucher.id, data.tracking_id).run();
+
+    // Save to KV
+    try {
+      const kvTtl = parseInt(env.VOUCHER_KV_TTL_SECONDS || '604800', 10);
+      await env.KV.put(voucher.code, JSON.stringify({
+        package: data.package_type,
+        paid: true,
+        used: false,
+        paidAt: new Date().toISOString(),
+        transaction: data.tracking_id,
+        email: data.email,
+        phone: data.phone_number
+      }), kvTtl > 0 ? { expirationTtl: kvTtl } : {});
+    } catch (kvErr) {
+      console.warn('[STATUS] KV save failed (non-fatal):', kvErr.message);
+    }
+
+    // Notify customer async
+    notifyCustomer(env, {
+      email: data.email,
+      phone: data.phone_number,
+      voucherCode: voucher.code,
+      packageType: data.package_type
+    }).catch(e => console.error('[STATUS] Notify failed:', e.message));
+
+    console.log('[STATUS] Self-healing complete. Voucher:', voucher.code);
+
+    return new Response(JSON.stringify({
+      status: 'COMPLETED',
+      voucherCode: voucher.code,
+      tracking_id: data.tracking_id,
+      package_type: data.package_type,
+      amount: data.amount,
+      healed: true
+    }), { status: 200, headers: jsonHeaders });
 
   } catch (error) {
     console.error('[STATUS] Critical error:', error.message, error.stack);
@@ -219,7 +198,7 @@ export function onRequestOptions() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// HELPERS (same as ipn.js — kept in sync)
+// HELPERS
 // ─────────────────────────────────────────────────────────────
 
 async function getPesapalToken(env) {
@@ -265,8 +244,8 @@ async function fetchPesapalStatus(orderTrackingId, token, retries = 3) {
       clearTimeout(timeoutId);
 
       if (!res.ok) throw new Error(`Pesapal returned ${res.status}`);
-      const data = await res.json();
-      return (data.payment_status_description || 'PENDING').toUpperCase();
+      const d = await res.json();
+      return (d.payment_status_description || 'PENDING').toUpperCase();
     } catch (err) {
       console.warn(`[STATUS Pesapal retry ${attempt}/${retries}] ${err.message}`);
       if (attempt < retries) await new Promise(r => setTimeout(r, attempt * 500));
@@ -288,7 +267,6 @@ async function retryVoucherAssignment(env, trackingId, packageType, maxRetries =
          )
          RETURNING id, code`
       ).bind(trackingId, packageType).first();
-
       if (voucher) return voucher;
     } catch (dbErr) {
       console.warn(`[STATUS voucher retry ${attempt}] ${dbErr.message}`);
@@ -309,7 +287,7 @@ async function notifyCustomer(env, { email, phone, voucherCode, packageType }) {
           from: env.EMAIL_FROM || 'noreply@yourdomain.com',
           to: email,
           subject: 'Your Hotspot Voucher Code',
-          html: `<h2>Payment Successful!</h2><p>Your voucher:</p>
+          html: `<h2>Payment Successful!</h2>
                  <h3 style="font-family:monospace;background:#f4f4f4;padding:10px">${voucherCode}</h3>
                  <p><strong>Package:</strong> ${packageType}</p>`
         })
