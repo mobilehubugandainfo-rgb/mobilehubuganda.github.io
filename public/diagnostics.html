@@ -1,72 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HotSpotCentral | Diagnostics</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hotspot Central | System Diagnostics</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI';
+    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    color:#fff;
+    min-height:100vh;
+    padding:30px;
+}
+.container {
+    max-width:900px;
+    margin:auto;
+    background:rgba(0,0,0,0.35);
+    padding:35px;
+    border-radius:24px;
+    border:1px solid rgba(255,255,255,0.1);
+}
+h1 { text-align:center; color:#4ecdc4; margin-bottom:25px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; }
+.section { background:rgba(255,255,255,0.05); padding:20px; border-radius:14px; }
+.section h3 { font-size:0.9rem; margin-bottom:10px; color:#f093fb; letter-spacing:1px; }
+button {
+    width:100%; padding:12px; border:none; border-radius:8px; font-weight:600;
+    background:linear-gradient(135deg,#4ecdc4,#44a08d); color:#fff; cursor:pointer;
+}
+button:hover { opacity:0.9; }
+.result {
+    margin-top:12px; background:#000; padding:12px; border-radius:8px;
+    font-family:monospace; font-size:0.75rem; max-height:160px; overflow:auto;
+    border-left:4px solid #4ecdc4;
+}
+.error { border-left-color:#ff4757; color:#ff6b6b; }
+select {
+    width:100%; padding:10px; margin-bottom:10px; border-radius:8px;
+    background:#000; color:#fff; border:1px solid #4ecdc4;
+}
+.copy { margin-top:25px; text-align:center; }
+.copy button { width:auto; background:none; border:1px solid #4ecdc4; color:#4ecdc4; padding:6px 14px; }
+</style>
 </head>
-<body class="bg-slate-900 text-white p-6">
-    <div class="max-w-md mx-auto">
-        <h1 class="text-2xl font-bold mb-6 text-yellow-500">System Diagnostics</h1>
-        
-        <div id="results" class="space-y-4">
-            <div class="p-4 bg-slate-800 rounded-lg border border-slate-700">
-                <p class="text-sm text-slate-400">Connection Status</p>
-                <p id="net-status" class="font-mono">Checking...</p>
-            </div>
+<body>
+<div class="container">
+<h1>🔧 Hotspot Central – Diagnostics</h1>
 
-            <div class="p-4 bg-slate-800 rounded-lg border border-slate-700">
-                <p class="text-sm text-slate-400">API Reachability</p>
-                <p id="api-status" class="font-mono">Checking...</p>
-            </div>
-            
-            <div class="p-4 bg-slate-800 rounded-lg border border-slate-700">
-                <p class="text-sm text-slate-400">Your IP Address</p>
-                <p id="ip-address" class="font-mono text-blue-400">Detecting...</p>
-            </div>
-        </div>
+<div class="grid">
 
-        <button onclick="runDiagnostics()" class="w-full mt-8 bg-yellow-600 p-3 rounded-lg font-bold hover:bg-yellow-500 transition">Rerun Tests</button>
-        <a href="index.html" class="block text-center mt-4 text-slate-400 underline hover:text-white">Back to Home</a>
-    </div>
+<div class="section">
+<h3>1. Worker Health</h3>
+<button onclick="pingWorker()">Ping Worker</button>
+<div id="pingRes" class="result">Waiting…</div>
+</div>
 
-    <script>
-        async function runDiagnostics() {
-            // Network status
-            const netStatusEl = document.getElementById('net-status');
-            netStatusEl.innerText = navigator.onLine ? "🌐 Online" : "🚫 Offline";
-            netStatusEl.className = navigator.onLine ? "font-mono text-green-400" : "font-mono text-red-400";
+<div class="section">
+<h3>2. Voucher Stock</h3>
+<button onclick="checkStock()">Check Stock</button>
+<div id="stockRes" class="result">Waiting…</div>
+</div>
 
-            const apiStatusEl = document.getElementById('api-status');
-            const ipEl = document.getElementById('ip-address');
+<div class="section">
+<h3>3. Pesapal Checkout</h3>
+<select id="pkg">
+    <option value="p1">p1 — Quick Surf (500 UGX / 3 Hours)</option>
+    <option value="p2">p2 — Day Pass (1,000 UGX / 24 Hours)</option>
+    <option value="p3">p3 — Weekly Pass (6,000 UGX / 7 Days)</option>
+    <option value="p4">p4 — Monthly Pass (25,000 UGX / 30 Days)</option>
+</select>
+<button onclick="testCheckout()">Start Checkout</button>
+<div id="payRes" class="result">Waiting…</div>
+</div>
 
-            try {
-                // Ping worker API
-                const start = Date.now();
-                const res = await fetch('/api/admin/stock', { method: 'GET' });
-                const duration = Date.now() - start;
+<div class="section">
+<h3>4. MikroTik Status</h3>
+<button onclick="checkRouter()">Check Active Users</button>
+<div id="routerRes" class="result">Waiting…</div>
+</div>
 
-                if (res.ok) {
-                    apiStatusEl.innerText = `✅ Reachable (${duration}ms)`;
-                    apiStatusEl.className = "font-mono text-green-400";
-                } else {
-                    throw new Error('Non-200 response');
-                }
+</div>
 
-                // Fetch public IP
-                const ipRes = await fetch('https://api.ipify.org?format=json');
-                const ipData = await ipRes.json();
-                ipEl.innerText = ipData.ip;
+<div class="copy">
+<button onclick="copyLogs()">📋 Copy Debug Log</button>
+</div>
+</div>
 
-            } catch (err) {
-                apiStatusEl.innerText = "❌ API Unreachable";
-                apiStatusEl.className = "font-mono text-red-400";
-                ipEl.innerText = "Local/Unknown";
-            }
-        }
+<script>
+const API = '';
+let logs = '';
 
-        runDiagnostics();
-    </script>
+function log(id, data, err=false){
+    const el = document.getElementById(id);
+    const text = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    el.textContent = text;
+    el.className = err ? 'result error' : 'result';
+    logs += `\n[${id}]\n${text}\n`;
+}
+
+async function pingWorker(){
+    try {
+        const r = await fetch(API + '/api/admin/mikrotik-stats');
+        log('pingRes', `Status ${r.status}`);
+    } catch(e) { log('pingRes', e.message, true); }
+}
+
+async function checkStock(){
+    try {
+        const r = await fetch(API + '/api/admin/stock');
+        log('stockRes', await r.json());
+    } catch(e) {
+        log('stockRes', '/api/admin/stock not yet implemented', true);
+    }
+}
+
+async function testCheckout(){
+    try {
+        const r = await fetch(API + '/api/payment/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                package_id: document.getElementById('pkg').value,
+                phone: '256771999302',
+                email: 'test@mobilehub.ug'
+            })
+        });
+        const d = await r.json();
+        log('payRes', d);
+        if (d.redirect_url && confirm('Open Pesapal?')) window.open(d.redirect_url, '_blank');
+    } catch(e) { log('payRes', e.message, true); }
+}
+
+async function checkRouter(){
+    try {
+        const r = await fetch(API + '/api/admin/mikrotik-stats');
+        log('routerRes', await r.json());
+    } catch(e) {
+        log('routerRes', 'Check MikroTik credentials in Secrets', true);
+    }
+}
+
+function copyLogs(){
+    navigator.clipboard.writeText(logs);
+    alert('Logs copied');
+}
+</script>
 </body>
 </html>
