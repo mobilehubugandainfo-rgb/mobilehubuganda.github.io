@@ -17,12 +17,17 @@ export async function onRequestPost({ request, env }) {
 
     /* ============================================
        1. PACKAGE VALIDATION
+       ──────────────────────────────────────────
+       p1:  500 UGX  → 3 Hours
+       p2:  1000 UGX → 24 Hours (1 Day)
+       p3:  6000 UGX → 7 Days   (1 Week)
+       p4:  25000 UGX → 30 Days  (1 Month)
        ============================================ */
     const packages = {
-      'p1': 250,
-      'p2': 500,
-      'p3': 1000,
-      'p4': 1500
+      'p1':  500,
+      'p2':  1000,
+      'p3':  6000,
+      'p4':  25000
     };
 
     const amount = packages[package_id];
@@ -136,7 +141,7 @@ export async function onRequestPost({ request, env }) {
     /* ============================================
        8. SUBMIT TO PESAPAL
        ──────────────────────────────────────────
-       Now includes 401 auto-retry:
+       Includes 401 auto-retry:
        - If Pesapal returns 401, stale token is
          cleared from KV and a fresh one is fetched
        - Order submission is retried automatically
@@ -158,9 +163,6 @@ export async function onRequestPost({ request, env }) {
 
     let pesapalResponse, result;
     try {
-      // ── Submit with automatic 401 token refresh ──────────────
-      // Mirrors the same retry pattern used in status.js so both
-      // files handle token expiry identically.
       const MAX_TOKEN_RETRIES = 2;
       let currentToken = token;
 
@@ -183,14 +185,13 @@ export async function onRequestPost({ request, env }) {
           console.warn(`[CHECKOUT] Got 401 on attempt ${attempt} — refreshing token and retrying`);
           try { await env.KV.delete('pesapal_token'); } catch {}
           currentToken = await getPesapalToken(env);
-          if (attempt < MAX_TOKEN_RETRIES) continue; // retry with fresh token
+          if (attempt < MAX_TOKEN_RETRIES) continue;
         }
 
-        // Non-401 response (success or other error) — stop retrying
         break;
       }
 
-      // Guard: Pesapal sometimes returns an HTML error page instead of JSON.
+      // Guard: Pesapal sometimes returns HTML instead of JSON
       const contentType = pesapalResponse.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) {
         const rawText = await pesapalResponse.text();
@@ -203,7 +204,6 @@ export async function onRequestPost({ request, env }) {
       console.log('[CHECKOUT] Pesapal response:', JSON.stringify(result));
 
     } catch (submitErr) {
-      // Roll back on any Pesapal submit failure
       await env.DB.prepare(`UPDATE vouchers SET status='unused', transaction_id=NULL WHERE id=?`)
         .bind(voucher.id).run();
       await env.DB.prepare(`DELETE FROM transactions WHERE tracking_id=?`)
@@ -231,7 +231,6 @@ export async function onRequestPost({ request, env }) {
         console.warn('[CHECKOUT] Pesapal did not return order_tracking_id — status.js fallback will rely on URL param');
       }
 
-      // Save to KV (non-fatal convenience cache for validate.js)
       try {
         await env.KV.put(tracking_id, JSON.stringify({
           voucher: voucher.code,
@@ -261,13 +260,11 @@ export async function onRequestPost({ request, env }) {
     await env.DB.prepare(
       `UPDATE vouchers SET status = 'unused', transaction_id = NULL WHERE id = ?`
     ).bind(voucher.id).run();
-
     await env.DB.prepare(
       `DELETE FROM transactions WHERE tracking_id = ?`
     ).bind(tracking_id).run();
 
     console.warn('[CHECKOUT] Pesapal rejected order — rolled back voucher and transaction');
-
     const errorMsg = result?.error?.message || result?.message || result?.error_description || 'Payment gateway rejected the order.';
     console.error('[CHECKOUT] Pesapal rejection reason:', errorMsg);
     throw new Error(errorMsg);
@@ -284,8 +281,6 @@ export async function onRequestPost({ request, env }) {
 /* ============================================
    PESAPAL TOKEN HELPER
    ──────────────────────────────────────────
-   Caches token in KV for 50 min.
-
    SELF-HEALING BEHAVIOUR:
    1. Reads cached token from KV
    2. Checks expiry — if still valid, returns it
@@ -293,13 +288,8 @@ export async function onRequestPost({ request, env }) {
       and fetches a completely fresh token
    4. Saves new token with updated expiry to KV
    5. Never requires manual intervention
-
-   The 401 retry loop in step 8 above handles the
-   rare edge case where a token expires between
-   being cached here and being used at Pesapal.
    ============================================ */
 async function getPesapalToken(env) {
-  // ── 1. Try KV cache first ─────────────────────────────────
   if (env.KV) {
     try {
       const cached = await env.KV.get('pesapal_token', 'json');
@@ -307,7 +297,6 @@ async function getPesapalToken(env) {
         console.log('[TOKEN] Using cached token, expires in', Math.round((cached.expiry - Date.now()) / 1000), 'seconds');
         return cached.token;
       }
-      // Token expired — delete the stale entry before fetching a new one
       if (cached) {
         console.log('[TOKEN] Cached token expired — clearing and fetching fresh one');
         await env.KV.delete('pesapal_token');
@@ -317,7 +306,6 @@ async function getPesapalToken(env) {
     }
   }
 
-  // ── 2. Fetch fresh token from Pesapal ─────────────────────
   console.log('[TOKEN] Fetching fresh Pesapal token');
   const res = await fetch('https://pay.pesapal.com/v3/api/Auth/RequestToken', {
     method: 'POST',
@@ -325,7 +313,6 @@ async function getPesapalToken(env) {
     body: JSON.stringify({ consumer_key: env.PESAPAL_KEY, consumer_secret: env.PESAPAL_SECRET })
   });
 
-  // Guard against HTML error response
   const contentType = res.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {
     const raw = await res.text();
@@ -341,16 +328,12 @@ async function getPesapalToken(env) {
     throw new Error('Failed to authenticate with payment gateway.');
   }
 
-  // ── 3. Cache the new token for 50 minutes ─────────────────
-  // expirationTtl=3600 is a KV safety net (1 hour hard expiry).
-  // Our own expiry check at 50 min ensures we refresh before
-  // Pesapal's server-side expiry hits.
   if (env.KV) {
     try {
       await env.KV.put('pesapal_token', JSON.stringify({
         token: data.token,
-        expiry: Date.now() + 50 * 60 * 1000   // 50 minutes from now
-      }), { expirationTtl: 3600 });            // KV hard-deletes after 1 hour
+        expiry: Date.now() + 50 * 60 * 1000
+      }), { expirationTtl: 3600 });
       console.log('[TOKEN] Fresh token cached for 50 minutes');
     } catch (kvWriteErr) {
       console.warn('[TOKEN] KV write failed (non-fatal, token still usable):', kvWriteErr.message);
