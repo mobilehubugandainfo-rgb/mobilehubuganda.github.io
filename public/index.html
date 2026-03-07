@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hotspot Central | Buy Internet Vouchers</title>
     <style>
-        /* Your original styles kept exactly as they were */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -131,10 +130,10 @@
     <div class="checkout-section" id="checkout">
         <h2 id="selectedTitle" style="color:#f093fb; margin-bottom: 15px;">Complete Purchase</h2>
         <p id="selectedSummary" style="margin-bottom: 20px; font-size: 0.9rem;"></p>
-        
+
         <label>Phone Number (Mobile Money)</label>
         <input type="tel" id="customerPhone" placeholder="e.g. 0771999302">
-        
+
         <label>Email (To receive voucher backup)</label>
         <input type="email" id="customerEmail" placeholder="yourname@gmail.com">
 
@@ -151,28 +150,30 @@
 </a>
 
 <script>
-    // Configuration
     const API_BASE = '';
-    
+
+    // ── PACKAGES ─────────────────────────────────────────────
+    // p1: 500 UGX  → 3 Hours
+    // p2: 1,000 UGX → 24 Hours (1 Day)
+    // p3: 6,000 UGX → 7 Days (1 Week)
+    // p4: 25,000 UGX → 30 Days (1 Month)
+    // ─────────────────────────────────────────────────────────
     const packages = [
-        { id: 'p1', price: 250, name: 'Basic Surf', dur: '35 Mins', rate: '1.5M/1M' },
-        { id: 'p2', price: 500, name: 'Power Hour', dur: '2 Hours', rate: '3M/2M' },
-        { id: 'p3', price: 1000, name: 'Day Lite', dur: '24 Hours', rate: '2M/1M' },
-        { id: 'p4', price: 1500, name: 'Day Pro', dur: '24 Hours', rate: '3M/2M' }
+        { id: 'p1', price: 500,   name: 'Quick Surf',   dur: '3 Hours',  features: ['⏱ 3 Hours of Access', '📶 High-Speed WiFi', '✅ Instant Activation'] },
+        { id: 'p2', price: 1000,  name: 'Day Pass',     dur: '24 Hours', features: ['⏱ Full Day Access',   '📶 High-Speed WiFi', '✅ Instant Activation'] },
+        { id: 'p3', price: 6000,  name: 'Weekly Pass',  dur: '7 Days',   features: ['⏱ 7 Days of Access',  '📶 High-Speed WiFi', '✅ Instant Activation', '💰 Best Value'] },
+        { id: 'p4', price: 25000, name: 'Monthly Pass', dur: '30 Days',  features: ['⏱ 30 Days of Access', '📶 High-Speed WiFi', '✅ Instant Activation', '🏆 Best Deal'] }
     ];
 
     let selectedPkg = null;
 
-    // Render Packages
     const grid = document.getElementById('pkgGrid');
     grid.innerHTML = packages.map(pkg => `
         <div class="package-card" onclick="selectPkg('${pkg.id}')" id="card-${pkg.id}">
-            <div class="price-tag">${pkg.price} UGX</div>
+            <div class="price-tag">${pkg.price.toLocaleString()} UGX</div>
             <div class="pkg-name">${pkg.name}</div>
             <ul class="pkg-features">
-                <li>⏱ Duration: ${pkg.dur}</li>
-                <li>🚀 Speed: ${pkg.rate}</li>
-                <li>✅ Instant Activation</li>
+                ${pkg.features.map(f => `<li>${f}</li>`).join('')}
             </ul>
         </div>
     `).join('');
@@ -183,29 +184,23 @@
         document.getElementById(`card-${id}`).classList.add('selected');
         document.getElementById('checkout').style.display = 'block';
         document.getElementById('selectedTitle').innerText = `Buy ${selectedPkg.name}`;
-        document.getElementById('selectedSummary').innerText = `Total: ${selectedPkg.price} UGX for ${selectedPkg.dur} access.`;
+        document.getElementById('selectedSummary').innerText = `Total: ${selectedPkg.price.toLocaleString()} UGX for ${selectedPkg.dur} of access.`;
         document.getElementById('checkout').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // UPDATED: Security fingerprinting for Trial
     async function startFreeTrial() {
         const btn = document.getElementById('trialBtn');
         btn.disabled = true;
         btn.innerText = "Checking Device...";
-
-        // Generate a fingerprint based on browser data
         const fingerprint = btoa(navigator.userAgent + navigator.language).substring(0, 16);
-
         try {
-            const res = await fetch(`${API_BASE}/api/voucher/free-trial`, { 
+            const res = await fetch(`${API_BASE}/api/voucher/free-trial`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ deviceId: fingerprint }) 
+                body: JSON.stringify({ deviceId: fingerprint })
             });
             const data = await res.json();
-            
-            if(data.success) {
-                // UPDATED: Changed from 'code' to 'voucher' parameter to match login.html
+            if (data.success) {
                 window.location.href = `login.html?voucher=${data.code}`;
             } else {
                 alert(data.message || "Trial already used today!");
@@ -219,29 +214,21 @@
         }
     }
 
-    // UPDATED: Sync with checkout.js keys
     async function initiatePesapal() {
         const phone = document.getElementById('customerPhone').value;
         const email = document.getElementById('customerEmail').value;
         const btn = document.getElementById('payBtn');
-
-        if(!phone) { alert("Please enter phone number"); return; }
-
+        if (!phone) { alert("Please enter phone number"); return; }
         btn.disabled = true;
         btn.innerText = "Redirecting to Pesapal...";
-
         try {
             const res = await fetch(`${API_BASE}/api/payment/checkout`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    package_id: selectedPkg.id,
-                    phone: phone,
-                    email: email
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ package_id: selectedPkg.id, phone, email })
             });
             const data = await res.json();
-            if(data.redirect_url) {
+            if (data.redirect_url) {
                 window.location.href = data.redirect_url;
             } else {
                 alert(data.error || "Payment error. Please try again.");
