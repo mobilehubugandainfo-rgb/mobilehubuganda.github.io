@@ -1,339 +1,434 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WiFi Login | Mobile Hub Uganda</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WiFi Login | Mobile Hub Uganda</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+-webkit-user-select: text; user-select: text;
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            /* Allow screenshots */
-            -webkit-user-select: text;
-            user-select: text;
-        }
+:root {
+  --cyan:#06b6d4; --violet:#7c3aed; --white:#f0f4ff;
+  --muted:rgba(200,210,255,0.55);
+  --glass:rgba(8,4,24,0.82);
+  --border:rgba(124,58,237,0.38);
+}
 
-        .login-card {
-            width: 100%;
-            max-width: 450px;
-            background: rgba(30, 30, 46, 0.95);
-            padding: 40px;
-            border-radius: 20px;
-            border: 2px solid #4ecdc4;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            text-align: center;
-        }
+html, body {
+  width:100%; min-height:100%;
+  background:#020008;
+  font-family:'Rajdhani',sans-serif; color:var(--white);
+  -webkit-user-select:text; user-select:text;
+  display:flex; align-items:center; justify-content:center;
+  padding:20px;
+}
 
-        .logo {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #4ecdc4;
-            margin-bottom: 10px;
-            letter-spacing: 1px;
-        }
+/* ═══ GALAXY ═══ */
+#galaxy { position:fixed; inset:0; z-index:0; }
+.nebula {
+  position:fixed; inset:0; z-index:1; pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 55% at 18% 28%, rgba(124,58,237,.25) 0%,transparent 65%),
+    radial-gradient(ellipse 55% 45% at 82% 68%, rgba(6,182,212,.18)  0%,transparent 60%),
+    radial-gradient(ellipse 50% 40% at 55%  8%, rgba(236,72,153,.13) 0%,transparent 55%),
+    radial-gradient(ellipse 45% 38% at  8% 82%, rgba(79,70,229,.20)  0%,transparent 60%);
+  animation:nebDrift 20s ease-in-out infinite alternate;
+}
+@keyframes nebDrift{from{opacity:.85}to{opacity:1;transform:scale(1.06)}}
+.ss{position:fixed;z-index:2;pointer-events:none;width:2px;border-radius:2px;opacity:0;background:linear-gradient(to bottom,transparent,rgba(255,255,255,.88));}
+.ss1{height:90px;top:-90px;left:15%;animation:shoot 3.5s 0s linear infinite;}
+.ss2{height:70px;top:-70px;left:55%;animation:shoot 2.8s 1.8s linear infinite;}
+.ss3{height:110px;top:-110px;left:80%;animation:shoot 4.0s 3.2s linear infinite;}
+.ss4{height:65px;top:-65px;left:6%;animation:shoot 3.2s 5.1s linear infinite;}
+.ss5{height:80px;top:-80px;left:40%;animation:shoot 2.6s 6.5s linear infinite;}
+@keyframes shoot{0%{transform:translateY(0) rotate(14deg);opacity:0}6%{opacity:.8}85%{opacity:.2}100%{transform:translateY(115vh) rotate(14deg);opacity:0}}
 
-        h2 { color: white; margin-bottom: 30px; font-weight: 400; font-size: 1.1rem; opacity: 0.8; }
+/* ═══ CARD ═══ */
+.login-card {
+  position:relative; z-index:10;
+  width:100%; max-width:460px;
+  background:var(--glass);
+  border:1.5px solid rgba(124,58,237,.5);
+  border-radius:24px;
+  padding:clamp(28px,6vw,44px) clamp(22px,6vw,40px);
+  text-align:center;
+  backdrop-filter:blur(24px);
+  box-shadow:
+    0 0 0 1px rgba(124,58,237,.1),
+    0 0 60px rgba(124,58,237,.2),
+    0 30px 80px rgba(0,0,0,.7);
+  animation:cardIn .6s cubic-bezier(.22,.68,0,1.2) both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
 
-        .form-group { margin-bottom: 20px; text-align: left; }
-        label { display: block; color: #b8b8b8; margin-bottom: 8px; font-size: 0.9rem; }
+/* HUD corner brackets */
+.hud{position:absolute;width:20px;height:20px;pointer-events:none;}
+.hud::before,.hud::after{content:'';position:absolute;background:var(--cyan);opacity:.55;}
+.hud::before{width:2px;height:12px;top:0;left:0} .hud::after{width:12px;height:2px;top:0;left:0}
+.hud.tl{top:12px;left:12px} .hud.tr{top:12px;right:12px;transform:scaleX(-1)}
+.hud.bl{bottom:12px;left:12px;transform:scaleY(-1)} .hud.br{bottom:12px;right:12px;transform:scale(-1)}
 
-        input {
-            width: 100%;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(78, 205, 196, 0.2);
-            border-radius: 12px;
-            color: white;
-            font-size: 1.2rem;
-            text-align: center;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            transition: 0.3s;
-        }
+/* Scanline overlay */
+.login-card::before{
+  content:'';position:absolute;inset:0;border-radius:24px;pointer-events:none;z-index:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(124,58,237,.018) 3px,rgba(124,58,237,.018) 4px);
+}
+.login-card > * { position:relative; z-index:1; }
 
-        input:focus {
-            outline: none;
-            border-color: #4ecdc4;
-            background: rgba(255, 255, 255, 0.08);
-        }
+/* ═══ LOGO ═══ */
+.logo-wrap { margin-bottom:18px; }
+.logo {
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(1.4rem,5vw,1.9rem); font-weight:900; letter-spacing:4px; text-transform:uppercase; line-height:1;
+  background:linear-gradient(90deg,#c084fc,#a78bfa,#67e8f9,#f0abfc);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 18px rgba(167,139,250,.8));
+}
+.logo-sub {
+  font-size:clamp(.56rem,2vw,.68rem); letter-spacing:2.5px; text-transform:uppercase;
+  color:#67e8f9; font-weight:600; margin-top:4px;
+  text-shadow:0 0 14px rgba(6,182,212,.9);
+}
 
-        .connect-btn {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #4ecdc4, #44a08d);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+/* Status pod */
+.status-pod {
+  display:inline-flex; align-items:center; gap:6px;
+  background:rgba(6,182,212,.08); border:1px solid rgba(6,182,212,.3); border-radius:30px;
+  padding:4px 12px; font-family:'Orbitron',sans-serif;
+  font-size:.5rem; letter-spacing:1.5px; color:#67e8f9; text-transform:uppercase;
+  margin-bottom:20px;
+}
+.orbit-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:oPulse 1.7s ease-in-out infinite;flex-shrink:0;}
+@keyframes oPulse{0%,100%{box-shadow:0 0 5px var(--cyan)}50%{box-shadow:0 0 12px var(--cyan);transform:scale(1.4)}}
 
-        .connect-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(78, 205, 196, 0.3);
-        }
+/* Divider */
+.divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.4),rgba(6,182,212,.4),transparent);margin-bottom:22px;}
 
-        .connect-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+/* ═══ FORM ═══ */
+.form-group { margin-bottom:18px; text-align:left; }
+.field-label {
+  font-size:.58rem; letter-spacing:2px; text-transform:uppercase;
+  color:#a78bfa; font-weight:700; font-family:'Orbitron',sans-serif;
+  display:block; margin-bottom:7px;
+}
 
-        /* Recovery Link Styling */
-        .recovery-box {
-            margin-top: 15px;
-            padding: 12px;
-            background: rgba(240, 147, 251, 0.08);
-            border: 1px dashed rgba(240, 147, 251, 0.3);
-            border-radius: 8px;
-            display: none;
-        }
+input {
+  width:100%; padding:15px 18px;
+  background:rgba(255,255,255,.04);
+  border:1.5px solid rgba(124,58,237,.35);
+  border-radius:13px; color:#fff;
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(1rem,3.5vw,1.25rem);
+  text-align:center; letter-spacing:4px; text-transform:uppercase;
+  transition:border-color .2s, box-shadow .2s, background .2s;
+  -webkit-user-select:text; user-select:text;
+}
+input:focus {
+  outline:none; border-color:var(--cyan);
+  background:rgba(6,182,212,.06);
+  box-shadow:0 0 20px rgba(6,182,212,.22);
+}
+input::placeholder { color:rgba(200,210,255,.25); font-size:.75rem; letter-spacing:2px; }
 
-        .recovery-btn {
-            background: none;
-            border: none;
-            color: #f093fb;
-            text-decoration: underline;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+/* ═══ CONNECT BUTTON ═══ */
+.connect-btn {
+  width:100%; padding:16px; border:none; border-radius:13px; cursor:pointer;
+  font-family:'Orbitron',sans-serif; font-size:clamp(.75rem,2.8vw,.9rem);
+  font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#fff;
+  background:linear-gradient(118deg,#6d28d9,#7c3aed 38%,#4f46e5 68%,#06b6d4);
+  box-shadow:0 4px 28px rgba(124,58,237,.55),0 1px 0 rgba(255,255,255,.1) inset;
+  transition:all .22s ease;
+  animation:heroAura 3s ease-in-out infinite;
+}
+@keyframes heroAura{0%,100%{box-shadow:0 4px 28px rgba(124,58,237,.5)}50%{box-shadow:0 6px 44px rgba(124,58,237,.75),0 0 70px rgba(124,58,237,.2)}}
+.connect-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 44px rgba(124,58,237,.72);}
+.connect-btn:active:not(:disabled){transform:scale(.97);}
+.connect-btn:disabled{opacity:.6;cursor:not-allowed;animation:none;}
 
-        .recovery-btn:hover {
-            color: #ff6ec7;
-        }
+/* ═══ RECOVERY BOX ═══ */
+.recovery-box {
+  margin-top:14px; padding:12px 16px;
+  background:rgba(240,147,251,.07); border:1px dashed rgba(240,147,251,.32);
+  border-radius:11px; display:none;
+}
+.recovery-box p { font-size:.7rem; color:var(--muted); margin-bottom:5px; }
+.recovery-btn {
+  background:none; border:none; cursor:pointer;
+  font-family:'Rajdhani',sans-serif; font-size:.82rem; font-weight:700; letter-spacing:.5px;
+  color:#f093fb; text-decoration:underline; transition:color .2s;
+}
+.recovery-btn:hover{color:#ff6ec7;}
 
-        /* WhatsApp Button Styling */
-        .whatsapp-btn {
-            margin-top: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background: #25d366;
-            color: white;
-            padding: 12px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: 0.3s;
-        }
+/* ═══ STATUS MSG ═══ */
+.status-msg {
+  margin-top:14px; padding:11px 14px; border-radius:11px;
+  font-size:.8rem; font-weight:600; letter-spacing:.3px; display:none;
+  animation:fadeInUp .3s ease both;
+  -webkit-user-select:text; user-select:text;
+}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 
-        .whatsapp-btn:hover { 
-            background: #1ebe57; 
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
-        }
+/* ═══ LINKS ═══ */
+.help-link {
+  display:inline-block; margin-top:16px;
+  font-size:.72rem; letter-spacing:.5px;
+  color:var(--muted); text-decoration:none; transition:color .2s;
+}
+.help-link:hover{color:var(--cyan);}
 
-        .status-msg { 
-            margin-top: 20px; 
-            padding: 12px; 
-            border-radius: 8px; 
-            font-size: 0.9rem; 
-            display: none;
-            animation: fadeIn 0.3s;
-            /* Allow screenshots of status messages */
-            -webkit-user-select: text;
-            user-select: text;
-        }
+/* ═══ WHATSAPP ═══ */
+.whatsapp-btn {
+  margin-top:14px; display:flex; align-items:center; justify-content:center; gap:9px;
+  background:rgba(37,211,102,.1); border:1.5px solid rgba(37,211,102,.4);
+  color:#86efac; padding:12px 16px; border-radius:12px;
+  text-decoration:none; font-weight:700; font-size:.82rem; letter-spacing:.4px;
+  backdrop-filter:blur(10px); transition:all .22s;
+}
+.whatsapp-btn:hover{background:rgba(37,211,102,.2);border-color:rgba(37,211,102,.65);box-shadow:0 0 20px rgba(37,211,102,.2);transform:translateY(-2px);}
+.whatsapp-btn span{font-size:1.1rem;}
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+/* ═══ SUCCESS CHECKMARK ═══ */
+.success-checkmark{display:inline-block;animation:scaleIn .3s ease-in-out;}
+@keyframes scaleIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
 
-        .help-link { 
-            margin-top: 15px; 
-            display: block; 
-            color: #b8b8b8; 
-            text-decoration: none; 
-            font-size: 0.8rem;
-            transition: 0.3s;
-        }
-
-        .help-link:hover {
-            color: #4ecdc4;
-        }
-
-        /* Success animation */
-        .success-checkmark {
-            display: inline-block;
-            animation: scaleIn 0.3s ease-in-out;
-        }
-
-        @keyframes scaleIn {
-            0% { transform: scale(0); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-    </style>
+/* ═══ FOOTER ═══ */
+.card-footer { margin-top:18px; padding-top:14px; border-top:1px solid rgba(124,58,237,.18); }
+.card-footer span { font-size:.56rem; color:rgba(167,139,250,.4); letter-spacing:.5px; font-family:'Orbitron',sans-serif; }
+</style>
 </head>
 <body>
 
-    <div class="login-card">
-        <div class="logo">MOBILE HUB</div>
-        <h2>Internet Access Portal</h2>
+<canvas id="galaxy"></canvas>
+<div class="nebula"></div>
+<div class="ss ss1"></div><div class="ss ss2"></div><div class="ss ss3"></div>
+<div class="ss ss4"></div><div class="ss ss5"></div>
 
-        <div class="form-group">
-            <label>Voucher Code</label>
-            <input 
-                type="text" 
-                id="voucherCode" 
-                placeholder="Enter Code" 
-                autocomplete="off"
-                maxlength="50"
-            >
-        </div>
+<div class="login-card">
+  <!-- HUD corners -->
+  <div class="hud tl"></div><div class="hud tr"></div>
+  <div class="hud bl"></div><div class="hud br"></div>
 
-        <button onclick="connectWiFi()" class="connect-btn" id="loginBtn">CONNECT NOW</button>
+  <!-- Logo -->
+  <div class="logo-wrap">
+    <div class="logo">MOBILE HUB</div>
+    <div class="logo-sub">Internet Access Portal</div>
+  </div>
 
-        <div id="recoverySection" class="recovery-box">
-            <p style="font-size: 0.75rem; color: #b8b8b8; margin-bottom: 5px;">
-                Found a saved voucher from <span id="savedDate" style="color:#f093fb;"></span>
-            </p>
-            <button onclick="restoreVoucher()" class="recovery-btn">Restore Code Automatically</button>
-        </div>
+  <!-- Status pod -->
+  <div class="status-pod"><div class="orbit-dot"></div>Hotspot Central · Connected</div>
 
-        <div id="status" class="status-msg"></div>
+  <div class="divider"></div>
 
-        <a href="index.html" class="help-link">Need a voucher? Buy one here.</a>
+  <!-- Voucher input -->
+  <div class="form-group">
+    <label class="field-label">Voucher Code</label>
+    <input
+      type="text"
+      id="voucherCode"
+      placeholder="ENTER CODE"
+      autocomplete="off"
+      maxlength="50"
+    >
+  </div>
 
-        <a href="https://wa.me/256771999302?text=Hello%20Mobile%20Hub,%20I%20am%20having%20trouble%20with%20my%20WiFi%20voucher." class="whatsapp-btn">
-            <span>💬 Chat with Support on WhatsApp</span>
-        </a>
-    </div>
+  <button onclick="connectWiFi()" class="connect-btn" id="loginBtn">⚡ CONNECT NOW</button>
 
-    <script>
-        console.log('[Login] Page loaded - Direct MikroTik submission mode');
+  <!-- Recovery -->
+  <div id="recoverySection" class="recovery-box">
+    <p>Found a saved voucher from <span id="savedDate" style="color:#f093fb;"></span></p>
+    <button onclick="restoreVoucher()" class="recovery-btn">↩ Restore Code Automatically</button>
+  </div>
 
-        // ============================================
-        // ON LOAD: CHECK URL AND LOCAL STORAGE
-        // ============================================
-        window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const codeFromUrl = urlParams.get('voucher');
-            const savedCode = localStorage.getItem('last_voucher');
-            const savedDate = localStorage.getItem('voucher_date');
+  <!-- Status -->
+  <div id="status" class="status-msg"></div>
 
-            console.log('[Login] URL voucher:', codeFromUrl);
-            console.log('[Login] Saved voucher:', savedCode);
+  <!-- Help links -->
+  <a href="index.html" class="help-link">✦ Need a voucher? Buy one here.</a>
 
-            if (codeFromUrl) {
-                console.log('[Login] ✅ Auto-filling voucher from URL');
-                document.getElementById('voucherCode').value = codeFromUrl;
-                document.getElementById('voucherCode').focus();
-            } else if (savedCode) {
-                console.log('[Login] Found saved voucher, showing recovery option');
-                document.getElementById('recoverySection').style.display = 'block';
-                const dateStr = savedDate ? savedDate.split(',')[0] : 'recently';
-                document.getElementById('savedDate').innerText = dateStr;
-            }
-        };
+  <a href="https://wa.me/256771999302?text=Hello%20Mobile%20Hub,%20I%20am%20having%20trouble%20with%20my%20WiFi%20voucher." class="whatsapp-btn">
+    <span>💬</span> Chat with Support on WhatsApp
+  </a>
 
-        function restoreVoucher() {
-            const savedCode = localStorage.getItem('last_voucher');
-            if (savedCode) {
-                console.log('[Login] Restoring saved voucher');
-                document.getElementById('voucherCode').value = savedCode;
-                document.getElementById('voucherCode').focus();
-                showStatus('✅ Voucher Restored!', '#4ecdc4');
-                document.getElementById('recoverySection').style.display = 'none';
-            }
+  <div class="card-footer">
+    <span>✦ Mobile Hub Uganda · Fast · Reliable · Always On ✦</span>
+  </div>
+</div>
+
+<script>
+    console.log('[Login] Page loaded - Direct MikroTik submission mode');
+
+    // ============================================
+    // ON LOAD: CHECK URL AND LOCAL STORAGE
+    // ============================================
+    window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeFromUrl = urlParams.get('voucher');
+        const savedCode = localStorage.getItem('last_voucher');
+        const savedDate = localStorage.getItem('voucher_date');
+
+        console.log('[Login] URL voucher:', codeFromUrl);
+        console.log('[Login] Saved voucher:', savedCode);
+
+        if (codeFromUrl) {
+            console.log('[Login] ✅ Auto-filling voucher from URL');
+            document.getElementById('voucherCode').value = codeFromUrl;
+            document.getElementById('voucherCode').focus();
+        } else if (savedCode) {
+            console.log('[Login] Found saved voucher, showing recovery option');
+            document.getElementById('recoverySection').style.display = 'block';
+            const dateStr = savedDate ? savedDate.split(',')[0] : 'recently';
+            document.getElementById('savedDate').innerText = dateStr;
+        }
+    };
+
+    function restoreVoucher() {
+        const savedCode = localStorage.getItem('last_voucher');
+        if (savedCode) {
+            console.log('[Login] Restoring saved voucher');
+            document.getElementById('voucherCode').value = savedCode;
+            document.getElementById('voucherCode').focus();
+            showStatus('✅ Voucher Restored!', '#4ecdc4');
+            document.getElementById('recoverySection').style.display = 'none';
+        }
+    }
+
+    // ============================================
+    // MAIN CONNECTION FUNCTION - DIRECT TO MIKROTIK
+    // ============================================
+    function connectWiFi() {
+        const code = document.getElementById('voucherCode').value.trim().toUpperCase();
+        const btn = document.getElementById('loginBtn');
+
+        console.log('[Login] Attempting direct connection with code:', code);
+
+        if (!code) {
+            showStatus('⚠️ Please enter a voucher code', '#ffa502');
+            document.getElementById('voucherCode').focus();
+            return;
         }
 
-        // ============================================
-        // MAIN CONNECTION FUNCTION - DIRECT TO MIKROTIK
-        // ============================================
-        function connectWiFi() {
-            const code = document.getElementById('voucherCode').value.trim().toUpperCase();
-            const btn = document.getElementById('loginBtn');
-
-            console.log('[Login] Attempting direct connection with code:', code);
-
-            if (!code) {
-                showStatus('⚠️ Please enter a voucher code', '#ffa502');
-                document.getElementById('voucherCode').focus();
-                return;
-            }
-
-            btn.disabled = true;
-            btn.textContent = 'CONNECTING...';
-            showStatus('<span class="success-checkmark">✅</span> Connecting to Internet...', '#4ecdc4');
+        btn.disabled = true;
+        btn.textContent = 'CONNECTING...';
+        showStatus('<span class="success-checkmark">✅</span> Connecting to Internet...', '#4ecdc4');
+        
+        // Save to localStorage
+        localStorage.setItem('last_voucher', code);
+        localStorage.setItem('voucher_date', new Date().toLocaleString());
+        
+        // Submit directly to MikroTik after short delay
+        setTimeout(() => {
+            console.log('[Login] Submitting to MikroTik at 10.0.0.1/login');
             
-            // Save to localStorage
-            localStorage.setItem('last_voucher', code);
-            localStorage.setItem('voucher_date', new Date().toLocaleString());
+            // Create hidden form
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'http://10.0.0.1/login';
             
-            // Submit directly to MikroTik after short delay
-            setTimeout(() => {
-                console.log('[Login] Submitting to MikroTik at 10.0.0.1/login');
-                
-                // Create hidden form
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = 'http://10.0.0.1/login';
-                
-                // Username = voucher code
-                const usernameField = document.createElement('input');
-                usernameField.type = 'hidden';
-                usernameField.name = 'username';
-                usernameField.value = code;
-                form.appendChild(usernameField);
-                
-                // Password = same as voucher code (FIXED)
-                const passwordField = document.createElement('input');
-                passwordField.type = 'hidden';
-                passwordField.name = 'password';
-                passwordField.value = code;  // ← UPDATED: Now uses voucher code as password
-                form.appendChild(passwordField);
-                
-                // Optional: destination after login
-                const dstField = document.createElement('input');
-                dstField.type = 'hidden';
-                dstField.name = 'dst';
-                dstField.value = '';
-                form.appendChild(dstField);
-                
-                // Submit form to MikroTik
-                document.body.appendChild(form);
-                console.log('[Login] Form created and submitting...');
-                form.submit();
-                
-                // MikroTik will handle validation:
-                // - Check if voucher exists
-                // - Check if voucher is already used
-                // - Grant internet access if valid
-                
-            }, 1000);
-        }
+            // Username = voucher code
+            const usernameField = document.createElement('input');
+            usernameField.type = 'hidden';
+            usernameField.name = 'username';
+            usernameField.value = code;
+            form.appendChild(usernameField);
+            
+            // Password = same as voucher code (FIXED)
+            const passwordField = document.createElement('input');
+            passwordField.type = 'hidden';
+            passwordField.name = 'password';
+            passwordField.value = code;  // ← UPDATED: Now uses voucher code as password
+            form.appendChild(passwordField);
+            
+            // Optional: destination after login
+            const dstField = document.createElement('input');
+            dstField.type = 'hidden';
+            dstField.name = 'dst';
+            dstField.value = '';
+            form.appendChild(dstField);
+            
+            // Submit form to MikroTik
+            document.body.appendChild(form);
+            console.log('[Login] Form created and submitting...');
+            form.submit();
+            
+            // MikroTik will handle validation:
+            // - Check if voucher exists
+            // - Check if voucher is already used
+            // - Grant internet access if valid
+            
+        }, 1000);
+    }
 
-        // ============================================
-        // UI HELPER FUNCTION
-        // ============================================
-        function showStatus(text, color) {
-            const status = document.getElementById('status');
-            status.innerHTML = text;
-            status.style.display = 'block';
-            status.style.color = color;
-            status.style.border = `1px solid ${color}`;
-            status.style.background = `${color}15`;
-        }
+    // ============================================
+    // UI HELPER FUNCTION
+    // ============================================
+    function showStatus(text, color) {
+        const status = document.getElementById('status');
+        status.innerHTML = text;
+        status.style.display = 'block';
+        status.style.color = color;
+        status.style.border = `1px solid ${color}`;
+        status.style.background = `${color}15`;
+    }
 
-        // Allow Enter key to submit
-        document.getElementById('voucherCode').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                connectWiFi();
-            }
-        });
-    </script>
+    // Allow Enter key to submit
+    document.getElementById('voucherCode').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            connectWiFi();
+        }
+    });
+
+/* ═══ GALAXY CANVAS ═══ */
+(function(){
+  const cv=document.getElementById('galaxy'),ctx=cv.getContext('2d');
+  let W,H,stars=[],dust=[];
+  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
+  function mkStars(){
+    stars=[];const n=Math.floor(W*H/1600);
+    for(let i=0;i<n;i++){
+      const big=Math.random()>.65;
+      stars.push({x:Math.random()*W,y:Math.random()*H,
+        r:big?Math.random()*1.9+.9:Math.random()*.75+.15,
+        a:Math.random(),da:(Math.random()*.005+.001)*(Math.random()<.5?1:-1),
+        vy:big?.012:.038,
+        col:['#ffffff','#c4b5fd','#93c5fd','#67e8f9','#fbcfe8'][Math.floor(Math.random()*5)]});
+    }
+  }
+  function mkDust(){
+    dust=[];
+    for(let i=0;i<7;i++)dust.push({
+      x:Math.random()*W,y:Math.random()*H,r:70+Math.random()*130,
+      a:.028+Math.random()*.045,
+      col:['rgba(124,58,237,','rgba(6,182,212,','rgba(236,72,153,','rgba(79,70,229,'][i%4],
+      dx:(Math.random()-.5)*.1,dy:(Math.random()-.5)*.1});
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const g=ctx.createRadialGradient(W*.5,H*.38,0,W*.5,H*.38,Math.max(W,H)*.75);
+    g.addColorStop(0,'rgba(18,8,48,.95)');g.addColorStop(1,'rgba(2,0,8,1)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    dust.forEach(d=>{
+      d.x+=d.dx;d.y+=d.dy;
+      if(d.x<-d.r)d.x=W+d.r;if(d.x>W+d.r)d.x=-d.r;
+      if(d.y<-d.r)d.y=H+d.r;if(d.y>H+d.r)d.y=-d.r;
+      const ng=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r);
+      ng.addColorStop(0,d.col+d.a+')');ng.addColorStop(1,d.col+'0)');
+      ctx.fillStyle=ng;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fill();
+    });
+    stars.forEach(s=>{
+      s.a+=s.da;if(s.a>1||s.a<0)s.da*=-1;
+      s.y-=s.vy;if(s.y<-2){s.y=H+2;s.x=Math.random()*W;}
+      ctx.globalAlpha=Math.max(0,Math.min(1,s.a));
+      if(s.r>1.1){ctx.shadowBlur=7;ctx.shadowColor=s.col;}
+      ctx.fillStyle=s.col;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();
+      ctx.shadowBlur=0;
+    });
+    ctx.globalAlpha=1;requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',()=>{resize();mkStars();mkDust();});
+  resize();mkStars();mkDust();draw();
+})();
+</script>
 </body>
 </html>
