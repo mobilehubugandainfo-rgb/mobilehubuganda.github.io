@@ -1,191 +1,299 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hotspot Central | Payment Success</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            color: #e0e0e0;
-        }
-        .card {
-            max-width: 500px;
-            width: 100%;
-            background: rgba(30, 30, 46, 0.95);
-            padding: 40px;
-            border-radius: 30px;
-            border: 2px solid #4ecdc4;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            backdrop-filter: blur(10px);
-        }
-        .check-container {
-            width: 80px;
-            height: 80px;
-            background: rgba(78, 205, 196, 0.1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            border: 2px solid #4ecdc4;
-            font-size: 40px;
-            color: #4ecdc4;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        h1 { color: #4ecdc4; font-size: 1.8rem; margin-bottom: 10px; }
-        .status-text { color: #b8b8b8; margin-bottom: 30px; font-size: 1rem; }
-        .progress-container {
-            width: 100%;
-            background: rgba(255,255,255,0.05);
-            height: 6px;
-            border-radius: 10px;
-            margin-top: 30px;
-            overflow: hidden;
-        }
-        .progress-bar {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, #4ecdc4, #44a08d);
-            transition: width 0.5s ease;
-            animation: shimmer 2s infinite;
-        }
-        @keyframes shimmer { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
-        .voucher-display { display: none; margin: 30px 0; }
-        .voucher-display.show { display: block; }
-        .voucher-code {
-            background: rgba(78, 205, 196, 0.1);
-            border: 2px dashed #4ecdc4;
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #4ecdc4;
-            letter-spacing: 3px;
-            word-break: break-all;
-        }
-        .copy-btn {
-            background: linear-gradient(135deg, #4ecdc4, #44a08d);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            margin: 10px 5px;
-        }
-        .copy-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(78,205,196,0.4); }
-        .copy-btn.copied { background: linear-gradient(135deg, #2ecc71, #27ae60); }
-        .footer-note { font-size: 0.8rem; color: #666; margin-top: 20px; }
-        .error-container { display: none; }
-        .error-container.show { display: block; }
-        .support-btn {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 16px 32px;
-            background: linear-gradient(135deg, #25d366, #128c7e);
-            color: white;
-            text-decoration: none;
-            border-radius: 12px;
-            font-weight: 700;
-            transition: 0.3s;
-        }
-        .support-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(37,211,102,0.3); }
-        .loading-dots { display: inline-block; }
-        .loading-dots span { animation: blink 1.4s infinite both; display: inline-block; }
-        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
-        .redirect-btn {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 16px 32px;
-            background: linear-gradient(135deg, #4ecdc4, #44a08d);
-            color: white;
-            text-decoration: none;
-            border-radius: 12px;
-            font-weight: 700;
-            transition: 0.3s;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        .redirect-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(78,205,196,0.3); }
-        .package-info {
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            font-size: 0.9rem;
-            line-height: 2;
-        }
-        .package-info strong { color: #4ecdc4; }
-        .attempt-info { font-size: 0.75rem; color: #555; margin-top: 10px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Hotspot Central | Payment Success</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+:root {
+  --cyan:#06b6d4; --violet:#7c3aed; --green:#22c55e; --red:#f43f5e; --white:#f0f4ff;
+  --muted:rgba(200,210,255,0.55);
+  --glass:rgba(8,4,24,0.82);
+  --border:rgba(124,58,237,0.38);
+}
+
+html, body {
+  width:100%; min-height:100%;
+  background:#020008;
+  font-family:'Rajdhani',sans-serif; color:var(--white);
+  display:flex; align-items:center; justify-content:center;
+  padding:20px;
+  -webkit-user-select:text; user-select:text;
+}
+
+/* ═══ GALAXY ═══ */
+#galaxy { position:fixed; inset:0; z-index:0; }
+.nebula {
+  position:fixed; inset:0; z-index:1; pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 55% at 18% 28%, rgba(124,58,237,.25) 0%,transparent 65%),
+    radial-gradient(ellipse 55% 45% at 82% 68%, rgba(6,182,212,.18)  0%,transparent 60%),
+    radial-gradient(ellipse 50% 40% at 55%  8%, rgba(236,72,153,.13) 0%,transparent 55%),
+    radial-gradient(ellipse 45% 38% at  8% 82%, rgba(79,70,229,.20)  0%,transparent 60%);
+  animation:nebDrift 20s ease-in-out infinite alternate;
+}
+@keyframes nebDrift{from{opacity:.85}to{opacity:1;transform:scale(1.06)}}
+.ss{position:fixed;z-index:2;pointer-events:none;width:2px;border-radius:2px;opacity:0;background:linear-gradient(to bottom,transparent,rgba(255,255,255,.88));}
+.ss1{height:90px;top:-90px;left:15%;animation:shoot 3.5s 0s linear infinite;}
+.ss2{height:70px;top:-70px;left:55%;animation:shoot 2.8s 1.8s linear infinite;}
+.ss3{height:110px;top:-110px;left:80%;animation:shoot 4.0s 3.2s linear infinite;}
+.ss4{height:65px;top:-65px;left:6%;animation:shoot 3.2s 5.1s linear infinite;}
+.ss5{height:80px;top:-80px;left:40%;animation:shoot 2.6s 6.5s linear infinite;}
+@keyframes shoot{0%{transform:translateY(0) rotate(14deg);opacity:0}6%{opacity:.8}85%{opacity:.2}100%{transform:translateY(115vh) rotate(14deg);opacity:0}}
+
+/* ═══ CARD ═══ */
+.card {
+  position:relative; z-index:10;
+  width:100%; max-width:520px;
+  background:var(--glass);
+  border:1.5px solid rgba(124,58,237,.5);
+  border-radius:24px;
+  padding:clamp(28px,6vw,44px) clamp(22px,6vw,40px);
+  text-align:center;
+  backdrop-filter:blur(24px);
+  box-shadow:0 0 0 1px rgba(124,58,237,.1),0 0 60px rgba(124,58,237,.2),0 30px 80px rgba(0,0,0,.7);
+  animation:cardIn .6s cubic-bezier(.22,.68,0,1.2) both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+
+/* HUD corners */
+.hud{position:absolute;width:20px;height:20px;pointer-events:none;}
+.hud::before,.hud::after{content:'';position:absolute;background:var(--cyan);opacity:.55;}
+.hud::before{width:2px;height:12px;top:0;left:0} .hud::after{width:12px;height:2px;top:0;left:0}
+.hud.tl{top:12px;left:12px} .hud.tr{top:12px;right:12px;transform:scaleX(-1)}
+.hud.bl{bottom:12px;left:12px;transform:scaleY(-1)} .hud.br{bottom:12px;right:12px;transform:scale(-1)}
+
+/* Scanlines */
+.card::before{content:'';position:absolute;inset:0;border-radius:24px;pointer-events:none;z-index:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(124,58,237,.018) 3px,rgba(124,58,237,.018) 4px);}
+.card > * { position:relative; z-index:1; }
+
+/* ═══ SITE LABEL ═══ */
+.site-label {
+  font-family:'Orbitron',sans-serif; font-size:clamp(.65rem,2vw,.75rem);
+  font-weight:700; letter-spacing:4px; text-transform:uppercase;
+  background:linear-gradient(90deg,#c084fc,#a78bfa,#67e8f9,#f0abfc);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 12px rgba(167,139,250,.6));
+  margin-bottom:20px; display:block;
+}
+
+/* ═══ ICON CIRCLE ═══ */
+.check-container {
+  width:80px; height:80px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 18px;
+  font-size:2.2rem;
+  animation:iconPulse 2s ease-in-out infinite;
+}
+.check-container.success { background:rgba(6,182,212,.1); border:2px solid rgba(6,182,212,.6); box-shadow:0 0 30px rgba(6,182,212,.2); }
+.check-container.error   { background:rgba(244,63,94,.1);  border:2px solid rgba(244,63,94,.6);  box-shadow:0 0 30px rgba(244,63,94,.2);  }
+@keyframes iconPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+/* ═══ HEADINGS ═══ */
+.state-title {
+  font-family:'Orbitron',sans-serif; font-size:clamp(1rem,4vw,1.45rem);
+  font-weight:900; letter-spacing:2px; text-transform:uppercase; margin-bottom:8px;
+}
+.state-title.success { color:#67e8f9; text-shadow:0 0 20px rgba(6,182,212,.6); }
+.state-title.error   { color:#f43f5e; text-shadow:0 0 20px rgba(244,63,94,.5); }
+.state-title.warning { color:#fbbf24; text-shadow:0 0 20px rgba(251,191,36,.5); }
+
+.status-text { font-size:clamp(.75rem,2.5vw,.88rem); color:var(--muted); letter-spacing:.4px; margin-bottom:8px; }
+
+/* ═══ DIVIDER ═══ */
+.divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.4),rgba(6,182,212,.4),transparent);margin:18px 0;}
+
+/* ═══ PROGRESS ═══ */
+.progress-container {
+  width:100%; background:rgba(255,255,255,.05);
+  height:6px; border-radius:10px; overflow:hidden; margin-top:18px;
+}
+.progress-bar {
+  width:0%; height:100%;
+  background:linear-gradient(90deg,#7c3aed,#06b6d4);
+  transition:width .5s ease;
+  animation:shimmer 2s infinite;
+}
+@keyframes shimmer{0%{opacity:.6}50%{opacity:1}100%{opacity:.6}}
+
+.attempt-info { font-size:.62rem; color:rgba(167,139,250,.5); margin-top:10px; letter-spacing:.5px; font-family:'Orbitron',sans-serif; }
+
+/* ═══ VOUCHER DISPLAY ═══ */
+.voucher-display { display:none; }
+.voucher-display.show { display:block; }
+
+.voucher-code {
+  background:rgba(6,182,212,.08);
+  border:1.5px dashed rgba(6,182,212,.5);
+  padding:20px; border-radius:16px;
+  margin:18px 0;
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(1.2rem,5vw,1.65rem); font-weight:900;
+  color:#67e8f9; letter-spacing:4px; word-break:break-all;
+  text-shadow:0 0 20px rgba(6,182,212,.7);
+  box-shadow:0 0 30px rgba(6,182,212,.12);
+  -webkit-user-select:text; user-select:text;
+  animation:voucherGlow 2.5s ease-in-out infinite;
+}
+@keyframes voucherGlow{0%,100%{box-shadow:0 0 20px rgba(6,182,212,.1)}50%{box-shadow:0 0 40px rgba(6,182,212,.3),0 0 80px rgba(6,182,212,.1)}}
+
+/* Package info */
+.package-info {
+  background:rgba(255,255,255,.04); border:1px solid rgba(124,58,237,.25);
+  padding:14px 18px; border-radius:13px; margin:16px 0;
+  font-size:.8rem; line-height:2.2; text-align:left;
+}
+.package-info .pi-row { display:flex; justify-content:space-between; align-items:center; }
+.package-info .pi-label { color:#a78bfa; font-size:.6rem; letter-spacing:2px; text-transform:uppercase; font-family:'Orbitron',sans-serif; }
+.package-info .pi-val   { color:#fff; font-weight:700; letter-spacing:.5px; }
+
+/* Buttons */
+.copy-btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:12px 26px; border-radius:12px; border:none; cursor:pointer;
+  font-family:'Orbitron',sans-serif; font-size:clamp(.62rem,2vw,.75rem);
+  font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
+  background:var(--glass); border:1.5px solid rgba(6,182,212,.45); color:#67e8f9;
+  backdrop-filter:blur(16px); transition:all .22s ease; margin:6px 4px;
+}
+.copy-btn:hover{border-color:rgba(6,182,212,.8);box-shadow:0 0 20px rgba(6,182,212,.25);transform:translateY(-2px);}
+.copy-btn.copied{border-color:rgba(34,197,94,.7);color:#86efac;background:rgba(34,197,94,.1);}
+
+.redirect-btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  width:100%; margin-top:8px; padding:14px; border-radius:13px; border:none; cursor:pointer;
+  font-family:'Orbitron',sans-serif; font-size:clamp(.7rem,2.5vw,.82rem);
+  font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#fff;
+  background:linear-gradient(118deg,#6d28d9,#7c3aed 38%,#4f46e5 68%,#06b6d4);
+  box-shadow:0 4px 28px rgba(124,58,237,.52);
+  transition:all .22s ease; animation:heroAura 3s ease-in-out infinite;
+}
+@keyframes heroAura{0%,100%{box-shadow:0 4px 28px rgba(124,58,237,.5)}50%{box-shadow:0 6px 44px rgba(124,58,237,.75),0 0 70px rgba(124,58,237,.2)}}
+.redirect-btn:hover{transform:translateY(-2px);box-shadow:0 8px 44px rgba(124,58,237,.72);}
+
+.support-btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:9px;
+  width:100%; margin-top:10px; padding:14px;
+  background:rgba(34,197,94,.1); border:1.5px solid rgba(34,197,94,.4);
+  color:#86efac; text-decoration:none; border-radius:13px;
+  font-weight:700; font-size:.85rem; letter-spacing:.4px;
+  backdrop-filter:blur(10px); transition:all .22s;
+}
+.support-btn:hover{background:rgba(34,197,94,.2);border-color:rgba(34,197,94,.65);box-shadow:0 0 20px rgba(34,197,94,.2);transform:translateY(-2px);}
+
+/* ═══ ERROR STATE ═══ */
+.error-container { display:none; }
+.error-container.show { display:block; }
+
+/* ═══ FOOTER ═══ */
+.footer-note { font-size:.65rem; color:rgba(167,139,250,.4); margin-top:16px; letter-spacing:.4px; }
+.card-footer { margin-top:18px; padding-top:14px; border-top:1px solid rgba(124,58,237,.18); }
+.card-footer span { font-size:.56rem; color:rgba(167,139,250,.38); letter-spacing:.5px; font-family:'Orbitron',sans-serif; }
+
+/* ═══ LOADING DOTS ═══ */
+.loading-dots{display:inline-block;}
+.loading-dots span{animation:blink 1.4s infinite both;display:inline-block;}
+.loading-dots span:nth-child(2){animation-delay:.2s;}
+.loading-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes blink{0%,80%,100%{opacity:0}40%{opacity:1}}
+</style>
 </head>
 <body>
+
+<canvas id="galaxy"></canvas>
+<div class="nebula"></div>
+<div class="ss ss1"></div><div class="ss ss2"></div><div class="ss ss3"></div>
+<div class="ss ss4"></div><div class="ss ss5"></div>
+
 <div class="card">
+  <!-- HUD corners -->
+  <div class="hud tl"></div><div class="hud tr"></div>
+  <div class="hud bl"></div><div class="hud br"></div>
 
-    <!-- PROCESSING STATE -->
-    <div id="processingUI">
-        <div class="check-container">✓</div>
-        <h1>Payment Successful!</h1>
-        <p class="status-text">
-            Preparing your voucher code<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>
-        </p>
-        <div class="progress-container">
-            <div class="progress-bar" id="bar"></div>
-        </div>
-        <p class="attempt-info" id="attemptInfo">Connecting to payment system...</p>
+  <!-- Site label -->
+  <span class="site-label">✦ Hotspot Central · Mobile Hub Uganda ✦</span>
+
+  <!-- ══════════════════════
+       PROCESSING STATE
+  ══════════════════════ -->
+  <div id="processingUI">
+    <div class="check-container success">⏳</div>
+    <div class="state-title success">Payment Successful!</div>
+    <p class="status-text">
+      Preparing your voucher code<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>
+    </p>
+
+    <div class="divider"></div>
+
+    <div class="progress-container">
+      <div class="progress-bar" id="bar"></div>
+    </div>
+    <p class="attempt-info" id="attemptInfo">Connecting to payment system...</p>
+  </div>
+
+  <!-- ══════════════════════
+       SUCCESS STATE
+  ══════════════════════ -->
+  <div id="voucherUI" class="voucher-display">
+    <div class="check-container success">✓</div>
+    <div class="state-title success">Voucher Ready!</div>
+    <p class="status-text">Use this code to connect to the internet</p>
+
+    <div class="divider"></div>
+
+    <div class="voucher-code" id="voucherCode">LOADING...</div>
+
+    <div class="package-info">
+      <div class="pi-row">
+        <span class="pi-label">Package</span>
+        <span class="pi-val" id="packageName">-</span>
+      </div>
+      <div class="pi-row">
+        <span class="pi-label">Duration</span>
+        <span class="pi-val" id="packageDuration">-</span>
+      </div>
+      <div class="pi-row">
+        <span class="pi-label">Order ID</span>
+        <span class="pi-val" id="orderId" style="font-size:.72rem;color:#a78bfa;">-</span>
+      </div>
     </div>
 
-    <!-- SUCCESS STATE -->
-    <div id="voucherUI" class="voucher-display">
-        <div class="check-container">✓</div>
-        <h1>Your Voucher is Ready!</h1>
-        <p class="status-text">Use this code to connect to the internet</p>
+    <div>
+      <button class="copy-btn" id="copyBtn" onclick="copyVoucher()">📋 Copy Voucher Code</button>
+    </div>
+    <button class="redirect-btn" onclick="redirectToLogin()">⚡ Connect to Internet Now</button>
 
-        <div class="voucher-code" id="voucherCode">LOADING...</div>
+    <p class="footer-note">This code has been saved. You can also find it in your SMS/email.</p>
+  </div>
 
-        <div class="package-info">
-            <strong>Package:</strong> <span id="packageName">-</span><br>
-            <strong>Duration:</strong> <span id="packageDuration">-</span><br>
-            <strong>Order ID:</strong> <span id="orderId">-</span>
-        </div>
+  <!-- ══════════════════════
+       ERROR STATE
+  ══════════════════════ -->
+  <div id="errorUI" class="error-container">
+    <div class="check-container error">⚠</div>
+    <div class="state-title warning">Voucher Delayed</div>
+    <p class="status-text">Your payment was successful! However, there's a slight delay generating your voucher.</p>
 
-        <button class="copy-btn" id="copyBtn" onclick="copyVoucher()">📋 Copy Voucher Code</button>
-        <br>
-        <button class="redirect-btn" onclick="redirectToLogin()">🌐 Connect to Internet Now</button>
+    <div class="divider"></div>
 
-        <p class="footer-note">This code has been saved. You can also find it in your SMS/email.</p>
+    <div class="package-info" style="border-color:rgba(251,191,36,.25);">
+      <div class="pi-row">
+        <span class="pi-label">Order ID</span>
+        <span class="pi-val" id="displayOrderId" style="font-size:.72rem;color:#fbbf24;">-</span>
+      </div>
     </div>
 
-    <!-- ERROR STATE -->
-    <div id="errorUI" class="error-container">
-        <div class="check-container" style="border-color:#ff4757;color:#ff4757;">⚠</div>
-        <h1 style="color:#ff4757;">Voucher Delayed</h1>
-        <p class="status-text">Your payment was successful! However, there's a delay generating your voucher.</p>
-        <p style="font-size:0.9rem;color:#b8b8b8;margin:20px 0;">Your code will be sent via SMS within 5 minutes.</p>
-        <p style="font-size:0.85rem;color:#888;">If you don't receive it, contact support with your Order ID below.</p>
-        <div class="package-info">
-            <strong>Order ID:</strong> <span id="displayOrderId">-</span>
-        </div>
-        <a href="https://wa.me/256771999302" class="support-btn">📱 Contact Support on WhatsApp</a>
-    </div>
+    <p class="status-text" style="font-size:.75rem;">Your code will be sent via SMS within 5 minutes. If you don't receive it, contact support with your Order ID above.</p>
 
+    <a href="https://wa.me/256771999302" class="support-btn">💬 Contact Support on WhatsApp</a>
+  </div>
+
+  <div class="card-footer">
+    <span>✦ Mobile Hub Uganda · Fast · Reliable · Always On ✦</span>
+  </div>
 </div>
 
 <script>
@@ -339,6 +447,57 @@
     }
 
     checkVoucherStatus();
+
+/* ═══ GALAXY CANVAS ═══ */
+(function(){
+  const cv=document.getElementById('galaxy'),ctx=cv.getContext('2d');
+  let W,H,stars=[],dust=[];
+  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
+  function mkStars(){
+    stars=[];const n=Math.floor(W*H/1600);
+    for(let i=0;i<n;i++){
+      const big=Math.random()>.65;
+      stars.push({x:Math.random()*W,y:Math.random()*H,
+        r:big?Math.random()*1.9+.9:Math.random()*.75+.15,
+        a:Math.random(),da:(Math.random()*.005+.001)*(Math.random()<.5?1:-1),
+        vy:big?.012:.038,
+        col:['#ffffff','#c4b5fd','#93c5fd','#67e8f9','#fbcfe8'][Math.floor(Math.random()*5)]});
+    }
+  }
+  function mkDust(){
+    dust=[];
+    for(let i=0;i<7;i++)dust.push({
+      x:Math.random()*W,y:Math.random()*H,r:70+Math.random()*130,
+      a:.028+Math.random()*.045,
+      col:['rgba(124,58,237,','rgba(6,182,212,','rgba(236,72,153,','rgba(79,70,229,'][i%4],
+      dx:(Math.random()-.5)*.1,dy:(Math.random()-.5)*.1});
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const g=ctx.createRadialGradient(W*.5,H*.38,0,W*.5,H*.38,Math.max(W,H)*.75);
+    g.addColorStop(0,'rgba(18,8,48,.95)');g.addColorStop(1,'rgba(2,0,8,1)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    dust.forEach(d=>{
+      d.x+=d.dx;d.y+=d.dy;
+      if(d.x<-d.r)d.x=W+d.r;if(d.x>W+d.r)d.x=-d.r;
+      if(d.y<-d.r)d.y=H+d.r;if(d.y>H+d.r)d.y=-d.r;
+      const ng=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r);
+      ng.addColorStop(0,d.col+d.a+')');ng.addColorStop(1,d.col+'0)');
+      ctx.fillStyle=ng;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fill();
+    });
+    stars.forEach(s=>{
+      s.a+=s.da;if(s.a>1||s.a<0)s.da*=-1;
+      s.y-=s.vy;if(s.y<-2){s.y=H+2;s.x=Math.random()*W;}
+      ctx.globalAlpha=Math.max(0,Math.min(1,s.a));
+      if(s.r>1.1){ctx.shadowBlur=7;ctx.shadowColor=s.col;}
+      ctx.fillStyle=s.col;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();
+      ctx.shadowBlur=0;
+    });
+    ctx.globalAlpha=1;requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',()=>{resize();mkStars();mkDust();});
+  resize();mkStars();mkDust();draw();
+})();
 </script>
 </body>
 </html>
