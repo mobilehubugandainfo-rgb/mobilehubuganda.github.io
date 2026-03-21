@@ -63,14 +63,12 @@ html, body {
 }
 @keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
 
-/* HUD corner brackets */
 .hud{position:absolute;width:20px;height:20px;pointer-events:none;}
 .hud::before,.hud::after{content:'';position:absolute;background:var(--cyan);opacity:.55;}
 .hud::before{width:2px;height:12px;top:0;left:0} .hud::after{width:12px;height:2px;top:0;left:0}
 .hud.tl{top:12px;left:12px} .hud.tr{top:12px;right:12px;transform:scaleX(-1)}
 .hud.bl{bottom:12px;left:12px;transform:scaleY(-1)} .hud.br{bottom:12px;right:12px;transform:scale(-1)}
 
-/* Scanline overlay */
 .login-card::before{
   content:'';position:absolute;inset:0;border-radius:24px;pointer-events:none;z-index:0;
   background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(124,58,237,.018) 3px,rgba(124,58,237,.018) 4px);
@@ -92,7 +90,6 @@ html, body {
   text-shadow:0 0 14px rgba(6,182,212,.9);
 }
 
-/* Status pod */
 .status-pod {
   display:inline-flex; align-items:center; gap:6px;
   background:rgba(6,182,212,.08); border:1px solid rgba(6,182,212,.3); border-radius:30px;
@@ -103,7 +100,6 @@ html, body {
 .orbit-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:oPulse 1.7s ease-in-out infinite;flex-shrink:0;}
 @keyframes oPulse{0%,100%{box-shadow:0 0 5px var(--cyan)}50%{box-shadow:0 0 12px var(--cyan);transform:scale(1.4)}}
 
-/* Divider */
 .divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.4),rgba(6,182,212,.4),transparent);margin-bottom:22px;}
 
 /* ═══ FORM ═══ */
@@ -114,7 +110,7 @@ html, body {
   display:block; margin-bottom:7px;
 }
 
-input {
+input[type="text"] {
   width:100%; padding:15px 18px;
   background:rgba(255,255,255,.04);
   border:1.5px solid rgba(124,58,237,.35);
@@ -125,12 +121,12 @@ input {
   transition:border-color .2s, box-shadow .2s, background .2s;
   -webkit-user-select:text; user-select:text;
 }
-input:focus {
+input[type="text"]:focus {
   outline:none; border-color:var(--cyan);
   background:rgba(6,182,212,.06);
   box-shadow:0 0 20px rgba(6,182,212,.22);
 }
-input::placeholder { color:rgba(200,210,255,.25); font-size:.75rem; letter-spacing:2px; }
+input[type="text"]::placeholder { color:rgba(200,210,255,.25); font-size:.75rem; letter-spacing:2px; }
 
 /* ═══ CONNECT BUTTON ═══ */
 .connect-btn {
@@ -189,7 +185,6 @@ input::placeholder { color:rgba(200,210,255,.25); font-size:.75rem; letter-spaci
 .whatsapp-btn:hover{background:rgba(37,211,102,.2);border-color:rgba(37,211,102,.65);box-shadow:0 0 20px rgba(37,211,102,.2);transform:translateY(-2px);}
 .whatsapp-btn span{font-size:1.1rem;}
 
-/* ═══ SUCCESS CHECKMARK ═══ */
 .success-checkmark{display:inline-block;animation:scaleIn .3s ease-in-out;}
 @keyframes scaleIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
 
@@ -206,22 +201,21 @@ input::placeholder { color:rgba(200,210,255,.25); font-size:.75rem; letter-spaci
 <div class="ss ss4"></div><div class="ss ss5"></div>
 
 <div class="login-card">
-  <!-- HUD corners -->
   <div class="hud tl"></div><div class="hud tr"></div>
   <div class="hud bl"></div><div class="hud br"></div>
 
-  <!-- Logo -->
+  <!-- MikroTik MAC injection -->
+  <input type="hidden" id="clientMac" value="$(mac)">
+
   <div class="logo-wrap">
     <div class="logo">MOBILE HUB</div>
     <div class="logo-sub">Internet Access Portal</div>
   </div>
 
-  <!-- Status pod -->
   <div class="status-pod"><div class="orbit-dot"></div>Hotspot Central · Connected</div>
 
   <div class="divider"></div>
 
-  <!-- Voucher input -->
   <div class="form-group">
     <label class="field-label">Voucher Code</label>
     <input
@@ -235,16 +229,13 @@ input::placeholder { color:rgba(200,210,255,.25); font-size:.75rem; letter-spaci
 
   <button onclick="connectWiFi()" class="connect-btn" id="loginBtn">⚡ CONNECT NOW</button>
 
-  <!-- Recovery -->
   <div id="recoverySection" class="recovery-box">
     <p>Found a saved voucher from <span id="savedDate" style="color:#f093fb;"></span></p>
     <button onclick="restoreVoucher()" class="recovery-btn">↩ Restore Code Automatically</button>
   </div>
 
-  <!-- Status -->
   <div id="status" class="status-msg"></div>
 
-  <!-- Help links -->
   <a href="index.html" class="help-link">✦ Need a voucher? Buy one here.</a>
 
   <a href="https://wa.me/256771999302?text=Hello%20Mobile%20Hub,%20I%20am%20having%20trouble%20with%20my%20WiFi%20voucher." class="whatsapp-btn">
@@ -257,127 +248,134 @@ input::placeholder { color:rgba(200,210,255,.25); font-size:.75rem; letter-spaci
 </div>
 
 <script>
-    console.log('[Login] Page loaded - Direct MikroTik submission mode');
+console.log('[Login] Page loaded');
 
-    // ============================================
-    // ON LOAD: CHECK URL AND LOCAL STORAGE
-    // ============================================
-    window.onload = function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const codeFromUrl = urlParams.get('voucher');
-        const savedCode = localStorage.getItem('last_voucher');
-        const savedDate = localStorage.getItem('voucher_date');
+// ── ON LOAD ──
+window.onload = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const codeFromUrl = urlParams.get('voucher');
+    const savedCode = localStorage.getItem('last_voucher');
+    const savedDate = localStorage.getItem('voucher_date');
 
-        console.log('[Login] URL voucher:', codeFromUrl);
-        console.log('[Login] Saved voucher:', savedCode);
+    if (codeFromUrl) {
+        document.getElementById('voucherCode').value = codeFromUrl;
+        document.getElementById('voucherCode').focus();
+    } else if (savedCode) {
+        document.getElementById('recoverySection').style.display = 'block';
+        const dateStr = savedDate ? savedDate.split(',')[0] : 'recently';
+        document.getElementById('savedDate').innerText = dateStr;
+    }
+};
 
-        if (codeFromUrl) {
-            console.log('[Login] ✅ Auto-filling voucher from URL');
-            document.getElementById('voucherCode').value = codeFromUrl;
-            document.getElementById('voucherCode').focus();
-        } else if (savedCode) {
-            console.log('[Login] Found saved voucher, showing recovery option');
-            document.getElementById('recoverySection').style.display = 'block';
-            const dateStr = savedDate ? savedDate.split(',')[0] : 'recently';
-            document.getElementById('savedDate').innerText = dateStr;
-        }
-    };
+function restoreVoucher() {
+    const savedCode = localStorage.getItem('last_voucher');
+    if (savedCode) {
+        document.getElementById('voucherCode').value = savedCode;
+        document.getElementById('voucherCode').focus();
+        showStatus('✅ Voucher Restored!', '#4ecdc4');
+        document.getElementById('recoverySection').style.display = 'none';
+    }
+}
 
-    function restoreVoucher() {
-        const savedCode = localStorage.getItem('last_voucher');
-        if (savedCode) {
-            console.log('[Login] Restoring saved voucher');
-            document.getElementById('voucherCode').value = savedCode;
-            document.getElementById('voucherCode').focus();
-            showStatus('✅ Voucher Restored!', '#4ecdc4');
-            document.getElementById('recoverySection').style.display = 'none';
-        }
+// ── MAIN CONNECT FUNCTION ──
+async function connectWiFi() {
+    const code = document.getElementById('voucherCode').value.trim().toUpperCase();
+    const btn = document.getElementById('loginBtn');
+
+    if (!code) {
+        showStatus('⚠️ Please enter a voucher code', '#ffa502');
+        document.getElementById('voucherCode').focus();
+        return;
     }
 
-    // ============================================
-    // MAIN CONNECTION FUNCTION - DIRECT TO MIKROTIK
-    // ============================================
-    function connectWiFi() {
-        const code = document.getElementById('voucherCode').value.trim().toUpperCase();
-        const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.textContent = 'VERIFYING...';
+    showStatus('⏳ Verifying voucher...', '#67e8f9');
 
-        console.log('[Login] Attempting direct connection with code:', code);
+    try {
+        // Get MAC address injected by MikroTik
+        const macEl = document.getElementById('clientMac');
+        const mac = (macEl && macEl.value && macEl.value !== '$(mac)') 
+            ? macEl.value 
+            : 'unknown';
 
-        if (!code) {
-            showStatus('⚠️ Please enter a voucher code', '#ffa502');
-            document.getElementById('voucherCode').focus();
+        console.log('[Login] Verifying code:', code, 'MAC:', mac);
+
+        // Call validate.js FIRST before submitting to MikroTik
+        const res = await fetch('https://mobilehubuganda-github-io.pages.dev/api/voucher/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, mac })
+        });
+
+        const data = await res.json();
+        console.log('[Login] Validate response:', data);
+
+        if (!data.success) {
+            showStatus('⛔ ' + (data.error || 'Invalid voucher code'), '#f87171');
+            btn.disabled = false;
+            btn.innerHTML = '⚡ CONNECT NOW';
+            btn.style.animation = 'heroAura 3s ease-in-out infinite';
             return;
         }
 
-        btn.disabled = true;
-        btn.textContent = 'CONNECTING...';
-        showStatus('<span class="success-checkmark">✅</span> Connecting to Internet...', '#4ecdc4');
-        
-        // Save to localStorage
+        // ✅ Voucher valid — save and submit to MikroTik
         localStorage.setItem('last_voucher', code);
         localStorage.setItem('voucher_date', new Date().toLocaleString());
-        
-        // Submit directly to MikroTik after short delay
+
+        showStatus('<span class="success-checkmark">✅</span> Voucher verified! Connecting to galaxy...', '#4ecdc4');
+
         setTimeout(() => {
-            console.log('[Login] Submitting to MikroTik at 10.0.0.1/login');
-            
-            // Create hidden form
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = 'http://10.0.0.1/login';
-            
-            // Username = voucher code
+
             const usernameField = document.createElement('input');
             usernameField.type = 'hidden';
             usernameField.name = 'username';
             usernameField.value = code;
             form.appendChild(usernameField);
-            
-            // Password = same as voucher code (FIXED)
+
             const passwordField = document.createElement('input');
             passwordField.type = 'hidden';
             passwordField.name = 'password';
-            passwordField.value = code;  // ← UPDATED: Now uses voucher code as password
+            passwordField.value = code;
             form.appendChild(passwordField);
-            
-            // Optional: destination after login
+
             const dstField = document.createElement('input');
             dstField.type = 'hidden';
             dstField.name = 'dst';
             dstField.value = '';
             form.appendChild(dstField);
-            
-            // Submit form to MikroTik
+
             document.body.appendChild(form);
-            console.log('[Login] Form created and submitting...');
+            console.log('[Login] Submitting to MikroTik...');
             form.submit();
-            
-            // MikroTik will handle validation:
-            // - Check if voucher exists
-            // - Check if voucher is already used
-            // - Grant internet access if valid
-            
         }, 1000);
-    }
 
-    // ============================================
-    // UI HELPER FUNCTION
-    // ============================================
-    function showStatus(text, color) {
-        const status = document.getElementById('status');
-        status.innerHTML = text;
-        status.style.display = 'block';
-        status.style.color = color;
-        status.style.border = `1px solid ${color}`;
-        status.style.background = `${color}15`;
+    } catch (err) {
+        console.error('[Login] Error:', err);
+        showStatus('⚠️ Connection error. Please try again.', '#ffa502');
+        btn.disabled = false;
+        btn.innerHTML = '⚡ CONNECT NOW';
+        btn.style.animation = 'heroAura 3s ease-in-out infinite';
     }
+}
 
-    // Allow Enter key to submit
-    document.getElementById('voucherCode').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            connectWiFi();
-        }
-    });
+// ── UI HELPER ──
+function showStatus(text, color) {
+    const status = document.getElementById('status');
+    status.innerHTML = text;
+    status.style.display = 'block';
+    status.style.color = color;
+    status.style.border = `1px solid ${color}`;
+    status.style.background = `${color}15`;
+}
+
+// Enter key support
+document.getElementById('voucherCode').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') connectWiFi();
+});
 
 /* ═══ GALAXY CANVAS ═══ */
 (function(){
