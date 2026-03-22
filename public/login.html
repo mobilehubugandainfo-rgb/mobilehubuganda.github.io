@@ -7,23 +7,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
 :root {
   --cyan:#06b6d4; --violet:#7c3aed; --white:#f0f4ff;
-  --muted:rgba(200,210,255,0.55);
-  --glass:rgba(8,4,24,0.82);
-  --border:rgba(124,58,237,0.38);
+  --muted:rgba(200,210,255,0.55); --glass:rgba(8,4,24,0.82); --border:rgba(124,58,237,0.38);
 }
-
 html, body {
-  width:100%; min-height:100%;
-  background:#020008;
+  width:100%; min-height:100%; background:#020008;
   font-family:'Rajdhani',sans-serif; color:var(--white);
   -webkit-user-select:text; user-select:text;
-  display:flex; align-items:center; justify-content:center;
-  padding:20px;
+  display:flex; align-items:center; justify-content:center; padding:20px;
 }
-
 #galaxy { position:fixed; inset:0; z-index:0; }
 .nebula {
   position:fixed; inset:0; z-index:1; pointer-events:none;
@@ -42,36 +35,25 @@ html, body {
 .ss4{height:65px;top:-65px;left:6%;animation:shoot 3.2s 5.1s linear infinite;}
 .ss5{height:80px;top:-80px;left:40%;animation:shoot 2.6s 6.5s linear infinite;}
 @keyframes shoot{0%{transform:translateY(0) rotate(14deg);opacity:0}6%{opacity:.8}85%{opacity:.2}100%{transform:translateY(115vh) rotate(14deg);opacity:0}}
-
 .login-card {
-  position:relative; z-index:10;
-  width:100%; max-width:460px;
-  background:var(--glass);
-  border:1.5px solid rgba(124,58,237,.5);
-  border-radius:24px;
-  padding:clamp(28px,6vw,44px) clamp(22px,6vw,40px);
-  text-align:center;
+  position:relative; z-index:10; width:100%; max-width:460px;
+  background:var(--glass); border:1.5px solid rgba(124,58,237,.5); border-radius:24px;
+  padding:clamp(28px,6vw,44px) clamp(22px,6vw,40px); text-align:center;
   backdrop-filter:blur(24px);
-  box-shadow:
-    0 0 0 1px rgba(124,58,237,.1),
-    0 0 60px rgba(124,58,237,.2),
-    0 30px 80px rgba(0,0,0,.7);
+  box-shadow:0 0 0 1px rgba(124,58,237,.1),0 0 60px rgba(124,58,237,.2),0 30px 80px rgba(0,0,0,.7);
   animation:cardIn .6s cubic-bezier(.22,.68,0,1.2) both;
 }
 @keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
-
 .hud{position:absolute;width:20px;height:20px;pointer-events:none;}
 .hud::before,.hud::after{content:'';position:absolute;background:var(--cyan);opacity:.55;}
 .hud::before{width:2px;height:12px;top:0;left:0} .hud::after{width:12px;height:2px;top:0;left:0}
 .hud.tl{top:12px;left:12px} .hud.tr{top:12px;right:12px;transform:scaleX(-1)}
 .hud.bl{bottom:12px;left:12px;transform:scaleY(-1)} .hud.br{bottom:12px;right:12px;transform:scale(-1)}
-
 .login-card::before{
   content:'';position:absolute;inset:0;border-radius:24px;pointer-events:none;z-index:0;
   background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(124,58,237,.018) 3px,rgba(124,58,237,.018) 4px);
 }
 .login-card > * { position:relative; z-index:1; }
-
 .logo-wrap { margin-bottom:18px; }
 .logo {
   font-family:'Orbitron',sans-serif;
@@ -82,61 +64,47 @@ html, body {
 }
 .logo-sub {
   font-size:clamp(.56rem,2vw,.68rem); letter-spacing:2.5px; text-transform:uppercase;
-  color:#67e8f9; font-weight:600; margin-top:4px;
-  text-shadow:0 0 14px rgba(6,182,212,.9);
+  color:#67e8f9; font-weight:600; margin-top:4px; text-shadow:0 0 14px rgba(6,182,212,.9);
 }
-
 .status-pod {
   display:inline-flex; align-items:center; gap:6px;
   background:rgba(6,182,212,.08); border:1px solid rgba(6,182,212,.3); border-radius:30px;
   padding:4px 12px; font-family:'Orbitron',sans-serif;
-  font-size:.5rem; letter-spacing:1.5px; color:#67e8f9; text-transform:uppercase;
-  margin-bottom:20px;
+  font-size:.5rem; letter-spacing:1.5px; color:#67e8f9; text-transform:uppercase; margin-bottom:20px;
 }
 .orbit-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:oPulse 1.7s ease-in-out infinite;flex-shrink:0;}
 @keyframes oPulse{0%,100%{box-shadow:0 0 5px var(--cyan)}50%{box-shadow:0 0 12px var(--cyan);transform:scale(1.4)}}
-
 .divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.4),rgba(6,182,212,.4),transparent);margin-bottom:22px;}
-
 .form-group { margin-bottom:18px; text-align:left; }
 .field-label {
   font-size:.58rem; letter-spacing:2px; text-transform:uppercase;
-  color:#a78bfa; font-weight:700; font-family:'Orbitron',sans-serif;
-  display:block; margin-bottom:7px;
+  color:#a78bfa; font-weight:700; font-family:'Orbitron',sans-serif; display:block; margin-bottom:7px;
 }
-
 input[type="text"] {
-  width:100%; padding:15px 18px;
-  background:rgba(255,255,255,.04);
-  border:1.5px solid rgba(124,58,237,.35);
-  border-radius:13px; color:#fff;
-  font-family:'Orbitron',sans-serif;
-  font-size:clamp(1rem,3.5vw,1.25rem);
+  width:100%; padding:15px 18px; background:rgba(255,255,255,.04);
+  border:1.5px solid rgba(124,58,237,.35); border-radius:13px; color:#fff;
+  font-family:'Orbitron',sans-serif; font-size:clamp(1rem,3.5vw,1.25rem);
   text-align:center; letter-spacing:4px; text-transform:uppercase;
   transition:border-color .2s, box-shadow .2s, background .2s;
   -webkit-user-select:text; user-select:text;
 }
 input[type="text"]:focus {
-  outline:none; border-color:var(--cyan);
-  background:rgba(6,182,212,.06);
+  outline:none; border-color:var(--cyan); background:rgba(6,182,212,.06);
   box-shadow:0 0 20px rgba(6,182,212,.22);
 }
 input[type="text"]::placeholder { color:rgba(200,210,255,.25); font-size:.75rem; letter-spacing:2px; }
-
 .connect-btn {
   width:100%; padding:16px; border:none; border-radius:13px; cursor:pointer;
   font-family:'Orbitron',sans-serif; font-size:clamp(.75rem,2.8vw,.9rem);
   font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#fff;
   background:linear-gradient(118deg,#6d28d9,#7c3aed 38%,#4f46e5 68%,#06b6d4);
   box-shadow:0 4px 28px rgba(124,58,237,.55),0 1px 0 rgba(255,255,255,.1) inset;
-  transition:all .22s ease;
-  animation:heroAura 3s ease-in-out infinite;
+  transition:all .22s ease; animation:heroAura 3s ease-in-out infinite;
 }
 @keyframes heroAura{0%,100%{box-shadow:0 4px 28px rgba(124,58,237,.5)}50%{box-shadow:0 6px 44px rgba(124,58,237,.75),0 0 70px rgba(124,58,237,.2)}}
 .connect-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 44px rgba(124,58,237,.72);}
 .connect-btn:active:not(:disabled){transform:scale(.97);}
 .connect-btn:disabled{opacity:.6;cursor:not-allowed;animation:none;}
-
 .recovery-box {
   margin-top:14px; padding:12px 16px;
   background:rgba(240,147,251,.07); border:1px dashed rgba(240,147,251,.32);
@@ -149,22 +117,17 @@ input[type="text"]::placeholder { color:rgba(200,210,255,.25); font-size:.75rem;
   color:#f093fb; text-decoration:underline; transition:color .2s;
 }
 .recovery-btn:hover{color:#ff6ec7;}
-
 .status-msg {
   margin-top:14px; padding:11px 14px; border-radius:11px;
   font-size:.8rem; font-weight:600; letter-spacing:.3px; display:none;
-  animation:fadeInUp .3s ease both;
-  -webkit-user-select:text; user-select:text;
+  animation:fadeInUp .3s ease both; -webkit-user-select:text; user-select:text;
 }
 @keyframes fadeInUp{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
-
 .help-link {
-  display:inline-block; margin-top:16px;
-  font-size:.72rem; letter-spacing:.5px;
+  display:inline-block; margin-top:16px; font-size:.72rem; letter-spacing:.5px;
   color:var(--muted); text-decoration:none; transition:color .2s;
 }
 .help-link:hover{color:var(--cyan);}
-
 .whatsapp-btn {
   margin-top:14px; display:flex; align-items:center; justify-content:center; gap:9px;
   background:rgba(37,211,102,.1); border:1.5px solid rgba(37,211,102,.4);
@@ -174,10 +137,8 @@ input[type="text"]::placeholder { color:rgba(200,210,255,.25); font-size:.75rem;
 }
 .whatsapp-btn:hover{background:rgba(37,211,102,.2);border-color:rgba(37,211,102,.65);box-shadow:0 0 20px rgba(37,211,102,.2);transform:translateY(-2px);}
 .whatsapp-btn span{font-size:1.1rem;}
-
 .success-checkmark{display:inline-block;animation:scaleIn .3s ease-in-out;}
 @keyframes scaleIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
-
 .card-footer { margin-top:18px; padding-top:14px; border-top:1px solid rgba(124,58,237,.18); }
 .card-footer span { font-size:.56rem; color:rgba(167,139,250,.4); letter-spacing:.5px; font-family:'Orbitron',sans-serif; }
 </style>
@@ -192,115 +153,82 @@ input[type="text"]::placeholder { color:rgba(200,210,255,.25); font-size:.75rem;
 <div class="login-card">
   <div class="hud tl"></div><div class="hud tr"></div>
   <div class="hud bl"></div><div class="hud br"></div>
-
   <div class="logo-wrap">
     <div class="logo">MOBILE HUB</div>
     <div class="logo-sub">Internet Access Portal</div>
   </div>
-
   <div class="status-pod"><div class="orbit-dot"></div>Hotspot Central · Connected</div>
-
   <div class="divider"></div>
-
   <div class="form-group">
     <label class="field-label">Voucher Code</label>
-    <input
-      type="text"
-      id="voucherCode"
-      placeholder="ENTER CODE"
-      autocomplete="off"
-      maxlength="50"
-    >
+    <input type="text" id="voucherCode" placeholder="ENTER CODE" autocomplete="off" maxlength="50">
   </div>
-
   <button onclick="connectWiFi()" class="connect-btn" id="loginBtn">⚡ CONNECT NOW</button>
-
   <div id="recoverySection" class="recovery-box">
     <p>Found a saved voucher from <span id="savedDate" style="color:#f093fb;"></span></p>
     <button onclick="restoreVoucher()" class="recovery-btn">↩ Restore Code Automatically</button>
   </div>
-
   <div id="status" class="status-msg"></div>
-
   <a href="index.html" class="help-link">✦ Need a voucher? Buy one here.</a>
-
   <a href="https://wa.me/256771999302?text=Hello%20Mobile%20Hub,%20I%20am%20having%20trouble%20with%20my%20WiFi%20voucher." class="whatsapp-btn">
     <span>💬</span> Chat with Support on WhatsApp
   </a>
-
-  <div class="card-footer">
-    <span>✦ Mobile Hub Uganda · Fast · Reliable · Always On ✦</span>
-  </div>
+  <div class="card-footer"><span>✦ Mobile Hub Uganda · Fast · Reliable · Always On ✦</span></div>
 </div>
 
 <script>
-// ── STATE: Captured once on page load, reused on connect ────────────
-var _mac       = 'unknown';
-var _loginUrl  = 'http://10.0.0.1/login';  // fallback, overridden below
+var _mac      = 'unknown';
+var _loginUrl = 'http://10.0.0.1/login';
 
 console.log('[Login] Page loaded — URL:', window.location.href);
 
-// ── ON LOAD ─────────────────────────────────────────────────────────
 window.onload = function() {
     var params = new URLSearchParams(window.location.search);
 
-    // Log ALL params MikroTik passes so we know the exact names
     console.log('[Login] URL params received:');
     var hasParams = false;
     for (var pair of params.entries()) {
         console.log('  ', pair[0], '=', pair[1]);
         hasParams = true;
     }
-    if (!hasParams) console.warn('[Login] No URL params — page may not have been opened via MikroTik redirect');
+    if (!hasParams) console.warn('[Login] No URL params — not via MikroTik redirect');
 
-    // ── FIX 1: Capture MAC from URL and persist it ──────────────────
-    // MikroTik passes MAC as "mac" when redirecting to external login page
+    // MAC capture
     var macFromUrl =
-        params.get('mac')        ||
-        params.get('MAC')        ||
-        params.get('client-mac') ||
-        params.get('chap-id')    ||
-        null;
+        params.get('mac') || params.get('MAC') ||
+        params.get('client-mac') || params.get('chap-id') || null;
 
     if (macFromUrl) {
         _mac = macFromUrl;
         localStorage.setItem('client_mac', macFromUrl);
-        console.log('[Login] ✅ MAC captured from URL:', _mac);
+        console.log('[Login] ✅ MAC from URL:', _mac);
     } else {
-        // Try localStorage (device reconnecting — URL params gone)
         var savedMac = localStorage.getItem('client_mac');
         if (savedMac && savedMac !== 'unknown') {
             _mac = savedMac;
-            console.log('[Login] MAC restored from localStorage:', _mac);
+            console.log('[Login] MAC from localStorage:', _mac);
         } else {
-            console.warn('[Login] ⚠️ MAC not found. Device may not have come through MikroTik redirect.');
+            console.warn('[Login] ⚠️ MAC not found.');
         }
     }
 
-    // ── FIX 2: Capture the correct MikroTik login URL from params ───
-    // MikroTik passes "link-login" (the URL to POST credentials to)
-    // This is the correct endpoint — NOT a hardcoded IP
-    var linkLogin =
-        params.get('link-login')      ||
-        params.get('link-login-only') ||
-        null;
-
+    // MikroTik login URL capture
+    var linkLogin = params.get('link-login') || params.get('link-login-only') || null;
     if (linkLogin) {
         _loginUrl = linkLogin;
         localStorage.setItem('mikrotik_login_url', linkLogin);
-        console.log('[Login] ✅ MikroTik login URL captured:', _loginUrl);
+        console.log('[Login] ✅ MikroTik login URL:', _loginUrl);
     } else {
-        // Try localStorage for reconnections
         var savedUrl = localStorage.getItem('mikrotik_login_url');
         if (savedUrl) {
             _loginUrl = savedUrl;
             console.log('[Login] MikroTik login URL from localStorage:', _loginUrl);
         } else {
-            console.warn('[Login] ⚠️ No link-login param — using fallback IP. May not work on all routers.');
+            console.warn('[Login] ⚠️ No link-login param — using fallback.');
         }
     }
 
-    // ── Voucher code auto-fill ───────────────────────────────────────
+    // Voucher code auto-fill
     var codeFromUrl = params.get('voucher');
     var savedCode   = localStorage.getItem('last_voucher');
     var savedDate   = localStorage.getItem('voucher_date');
@@ -314,7 +242,6 @@ window.onload = function() {
         document.getElementById('savedDate').innerText = dateStr;
     }
 
-    // Also capture "dst" (original destination URL) for post-login redirect
     var dst = params.get('dst') || '';
     if (dst) localStorage.setItem('mikrotik_dst', dst);
 };
@@ -329,15 +256,12 @@ function restoreVoucher() {
     }
 }
 
-// ── MAIN CONNECT FUNCTION ───────────────────────────────────────────
 async function connectWiFi() {
     var code = document.getElementById('voucherCode').value.trim().toUpperCase();
     var btn  = document.getElementById('loginBtn');
+    var mac  = _mac;
 
-    // Use the MAC captured at page load
-    var mac = _mac;
-
-    console.log('[Login] Attempting login — code:', code, '| mac:', mac, '| loginUrl:', _loginUrl);
+    console.log('[Login] Attempting — code:', code, '| mac:', mac, '| loginUrl:', _loginUrl);
 
     if (!code) {
         showStatus('⚠️ Please enter a voucher code', '#ffa502');
@@ -369,29 +293,51 @@ async function connectWiFi() {
             return;
         }
 
-        // ✅ Valid — save and submit to MikroTik
+        // ── REMAINING TIME CALCULATION ───────────────────────────────
+        // validate.js returns expires_at as "YYYY-MM-DD HH:MM:SS" UTC
+        // We convert this to seconds remaining and pass it to MikroTik
+        // as session-timeout so the client gets ONLY their remaining time
+        // — not a fresh full duration on every reconnect
+        var remainingSeconds = 0;
+        if (data.expires_at) {
+            var expiryDate   = new Date(data.expires_at.replace(' ', 'T') + 'Z');
+            remainingSeconds = Math.floor((expiryDate.getTime() - Date.now()) / 1000);
+            if (remainingSeconds < 0) remainingSeconds = 0;
+            var mins = Math.floor(remainingSeconds / 60);
+            var secs = remainingSeconds % 60;
+            console.log('[Login] Time remaining:', remainingSeconds + 's (' + mins + 'm ' + secs + 's)');
+        }
+
         localStorage.setItem('last_voucher', code);
         localStorage.setItem('voucher_date', new Date().toLocaleString());
 
         showStatus(
-            '<span class="success-checkmark">✅</span> Voucher verified! Connecting to galaxy...',
+            '<span class="success-checkmark">✅</span> Voucher verified! Connecting...',
             '#4ecdc4'
         );
 
         setTimeout(function() {
-            // ── FIX 3: Use the captured _loginUrl, not hardcoded IP ──
-            var form = document.createElement('form');
+            var form    = document.createElement('form');
             form.method = 'POST';
             form.action = _loginUrl;
 
-            // MikroTik hotspot login requires: username, password, dst
-            var dst = localStorage.getItem('mikrotik_dst') || '';
-
-            [
+            var dst    = localStorage.getItem('mikrotik_dst') || '';
+            var fields = [
                 ['username', code],
                 ['password', code],
                 ['dst',      dst]
-            ].forEach(function(pair) {
+            ];
+
+            // Pass remaining seconds to MikroTik — this is the key:
+            // First login  → full duration (e.g. 10800s for 3h)
+            // Reconnection → whatever is left (e.g. 5400s = 1h 30m remaining)
+            // MikroTik disconnects the client at exactly the right moment
+            if (remainingSeconds > 0) {
+                fields.push(['session-timeout', String(remainingSeconds)]);
+                console.log('[Login] Passing session-timeout:', remainingSeconds + 's to MikroTik');
+            }
+
+            fields.forEach(function(pair) {
                 var input   = document.createElement('input');
                 input.type  = 'hidden';
                 input.name  = pair[0];
@@ -412,17 +358,15 @@ async function connectWiFi() {
     }
 }
 
-// ── UI HELPER ───────────────────────────────────────────────────────
 function showStatus(text, color) {
-    var el = document.getElementById('status');
-    el.innerHTML        = text;
+    var el          = document.getElementById('status');
+    el.innerHTML    = text;
     el.style.display    = 'block';
     el.style.color      = color;
     el.style.border     = '1px solid ' + color;
     el.style.background = color + '15';
 }
 
-// Enter key support
 document.getElementById('voucherCode').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') connectWiFi();
 });
