@@ -7,7 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
--webkit-user-select: text; user-select: text;
 
 :root {
   --cyan:#06b6d4; --violet:#7c3aed; --white:#f0f4ff;
@@ -235,64 +234,93 @@ input[type="text"]::placeholder { color:rgba(200,210,255,.25); font-size:.75rem;
 </div>
 
 <script>
+// ── STATE: Captured once on page load, reused on connect ────────────
+var _mac       = 'unknown';
+var _loginUrl  = 'http://10.0.0.1/login';  // fallback, overridden below
+
 console.log('[Login] Page loaded — URL:', window.location.href);
-
-// ── MAC EXTRACTION ──────────────────────────────────────────────────
-// MikroTik passes MAC in URL when redirecting to external login page
-// Try multiple possible parameter names MikroTik uses
-function getMac() {
-    const params = new URLSearchParams(window.location.search);
-
-    // MikroTik uses these URL parameter names
-    const macFromUrl =
-        params.get('mac')      ||  // most common
-        params.get('MAC')      ||
-        params.get('client-mac') ||
-        params.get('chap-id');     // sometimes used
-
-    // Also check localStorage for previously stored MAC
-    const savedMac = localStorage.getItem('client_mac');
-
-    const mac = macFromUrl || savedMac || 'unknown';
-
-    // Save MAC to localStorage so it persists on reconnection
-    if (macFromUrl && macFromUrl !== 'unknown') {
-        localStorage.setItem('client_mac', macFromUrl);
-        console.log('[Login] MAC from URL:', macFromUrl);
-    } else if (savedMac) {
-        console.log('[Login] MAC from localStorage:', savedMac);
-    } else {
-        console.warn('[Login] MAC not found in URL or localStorage');
-    }
-
-    return mac;
-}
 
 // ── ON LOAD ─────────────────────────────────────────────────────────
 window.onload = function() {
-    const params    = new URLSearchParams(window.location.search);
-    const codeFromUrl = params.get('voucher');
-    const savedCode = localStorage.getItem('last_voucher');
-    const savedDate = localStorage.getItem('voucher_date');
+    var params = new URLSearchParams(window.location.search);
 
-    // Log all URL params so we can see what MikroTik is passing
-    console.log('[Login] URL params:');
-    for (const [key, val] of params.entries()) {
-        console.log('  ', key, '=', val);
+    // Log ALL params MikroTik passes so we know the exact names
+    console.log('[Login] URL params received:');
+    var hasParams = false;
+    for (var pair of params.entries()) {
+        console.log('  ', pair[0], '=', pair[1]);
+        hasParams = true;
     }
+    if (!hasParams) console.warn('[Login] No URL params — page may not have been opened via MikroTik redirect');
+
+    // ── FIX 1: Capture MAC from URL and persist it ──────────────────
+    // MikroTik passes MAC as "mac" when redirecting to external login page
+    var macFromUrl =
+        params.get('mac')        ||
+        params.get('MAC')        ||
+        params.get('client-mac') ||
+        params.get('chap-id')    ||
+        null;
+
+    if (macFromUrl) {
+        _mac = macFromUrl;
+        localStorage.setItem('client_mac', macFromUrl);
+        console.log('[Login] ✅ MAC captured from URL:', _mac);
+    } else {
+        // Try localStorage (device reconnecting — URL params gone)
+        var savedMac = localStorage.getItem('client_mac');
+        if (savedMac && savedMac !== 'unknown') {
+            _mac = savedMac;
+            console.log('[Login] MAC restored from localStorage:', _mac);
+        } else {
+            console.warn('[Login] ⚠️ MAC not found. Device may not have come through MikroTik redirect.');
+        }
+    }
+
+    // ── FIX 2: Capture the correct MikroTik login URL from params ───
+    // MikroTik passes "link-login" (the URL to POST credentials to)
+    // This is the correct endpoint — NOT a hardcoded IP
+    var linkLogin =
+        params.get('link-login')      ||
+        params.get('link-login-only') ||
+        null;
+
+    if (linkLogin) {
+        _loginUrl = linkLogin;
+        localStorage.setItem('mikrotik_login_url', linkLogin);
+        console.log('[Login] ✅ MikroTik login URL captured:', _loginUrl);
+    } else {
+        // Try localStorage for reconnections
+        var savedUrl = localStorage.getItem('mikrotik_login_url');
+        if (savedUrl) {
+            _loginUrl = savedUrl;
+            console.log('[Login] MikroTik login URL from localStorage:', _loginUrl);
+        } else {
+            console.warn('[Login] ⚠️ No link-login param — using fallback IP. May not work on all routers.');
+        }
+    }
+
+    // ── Voucher code auto-fill ───────────────────────────────────────
+    var codeFromUrl = params.get('voucher');
+    var savedCode   = localStorage.getItem('last_voucher');
+    var savedDate   = localStorage.getItem('voucher_date');
 
     if (codeFromUrl) {
         document.getElementById('voucherCode').value = codeFromUrl;
         document.getElementById('voucherCode').focus();
     } else if (savedCode) {
         document.getElementById('recoverySection').style.display = 'block';
-        const dateStr = savedDate ? savedDate.split(',')[0] : 'recently';
+        var dateStr = savedDate ? savedDate.split(',')[0] : 'recently';
         document.getElementById('savedDate').innerText = dateStr;
     }
+
+    // Also capture "dst" (original destination URL) for post-login redirect
+    var dst = params.get('dst') || '';
+    if (dst) localStorage.setItem('mikrotik_dst', dst);
 };
 
 function restoreVoucher() {
-    const savedCode = localStorage.getItem('last_voucher');
+    var savedCode = localStorage.getItem('last_voucher');
     if (savedCode) {
         document.getElementById('voucherCode').value = savedCode;
         document.getElementById('voucherCode').focus();
@@ -303,11 +331,13 @@ function restoreVoucher() {
 
 // ── MAIN CONNECT FUNCTION ───────────────────────────────────────────
 async function connectWiFi() {
-    const code = document.getElementById('voucherCode').value.trim().toUpperCase();
-    const btn  = document.getElementById('loginBtn');
-    const mac  = getMac();
+    var code = document.getElementById('voucherCode').value.trim().toUpperCase();
+    var btn  = document.getElementById('loginBtn');
 
-    console.log('[Login] Attempting login — code:', code, '| mac:', mac);
+    // Use the MAC captured at page load
+    var mac = _mac;
+
+    console.log('[Login] Attempting login — code:', code, '| mac:', mac, '| loginUrl:', _loginUrl);
 
     if (!code) {
         showStatus('⚠️ Please enter a voucher code', '#ffa502');
@@ -320,21 +350,21 @@ async function connectWiFi() {
     showStatus('⏳ Verifying voucher...', '#67e8f9');
 
     try {
-        const res = await fetch(
+        var res = await fetch(
             'https://mobilehubuganda-github-io.pages.dev/api/voucher/validate',
             {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ code, mac })
+                body:    JSON.stringify({ code: code, mac: mac })
             }
         );
 
-        const data = await res.json();
+        var data = await res.json();
         console.log('[Login] Validate response:', JSON.stringify(data));
 
         if (!data.success) {
             showStatus('⛔ ' + (data.error || 'Invalid voucher code'), '#f87171');
-            btn.disabled = false;
+            btn.disabled  = false;
             btn.innerHTML = '⚡ CONNECT NOW';
             return;
         }
@@ -348,25 +378,29 @@ async function connectWiFi() {
             '#4ecdc4'
         );
 
-        setTimeout(() => {
-            const form = document.createElement('form');
+        setTimeout(function() {
+            // ── FIX 3: Use the captured _loginUrl, not hardcoded IP ──
+            var form = document.createElement('form');
             form.method = 'POST';
-            form.action = 'http://10.0.0.1/login';
+            form.action = _loginUrl;
+
+            // MikroTik hotspot login requires: username, password, dst
+            var dst = localStorage.getItem('mikrotik_dst') || '';
 
             [
                 ['username', code],
                 ['password', code],
-                ['dst',      '']
-            ].forEach(([name, value]) => {
-                const input = document.createElement('input');
+                ['dst',      dst]
+            ].forEach(function(pair) {
+                var input   = document.createElement('input');
                 input.type  = 'hidden';
-                input.name  = name;
-                input.value = value;
+                input.name  = pair[0];
+                input.value = pair[1];
                 form.appendChild(input);
             });
 
             document.body.appendChild(form);
-            console.log('[Login] Submitting to MikroTik...');
+            console.log('[Login] Submitting to MikroTik at:', _loginUrl);
             form.submit();
         }, 1000);
 
@@ -380,28 +414,28 @@ async function connectWiFi() {
 
 // ── UI HELPER ───────────────────────────────────────────────────────
 function showStatus(text, color) {
-    const el = document.getElementById('status');
-    el.innerHTML   = text;
+    var el = document.getElementById('status');
+    el.innerHTML        = text;
     el.style.display    = 'block';
     el.style.color      = color;
-    el.style.border     = `1px solid ${color}`;
-    el.style.background = `${color}15`;
+    el.style.border     = '1px solid ' + color;
+    el.style.background = color + '15';
 }
 
 // Enter key support
-document.getElementById('voucherCode').addEventListener('keypress', e => {
+document.getElementById('voucherCode').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') connectWiFi();
 });
 
 /* ═══ GALAXY CANVAS ═══ */
 (function(){
-  const cv=document.getElementById('galaxy'),ctx=cv.getContext('2d');
-  let W,H,stars=[],dust=[];
+  var cv=document.getElementById('galaxy'),ctx=cv.getContext('2d');
+  var W,H,stars=[],dust=[];
   function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
   function mkStars(){
-    stars=[];const n=Math.floor(W*H/1600);
-    for(let i=0;i<n;i++){
-      const big=Math.random()>.65;
+    stars=[];var n=Math.floor(W*H/1600);
+    for(var i=0;i<n;i++){
+      var big=Math.random()>.65;
       stars.push({x:Math.random()*W,y:Math.random()*H,
         r:big?Math.random()*1.9+.9:Math.random()*.75+.15,
         a:Math.random(),da:(Math.random()*.005+.001)*(Math.random()<.5?1:-1),
@@ -411,7 +445,7 @@ document.getElementById('voucherCode').addEventListener('keypress', e => {
   }
   function mkDust(){
     dust=[];
-    for(let i=0;i<7;i++)dust.push({
+    for(var i=0;i<7;i++)dust.push({
       x:Math.random()*W,y:Math.random()*H,r:70+Math.random()*130,
       a:.028+Math.random()*.045,
       col:['rgba(124,58,237,','rgba(6,182,212,','rgba(236,72,153,','rgba(79,70,229,'][i%4],
@@ -419,18 +453,18 @@ document.getElementById('voucherCode').addEventListener('keypress', e => {
   }
   function draw(){
     ctx.clearRect(0,0,W,H);
-    const g=ctx.createRadialGradient(W*.5,H*.38,0,W*.5,H*.38,Math.max(W,H)*.75);
+    var g=ctx.createRadialGradient(W*.5,H*.38,0,W*.5,H*.38,Math.max(W,H)*.75);
     g.addColorStop(0,'rgba(18,8,48,.95)');g.addColorStop(1,'rgba(2,0,8,1)');
     ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-    dust.forEach(d=>{
+    dust.forEach(function(d){
       d.x+=d.dx;d.y+=d.dy;
       if(d.x<-d.r)d.x=W+d.r;if(d.x>W+d.r)d.x=-d.r;
       if(d.y<-d.r)d.y=H+d.r;if(d.y>H+d.r)d.y=-d.r;
-      const ng=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r);
+      var ng=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r);
       ng.addColorStop(0,d.col+d.a+')');ng.addColorStop(1,d.col+'0)');
       ctx.fillStyle=ng;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fill();
     });
-    stars.forEach(s=>{
+    stars.forEach(function(s){
       s.a+=s.da;if(s.a>1||s.a<0)s.da*=-1;
       s.y-=s.vy;if(s.y<-2){s.y=H+2;s.x=Math.random()*W;}
       ctx.globalAlpha=Math.max(0,Math.min(1,s.a));
@@ -440,30 +474,9 @@ document.getElementById('voucherCode').addEventListener('keypress', e => {
     });
     ctx.globalAlpha=1;requestAnimationFrame(draw);
   }
-  window.addEventListener('resize',()=>{resize();mkStars();mkDust();});
+  window.addEventListener('resize',function(){resize();mkStars();mkDust();});
   resize();mkStars();mkDust();draw();
 })();
 </script>
 </body>
 </html>
-```
-
----
-
-## Key Changes
-
-| Change | What It Does |
-|--------|-------------|
-| `getMac()` function | Checks URL params `mac`, `MAC`, `client-mac`, `chap-id` |
-| `localStorage` MAC saving | Remembers MAC for reconnections |
-| URL params logging | Shows all params MikroTik passes in console |
-| Cleaner form submission | Tidier code using array loop |
-
----
-
-## After Deploying
-
-Open the login page from a hotspot connected device, press F12 → Console and look for:
-```
-[Login] URL params:
-  mac = XX:XX:XX:XX:XX:XX
