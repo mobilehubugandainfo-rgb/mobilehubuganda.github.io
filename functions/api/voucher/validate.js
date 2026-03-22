@@ -117,7 +117,7 @@ export async function onRequestPost({ request, env }) {
 
     // ── 3. Calculate expiry ────────────────────────────────────────
     const durations = {
-      'p1':  3 * 60 * 60 * 1000,       // 3 hours
+      'p1':  3 * 60 * 1000,       // 5 minutes
       'p2': 24 * 60 * 60 * 1000,       // 1 day
       'p3':  7 * 24 * 60 * 60 * 1000,  // 1 week
       'p4': 30 * 24 * 60 * 60 * 1000   // 30 days
