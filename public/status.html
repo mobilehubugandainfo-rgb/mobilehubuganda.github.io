@@ -63,7 +63,6 @@ html, body {
 }
 .divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.4),rgba(6,182,212,.4),transparent);margin:14px 0;}
 
-/* Timer ring */
 .timer-wrap { position:relative; width:170px; height:170px; margin:0 auto 16px; }
 .timer-svg { transform:rotate(-90deg); }
 .timer-track { fill:none; stroke:rgba(124,58,237,.2); stroke-width:10; }
@@ -80,7 +79,6 @@ html, body {
 .timer-label { font-size:.52rem; letter-spacing:2px; color:#a78bfa; text-transform:uppercase; font-family:'Orbitron',sans-serif; }
 .timer-sub { font-size:.6rem; color:var(--muted); letter-spacing:.5px; }
 
-/* Expiry strip */
 .expiry-strip {
   display:flex; align-items:center; justify-content:space-between;
   background:rgba(124,58,237,.1); border:1px solid rgba(124,58,237,.3);
@@ -90,7 +88,6 @@ html, body {
 .exp-label { font-size:.52rem; letter-spacing:1.5px; text-transform:uppercase; color:#a78bfa; font-family:'Orbitron',sans-serif; margin-bottom:3px; }
 .exp-val { font-family:'Orbitron',sans-serif; font-size:.82rem; font-weight:700; color:#67e8f9; letter-spacing:1.5px; }
 
-/* Voucher code display */
 .voucher-display {
   background:rgba(6,182,212,.06); border:1px dashed rgba(6,182,212,.3);
   border-radius:10px; padding:8px 14px; margin-bottom:14px;
@@ -99,7 +96,6 @@ html, body {
 }
 .voucher-label { font-size:.5rem; color:#a78bfa; letter-spacing:2px; text-transform:uppercase; margin-bottom:3px; }
 
-/* Stats */
 .stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
 .stat-box {
   background:rgba(255,255,255,.04); border:1px solid rgba(124,58,237,.22);
@@ -109,7 +105,6 @@ html, body {
 .stat-lbl { font-size:.52rem; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; }
 .stat-icon { font-size:1.1rem; margin-bottom:5px; }
 
-/* Buttons */
 .connect-btn {
   display:block; width:100%; padding:14px; border-radius:13px; border:none; cursor:pointer;
   font-family:'Orbitron',sans-serif; font-size:clamp(.65rem,2.3vw,.76rem);
@@ -139,7 +134,6 @@ html, body {
 }
 .wa-btn:hover{background:rgba(34,197,94,.18);transform:translateY(-2px);}
 
-/* States */
 .loading-state { padding:20px 0; }
 .loading-dots{display:inline-block;}
 .loading-dots span{animation:blink 1.4s infinite both;display:inline-block;}
@@ -261,149 +255,147 @@ html, body {
 <script>
 var API = 'https://mobilehubuganda-github-io.pages.dev';
 
+// ── Keep in sync with activate.js PLAN_DURATIONS ─────────────
 var packageNames = {
-    p1: 'Quick Surf · 3hrs',
-    p2: 'Day Pass · 24hrs',
-    p3: 'Weekly · 7 days',
-    p4: 'Monthly · 30 days'
-};
-
-var packageDurations = {
-    p1: 3 * 60 * 60,
-    p2: 24 * 60 * 60,
-    p3: 7 * 24 * 60 * 60,
-    p4: 30 * 24 * 60 * 60
+  p1: 'Quick Surf · 3hrs',
+  p2: 'Standard · 8hrs',
+  p3: 'Day Pass · 24hrs'
 };
 
 function pad(n) { return n < 10 ? '0' + n : String(n); }
 
 function fmtTime(secs) {
-    if (secs <= 0) return '00:00';
-    var h = Math.floor(secs / 3600);
-    var m = Math.floor((secs % 3600) / 60);
-    var s = secs % 60;
-    if (h > 0) return pad(h) + ':' + pad(m) + ':' + pad(s);
-    return pad(m) + ':' + pad(s);
+  if (secs <= 0) return '00:00';
+  var h = Math.floor(secs / 3600);
+  var m = Math.floor((secs % 3600) / 60);
+  var s = secs % 60;
+  if (h > 0) return pad(h) + ':' + pad(m) + ':' + pad(s);
+  return pad(m) + ':' + pad(s);
 }
 
 function setRing(fraction) {
-    var bar = document.getElementById('timerBar');
-    var offset = 471 - (Math.max(0, Math.min(1, fraction)) * 471);
-    bar.style.strokeDashoffset = offset;
-    if (fraction > 0.5)       bar.setAttribute('stroke', '#06b6d4');
-    else if (fraction > 0.25) bar.setAttribute('stroke', '#fbbf24');
-    else                      bar.setAttribute('stroke', '#f43f5e');
+  var bar = document.getElementById('timerBar');
+  var offset = 471 - (Math.max(0, Math.min(1, fraction)) * 471);
+  bar.style.strokeDashoffset = offset;
+  if (fraction > 0.5)       bar.setAttribute('stroke', '#06b6d4');
+  else if (fraction > 0.25) bar.setAttribute('stroke', '#fbbf24');
+  else                      bar.setAttribute('stroke', '#f43f5e');
 }
 
 function updateSub(secs) {
-    var sub = document.getElementById('timerSub');
-    if (secs > 3600) {
-        sub.textContent = (secs / 3600).toFixed(1) + ' hours left';
-        sub.style.color = '';
-    } else if (secs > 60) {
-        sub.textContent = Math.ceil(secs / 60) + ' minutes left';
-        sub.style.color = secs < 300 ? '#fbbf24' : '';
-    } else {
-        sub.textContent = 'Less than a minute!';
-        sub.style.color = '#f43f5e';
-    }
+  var sub = document.getElementById('timerSub');
+  if (secs > 3600) {
+    sub.textContent = (secs / 3600).toFixed(1) + ' hours left';
+    sub.style.color = '';
+  } else if (secs > 60) {
+    sub.textContent = Math.ceil(secs / 60) + ' minutes left';
+    sub.style.color = secs < 300 ? '#fbbf24' : '';
+  } else {
+    sub.textContent = 'Less than a minute!';
+    sub.style.color = '#f43f5e';
+  }
 }
 
 function showState(state) {
-    document.getElementById('loadingState').style.display   = state === 'loading'    ? 'block' : 'none';
-    document.getElementById('activeState').style.display    = state === 'active'     ? 'block' : 'none';
-    document.getElementById('expiredState').style.display   = state === 'expired'    ? 'block' : 'none';
-    document.getElementById('noVoucherState').style.display = state === 'no-voucher' ? 'block' : 'none';
+  document.getElementById('loadingState').style.display   = state === 'loading'    ? 'block' : 'none';
+  document.getElementById('activeState').style.display    = state === 'active'     ? 'block' : 'none';
+  document.getElementById('expiredState').style.display   = state === 'expired'    ? 'block' : 'none';
+  document.getElementById('noVoucherState').style.display = state === 'no-voucher' ? 'block' : 'none';
 }
 
 var countdownTimer = null;
 
 async function loadStatus() {
-    showState('loading');
+  showState('loading');
 
-    // Get voucher code from localStorage
-    var code = localStorage.getItem('last_voucher');
-    var mac  = localStorage.getItem('client_mac') || 'unknown';
+  // Read voucher code from localStorage (saved by login.html on connect)
+  var code = localStorage.getItem('last_voucher');
+  var mac  = localStorage.getItem('client_mac') || 'unknown';
 
-    if (!code) {
-        showState('no-voucher');
+  // Also check URL param (in case MikroTik passes it)
+  var params = new URLSearchParams(window.location.search);
+  var codeFromUrl = params.get('voucher');
+  if (codeFromUrl) {
+    code = codeFromUrl.toUpperCase();
+    localStorage.setItem('last_voucher', code);
+  }
+
+  if (!code) {
+    showState('no-voucher');
+    return;
+  }
+
+  try {
+    // ── Call /api/voucher/session — dedicated read-only endpoint ──
+    var res = await fetch(API + '/api/voucher/session', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ code: code, mac: mac })
+    });
+    var data = await res.json();
+
+    console.log('[Status] Session response:', JSON.stringify(data));
+
+    if (!data.success) {
+      // not_found, not_activated, mac_mismatch
+      showState('no-voucher');
+      return;
+    }
+
+    if (data.state === 'expired') {
+      showState('expired');
+      return;
+    }
+
+    // ── Active session — populate UI ──────────────────────────
+    showState('active');
+
+    var remainingSecs = data.remaining_secs;
+    var totalSecs     = data.total_secs;
+    var usedSecs      = data.used_secs;
+    var pkg           = data.package || 'p1';
+
+    // Expiry time in local time
+    var expiryDate  = new Date(data.expires_at.replace(' ', 'T') + 'Z');
+    var expiryLocal = expiryDate.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('expiryTime').textContent  = expiryLocal;
+    document.getElementById('packageVal').textContent  = packageNames[pkg] || pkg.toUpperCase();
+    document.getElementById('voucherDisplay').textContent = code;
+    document.getElementById('totalTime').textContent   = fmtTime(totalSecs);
+    document.getElementById('sessionAge').textContent  = fmtTime(usedSecs);
+
+    // Activated at — from DB (used_at), not localStorage
+    if (data.activated_at) {
+      var activatedDate = new Date(data.activated_at.replace(' ', 'T') + 'Z');
+      document.getElementById('usedAt').textContent =
+        activatedDate.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    }
+
+    // Ring + countdown
+    setRing(remainingSecs / totalSecs);
+    document.getElementById('timerVal').textContent = fmtTime(remainingSecs);
+    updateSub(remainingSecs);
+
+    if (countdownTimer) clearInterval(countdownTimer);
+    var secs = remainingSecs;
+    countdownTimer = setInterval(function() {
+      secs--;
+      if (secs <= 0) {
+        clearInterval(countdownTimer);
+        showState('expired');
         return;
-    }
+      }
+      document.getElementById('timerVal').textContent    = fmtTime(secs);
+      document.getElementById('sessionAge').textContent  = fmtTime(totalSecs - secs);
+      setRing(secs / totalSecs);
+      updateSub(secs);
+    }, 1000);
 
-    try {
-        var res = await fetch(API + '/api/voucher/validate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code: code, mac: mac })
-        });
-        var data = await res.json();
-
-        if (!data.success) {
-            // Voucher expired or invalid
-            showState('expired');
-            return;
-        }
-
-        // ── Active session ────────────────────────────────────────
-        showState('active');
-
-        var expiryDate   = new Date(data.expires_at.replace(' ', 'T') + 'Z');
-        var now          = new Date();
-        var remainingSecs = Math.max(0, Math.floor((expiryDate - now) / 1000));
-        var pkg          = (data.package || 'p1').toLowerCase();
-        var totalSecs    = packageDurations[pkg] || 300;
-        var usedSecs     = totalSecs - remainingSecs;
-
-        // Expiry time in local time
-        var expiryLocal  = expiryDate.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-        document.getElementById('expiryTime').textContent  = expiryLocal;
-        document.getElementById('packageVal').textContent  = packageNames[pkg] || pkg;
-        document.getElementById('voucherDisplay').textContent = code;
-        document.getElementById('totalTime').textContent   = fmtTime(totalSecs);
-        document.getElementById('sessionAge').textContent  = fmtTime(usedSecs);
-
-        // Activated at
-        var voucher_date = localStorage.getItem('voucher_date');
-        if (voucher_date) {
-            var activatedDate = new Date(voucher_date);
-            document.getElementById('usedAt').textContent =
-                activatedDate.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-        }
-
-        // Start ring and countdown
-        setRing(remainingSecs / totalSecs);
-        document.getElementById('timerVal').textContent = fmtTime(remainingSecs);
-        updateSub(remainingSecs);
-
-        if (countdownTimer) clearInterval(countdownTimer);
-        var secs = remainingSecs;
-        countdownTimer = setInterval(function() {
-            secs--;
-            if (secs <= 0) {
-                clearInterval(countdownTimer);
-                showState('expired');
-                return;
-            }
-            document.getElementById('timerVal').textContent = fmtTime(secs);
-            document.getElementById('sessionAge').textContent = fmtTime(totalSecs - secs);
-            setRing(secs / totalSecs);
-            updateSub(secs);
-        }, 1000);
-
-    } catch (err) {
-        console.error('Status error:', err);
-        showState('no-voucher');
-    }
+  } catch (err) {
+    console.error('[Status] Error:', err);
+    showState('no-voucher');
+  }
 }
-
-// Check URL params — if coming from MikroTik with voucher in URL
-(function() {
-    var params = new URLSearchParams(window.location.search);
-    var voucherFromUrl = params.get('voucher');
-    if (voucherFromUrl) {
-        localStorage.setItem('last_voucher', voucherFromUrl.toUpperCase());
-    }
-})();
 
 loadStatus();
 
