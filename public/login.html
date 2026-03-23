@@ -185,54 +185,32 @@ input[type="text"]::placeholder { color:rgba(200,210,255,.25); font-size:.75rem;
 <script>
 // ── STATE ────────────────────────────────────────────────────
 var _mac      = 'unknown';
-var _loginUrl = 'http://10.0.0.1/login';  // fallback — overridden from URL params
-
-console.log('[Login] Page loaded — URL:', window.location.href);
+var _loginUrl = 'http://10.0.0.1/login';
 
 window.onload = function() {
     var params = new URLSearchParams(window.location.search);
 
-    console.log('[Login] URL params:');
-    for (var pair of params.entries()) {
-        console.log('  ', pair[0], '=', pair[1]);
-    }
-
-    // ── MAC capture ──────────────────────────────────────────
-    var macFromUrl = params.get('mac') || params.get('MAC') ||
-                     params.get('client-mac') || params.get('chap-id') || null;
+    // MAC capture
+    var macFromUrl = params.get('mac') || params.get('MAC') || params.get('client-mac') || params.get('chap-id') || null;
     if (macFromUrl) {
         _mac = macFromUrl;
         localStorage.setItem('client_mac', macFromUrl);
-        console.log('[Login] MAC from URL:', _mac);
     } else {
         var savedMac = localStorage.getItem('client_mac');
-        if (savedMac && savedMac !== 'unknown') {
-            _mac = savedMac;
-            console.log('[Login] MAC from localStorage:', _mac);
-        }
+        if (savedMac && savedMac !== 'unknown') _mac = savedMac;
     }
 
-    // ── MikroTik login URL ───────────────────────────────────
+    // MikroTik login URL
     var linkLogin = params.get('link-login-only') || params.get('link-login') || null;
     if (linkLogin) {
         _loginUrl = linkLogin;
         localStorage.setItem('mikrotik_login_url', linkLogin);
-        console.log('[Login] MikroTik login URL from URL:', _loginUrl);
     } else {
         var savedUrl = localStorage.getItem('mikrotik_login_url');
-        if (savedUrl) {
-            _loginUrl = savedUrl;
-            console.log('[Login] MikroTik login URL from localStorage:', _loginUrl);
-        } else {
-            console.warn('[Login] No login URL found — using fallback 10.0.0.1');
-        }
+        if (savedUrl) _loginUrl = savedUrl;
     }
 
-    // ── Save dst (original destination) ─────────────────────
-    var dst = params.get('dst') || '';
-    if (dst) localStorage.setItem('mikrotik_dst', dst);
-
-    // ── Voucher code auto-fill ───────────────────────────────
+    // Voucher code auto-fill
     var codeFromUrl = params.get('voucher');
     var savedCode   = localStorage.getItem('last_voucher');
     var savedDate   = localStorage.getItem('voucher_date');
@@ -262,8 +240,6 @@ async function connectWiFi() {
     var btn  = document.getElementById('loginBtn');
     var mac  = _mac;
 
-    console.log('[Login] Connect — code:', code, '| mac:', mac, '| loginUrl:', _loginUrl);
-
     if (!code) {
         showStatus('⚠️ Please enter a voucher code', '#ffa502');
         document.getElementById('voucherCode').focus();
@@ -275,104 +251,69 @@ async function connectWiFi() {
     showStatus('⏳ Verifying voucher...', '#67e8f9');
 
     try {
-        // ── STEP 1: Validate ──────────────────────────────────────
-        // Checks the voucher exists, isn't expired, and MAC isn't locked to another device.
-        // Does NOT set expiry.
-        var validateRes = await fetch(
-            'https://mobilehubuganda-github-io.pages.dev/api/voucher/validate',
-            {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ code: code, mac: mac })
-            }
-        );
+        // STEP 1: Validate
+        var validateRes = await fetch('https://mobilehubuganda-github-io.pages.dev/api/voucher/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code, mac: mac })
+        });
 
         var validateData = await validateRes.json();
-        console.log('[Login] Validate response:', JSON.stringify(validateData));
-
         if (!validateData.success) {
             showStatus('⛔ ' + (validateData.error || 'Invalid voucher code'), '#f87171');
-            btn.disabled  = false;
+            btn.disabled = false;
             btn.innerHTML = '⚡ CONNECT NOW';
             return;
         }
 
-        // ── STEP 2: Activate ─────────────────────────────────────
-        // Sets expires_at = NOW + plan duration for the first time.
-        // On reconnection within the window this is a no-op and returns the existing expiry.
+        // STEP 2: Activate
         btn.textContent = 'ACTIVATING...';
         showStatus('⏳ Activating session...', '#67e8f9');
 
-        var activateRes = await fetch(
-            'https://mobilehubuganda-github-io.pages.dev/api/voucher/activate',
-            {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ code: code, mac: mac })
-            }
-        );
+        var activateRes = await fetch('https://mobilehubuganda-github-io.pages.dev/api/voucher/activate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code, mac: mac })
+        });
 
         var activateData = await activateRes.json();
-        console.log('[Login] Activate response:', JSON.stringify(activateData));
-
         if (!activateData.success) {
-            showStatus('⛔ ' + (activateData.error || 'Activation failed. Please try again.'), '#f87171');
-            btn.disabled  = false;
+            showStatus('⛔ ' + (activateData.error || 'Activation failed.'), '#f87171');
+            btn.disabled = false;
             btn.innerHTML = '⚡ CONNECT NOW';
             return;
         }
 
-        // ── STEP 3: Hand off to MikroTik ─────────────────────────
-        // Both steps succeeded — now let MikroTik grant internet access.
+        // STEP 3: Hand off to MikroTik
         localStorage.setItem('last_voucher', code);
         localStorage.setItem('voucher_date', new Date().toLocaleString());
 
-        showStatus(
-            '<span class="success-checkmark">✅</span> Voucher activated! Connecting...',
-            '#4ecdc4'
-        );
+        showStatus('<span class="success-checkmark">✅</span> Voucher activated! Connecting...', '#4ecdc4');
 
         setTimeout(function() {
-            var form    = document.createElement('form');
-            form.method = 'POST';
-            form.action = _loginUrl;
-
             var dst = 'https://mobilehubuganda-github-io.pages.dev/status.html';
+            var redirectUrl = _loginUrl + 
+                "?username=" + encodeURIComponent(code) + 
+                "&password=" + encodeURIComponent(code) + 
+                "&dst=" + encodeURIComponent(dst);
 
-            var fields = [
-                ['username', code],
-                ['password', code],
-                ['dst',      dst]
-            ];
-
-            fields.forEach(function(pair) {
-                var input   = document.createElement('input');
-                input.type  = 'hidden';
-                input.name  = pair[0];
-                input.value = pair[1];
-                form.appendChild(input);
-            });
-
-            document.body.appendChild(form);
-            console.log('[Login] Submitting to MikroTik:', _loginUrl, '→ dst:', dst);
-            form.submit();
-
+            window.location.href = redirectUrl; 
         }, 1000);
 
     } catch (err) {
         console.error('[Login] Fetch error:', err);
         showStatus('⚠️ Connection error. Please try again.', '#ffa502');
-        btn.disabled  = false;
+        btn.disabled = false;
         btn.innerHTML = '⚡ CONNECT NOW';
     }
 }
 
 function showStatus(text, color) {
     var el = document.getElementById('status');
-    el.innerHTML        = text;
-    el.style.display    = 'block';
-    el.style.color      = color;
-    el.style.border     = '1px solid ' + color;
+    el.innerHTML = text;
+    el.style.display = 'block';
+    el.style.color = color;
+    el.style.border = '1px solid ' + color;
     el.style.background = color + '15';
 }
 
