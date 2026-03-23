@@ -1,10 +1,21 @@
+// functions/api/voucher/activate.js
+// Called from login.html JUST BEFORE submitting credentials to MikroTik.
+// This is the moment the expiry clock starts — not at payment, not at validation.
+
+const PLAN_DURATIONS = {
+  p1: 3  * 60 * 60 * 1000,  // 3 hours
+  p2: 8  * 60 * 60 * 1000,  // 8 hours
+  p3: 24 * 60 * 60 * 1000,  // 24 hours
+};
+
+const jsonHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type'
+};
+
 export async function onRequestPost({ request, env }) {
-
-  const jsonHeaders = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*'
-  };
-
   try {
     const body = await request.json();
     const code = (body.code || '').trim().toUpperCase();
@@ -14,65 +25,103 @@ export async function onRequestPost({ request, env }) {
 
     if (!code) {
       return new Response(JSON.stringify({
-        success: false, error: 'Voucher code required'
+        success: false, error: 'Voucher code is required'
       }), { status: 400, headers: jsonHeaders });
     }
 
+    // ── Fetch voucher ─────────────────────────────────────────────
     const voucher = await env.DB.prepare(`
-      SELECT id, package_type, expires_at, mac_address
+      SELECT id, code, package_type, status, expires_at, mac_address
       FROM vouchers WHERE code = ?
     `).bind(code).first();
 
     if (!voucher) {
       return new Response(JSON.stringify({
-        success: false, error: 'Invalid voucher'
+        success: false, error: 'Voucher not found'
       }), { status: 200, headers: jsonHeaders });
     }
 
-    // ✅ Already activated — do nothing
+    // ── MAC mismatch — locked to a different device ───────────────
+    if (voucher.mac_address && voucher.mac_address !== 'unknown' && mac !== 'unknown') {
+      if (voucher.mac_address !== mac) {
+        console.warn('[ACTIVATE] ❌ MAC mismatch — locked to:', voucher.mac_address, '| tried:', mac);
+        return new Response(JSON.stringify({
+          success: false, error: 'This voucher is already active on another device.'
+        }), { status: 200, headers: jsonHeaders });
+      }
+    }
+
+    // ── Already activated — check if still within window ─────────
     if (voucher.expires_at) {
-      console.log('[ACTIVATE] ⚠️ Already active:', code);
+      const now    = new Date();
+      const expiry = new Date(voucher.expires_at.replace(' ', 'T') + 'Z');
+
+      if (now > expiry) {
+        await env.DB.prepare(
+          `UPDATE vouchers SET status = 'expired' WHERE id = ?`
+        ).bind(voucher.id).run();
+
+        console.warn('[ACTIVATE] ❌ Already expired:', code);
+        return new Response(JSON.stringify({
+          success: false, error: 'This voucher has already expired. Please purchase a new one.'
+        }), { status: 200, headers: jsonHeaders });
+      }
+
+      // Still live — idempotent, return existing expiry (don't reset the clock)
+      console.log('[ACTIVATE] ✅ Already active, reconnecting — expires:', voucher.expires_at);
       return new Response(JSON.stringify({
-        success: true,
-        already_active: true
+        success:      true,
+        expires_at:   voucher.expires_at,
+        reconnection: true
       }), { status: 200, headers: jsonHeaders });
     }
 
-    // ── Duration (KEEP 5 MINUTES FOR NOW) ──
-    const durations = {
-      'p1':  5 * 60 * 1000,
-      'p2': 24 * 60 * 60 * 1000,
-      'p3':  7 * 24 * 60 * 60 * 1000,
-      'p4': 30 * 24 * 60 * 60 * 1000
-    };
+    // ── FIRST ACTIVATION — stamp the clock RIGHT NOW ──────────────
+    const plan     = (voucher.package_type || 'p1').toLowerCase();
+    const duration = PLAN_DURATIONS[plan] ?? PLAN_DURATIONS['p1'];
+    const now      = Date.now();
 
-    const pkg      = (voucher.package_type || 'p2').toLowerCase();
-    const duration = durations[pkg] || durations['p2'];
+    // Store as UTC string in SQLite-friendly format: "YYYY-MM-DD HH:MM:SS"
+    const expiresAt = new Date(now + duration)
+      .toISOString()
+      .replace('T', ' ')
+      .replace(/\.\d{3}Z$/, '');
 
-    const expiresAt = new Date(Date.now() + duration)
-      .toISOString().replace('T', ' ').split('.')[0];
-
-    console.log('[ACTIVATE] 🚀 Activating — expires at:', expiresAt);
+    const activatedAt = new Date(now)
+      .toISOString()
+      .replace('T', ' ')
+      .replace(/\.\d{3}Z$/, '');
 
     await env.DB.prepare(`
       UPDATE vouchers
-      SET
-        status      = 'used',
-        used_at     = datetime('now'),
-        expires_at  = ?,
-        mac_address = CASE WHEN mac_address IS NULL THEN ? ELSE mac_address END
+      SET status = 'used', expires_at = ?, used_at = ?, mac_address = ?
       WHERE id = ?
-    `).bind(expiresAt, mac, voucher.id).run();
+    `).bind(expiresAt, activatedAt, mac, voucher.id).run();
+
+    console.log('[ACTIVATE] ✅ First activation — code:', code, '| expires:', expiresAt, '| mac:', mac);
 
     return new Response(JSON.stringify({
-      success: true,
-      expires_at: expiresAt
+      success:      true,
+      expires_at:   expiresAt,
+      reconnection: false
     }), { status: 200, headers: jsonHeaders });
 
-  } catch (err) {
-    console.error('[ACTIVATE] ❌ Error:', err);
+  } catch (error) {
+    console.error('[ACTIVATE] ❌ Unexpected error:', error.message, error.stack);
     return new Response(JSON.stringify({
-      success: false
+      success: false, error: 'System error — please contact support'
     }), { status: 500, headers: jsonHeaders });
   }
+}
+
+// ── CORS preflight ────────────────────────────────────────────
+export function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin':  '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    }
+  });
 }
