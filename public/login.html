@@ -33,8 +33,6 @@
         .ss1{height:90px;top:-90px;left:15%;animation:shoot 3.5s 0s linear infinite;}
         .ss2{height:70px;top:-70px;left:55%;animation:shoot 2.8s 1.8s linear infinite;}
         .ss3{height:110px;top:-110px;left:80%;animation:shoot 4.0s 3.2s linear infinite;}
-        .ss4{height:65px;top:-65px;left:6%;animation:shoot 3.2s 5.1s linear infinite;}
-        .ss5{height:80px;top:-80px;left:40%;animation:shoot 2.6s 6.5s linear infinite;}
         @keyframes shoot{0%{transform:translateY(0) rotate(14deg);opacity:0}6%{opacity:.8}85%{opacity:.2}100%{transform:translateY(115vh) rotate(14deg);opacity:0}}
         .login-card {
             position:relative; z-index:10; width:100%; max-width:460px;
@@ -183,21 +181,11 @@
         }
 
         btn.disabled = true;
-        btn.textContent = 'VERIFYING...';
+        btn.textContent = 'CONNECTING...';
         showStatus('⏳ Verifying...', '#67e8f9');
 
         try {
-            // STEP 1: API Validation
-            var valRes = await fetch('https://mobilehubuganda-github-io.pages.dev/api/voucher/validate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: code, mac: mac })
-            });
-            var valData = await valRes.json();
-            if (!valData.success) throw new Error(valData.error || 'Invalid Voucher');
-
-            // STEP 2: API Activation
-            btn.textContent = 'ACTIVATING...';
+            // STEP 1: API Activation
             var actRes = await fetch('https://mobilehubuganda-github-io.pages.dev/api/voucher/activate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -206,19 +194,19 @@
             var actData = await actRes.json();
             if (!actData.success) throw new Error(actData.error || 'Activation Failed');
 
-            // STEP 3: Connect to MikroTik & Force Redirect
+            // STEP 2: The Silent MikroTik Handshake
             localStorage.setItem('last_voucher', code);
             localStorage.setItem('voucher_date', new Date().toLocaleDateString());
             showStatus('✅ Connected! Redirecting...', '#4ecdc4');
 
+            // Send login to MikroTik in background
+            var ping = new Image();
+            ping.src = _loginUrl + "?username=" + encodeURIComponent(code) + "&password=" + encodeURIComponent(code);
+
+            // STEP 3: Hardcoded Jump to Status Page
             setTimeout(function() {
-                var statusPage = 'https://mobilehubuganda-github-io.pages.dev/status.html';
-                var finalUrl = _loginUrl + "?username=" + encodeURIComponent(code) + "&password=" + encodeURIComponent(code) + "&dst=" + encodeURIComponent(statusPage);
-                
-                window.location.href = finalUrl;
-                // Double safety jump
-                setTimeout(() => { window.location.href = statusPage; }, 2500);
-            }, 1000);
+                window.location.href = "https://mobilehubuganda-github-io.pages.dev/status.html";
+            }, 1500);
 
         } catch (err) {
             showStatus('⛔ ' + err.message, '#f87171');
@@ -236,14 +224,13 @@
         el.style.background = col + '15';
     }
 
-    // GALAXY BACKGROUND SCRIPT
     (function(){
         var cv=document.getElementById('galaxy'), ctx=cv.getContext('2d');
         var W, H, stars=[];
         function resize(){ W=cv.width=window.innerWidth; H=cv.height=window.innerHeight; }
         function mkStars(){
             stars=[];
-            for(var i=0; i<150; i++) stars.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.5, v:Math.random()*0.5});
+            for(var i=0; i<100; i++) stars.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.2, v:Math.random()*0.3});
         }
         function draw(){
             ctx.clearRect(0,0,W,H);
