@@ -192,7 +192,6 @@ console.log('[Login] Page loaded — URL:', window.location.href);
 window.onload = function() {
     var params = new URLSearchParams(window.location.search);
 
-    // Log all URL params for debugging
     console.log('[Login] URL params:');
     for (var pair of params.entries()) {
         console.log('  ', pair[0], '=', pair[1]);
@@ -214,10 +213,6 @@ window.onload = function() {
     }
 
     // ── MikroTik login URL ───────────────────────────────────
-    // MikroTik passes link-login-only when html-directory-override is set
-    // link-login-only = the URL to POST credentials to (no redirect)
-    // link-login = same but includes redirect handling
-    // We try both and save whichever is present
     var linkLogin = params.get('link-login-only') || params.get('link-login') || null;
     if (linkLogin) {
         _loginUrl = linkLogin;
@@ -280,7 +275,10 @@ async function connectWiFi() {
     showStatus('⏳ Verifying voucher...', '#67e8f9');
 
     try {
-        var res = await fetch(
+        // ── STEP 1: Validate ──────────────────────────────────────
+        // Checks the voucher exists, isn't expired, and MAC isn't locked to another device.
+        // Does NOT set expiry.
+        var validateRes = await fetch(
             'https://mobilehubuganda-github-io.pages.dev/api/voucher/validate',
             {
                 method:  'POST',
@@ -289,34 +287,56 @@ async function connectWiFi() {
             }
         );
 
-        var data = await res.json();
-        console.log('[Login] Validate response:', JSON.stringify(data));
+        var validateData = await validateRes.json();
+        console.log('[Login] Validate response:', JSON.stringify(validateData));
 
-        if (!data.success) {
-            showStatus('⛔ ' + (data.error || 'Invalid voucher code'), '#f87171');
+        if (!validateData.success) {
+            showStatus('⛔ ' + (validateData.error || 'Invalid voucher code'), '#f87171');
             btn.disabled  = false;
             btn.innerHTML = '⚡ CONNECT NOW';
             return;
         }
 
-        // Save voucher to localStorage
+        // ── STEP 2: Activate ─────────────────────────────────────
+        // Sets expires_at = NOW + plan duration for the first time.
+        // On reconnection within the window this is a no-op and returns the existing expiry.
+        btn.textContent = 'ACTIVATING...';
+        showStatus('⏳ Activating session...', '#67e8f9');
+
+        var activateRes = await fetch(
+            'https://mobilehubuganda-github-io.pages.dev/api/voucher/activate',
+            {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ code: code, mac: mac })
+            }
+        );
+
+        var activateData = await activateRes.json();
+        console.log('[Login] Activate response:', JSON.stringify(activateData));
+
+        if (!activateData.success) {
+            showStatus('⛔ ' + (activateData.error || 'Activation failed. Please try again.'), '#f87171');
+            btn.disabled  = false;
+            btn.innerHTML = '⚡ CONNECT NOW';
+            return;
+        }
+
+        // ── STEP 3: Hand off to MikroTik ─────────────────────────
+        // Both steps succeeded — now let MikroTik grant internet access.
         localStorage.setItem('last_voucher', code);
         localStorage.setItem('voucher_date', new Date().toLocaleString());
 
         showStatus(
-            '<span class="success-checkmark">✅</span> Voucher verified! Connecting...',
+            '<span class="success-checkmark">✅</span> Voucher activated! Connecting...',
             '#4ecdc4'
         );
 
         setTimeout(function() {
-            // Build MikroTik login form
-            // dst = status.html so MikroTik redirects to session status after granting internet
-            // MikroTik flow: POST credentials → authenticate → unblock internet → redirect to dst
             var form    = document.createElement('form');
             form.method = 'POST';
             form.action = _loginUrl;
 
-            // Always redirect to status page after MikroTik grants internet
             var dst = 'https://mobilehubuganda-github-io.pages.dev/status.html';
 
             var fields = [
