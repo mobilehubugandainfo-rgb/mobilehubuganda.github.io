@@ -1,0 +1,13 @@
+name = "mobilehub-enforcer"
+compatibility_date = "2026-03-24"
+
+# Points Cloudflare to your new functions folder
+# Note: For Pages, Cloudflare handles the 'main' entry automatically, 
+# but keeping this ensures the CLI knows where your logic lives.
+main = "functions/enforcer/index.js"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mikrotick_voucher_db"
+# You MUST replace the string below with your actual D1 Database ID
+database_id = "PASTE_YOUR_D1_DATABASE_ID_HERE"
