@@ -155,9 +155,6 @@ input[type="text"]::placeholder { color:rgba(200,210,255,.25); font-size:.75rem;
 <div class="ss ss1"></div><div class="ss ss2"></div><div class="ss ss3"></div>
 <div class="ss ss4"></div><div class="ss ss5"></div>
 
-<!-- Hidden iframe — MikroTik login submits here so we keep control of the page -->
-<iframe id="mikrotik-frame" name="mikrotik-frame" style="display:none;"></iframe>
-
 <div class="login-card">
   <div class="hud tl"></div><div class="hud tr"></div>
   <div class="hud bl"></div><div class="hud br"></div>
@@ -186,26 +183,24 @@ input[type="text"]::placeholder { color:rgba(200,210,255,.25); font-size:.75rem;
 </div>
 
 <script>
+// ── STATE ────────────────────────────────────────────────────
 var _mac      = 'unknown';
-var _loginUrl = 'http://10.0.0.1/login';
+var _loginUrl = 'http://10.0.0.1/login';  // fallback — overridden from URL params
 
 console.log('[Login] Page loaded — URL:', window.location.href);
 
 window.onload = function() {
     var params = new URLSearchParams(window.location.search);
 
-    console.log('[Login] URL params received:');
-    var hasParams = false;
+    // Log all URL params for debugging
+    console.log('[Login] URL params:');
     for (var pair of params.entries()) {
         console.log('  ', pair[0], '=', pair[1]);
-        hasParams = true;
     }
-    if (!hasParams) console.warn('[Login] No URL params — not via MikroTik redirect');
 
-    var macFromUrl =
-        params.get('mac') || params.get('MAC') ||
-        params.get('client-mac') || params.get('chap-id') || null;
-
+    // ── MAC capture ──────────────────────────────────────────
+    var macFromUrl = params.get('mac') || params.get('MAC') ||
+                     params.get('client-mac') || params.get('chap-id') || null;
     if (macFromUrl) {
         _mac = macFromUrl;
         localStorage.setItem('client_mac', macFromUrl);
@@ -215,26 +210,34 @@ window.onload = function() {
         if (savedMac && savedMac !== 'unknown') {
             _mac = savedMac;
             console.log('[Login] MAC from localStorage:', _mac);
-        } else {
-            console.warn('[Login] MAC not found.');
         }
     }
 
-    var linkLogin = params.get('link-login') || params.get('link-login-only') || null;
+    // ── MikroTik login URL ───────────────────────────────────
+    // MikroTik passes link-login-only when html-directory-override is set
+    // link-login-only = the URL to POST credentials to (no redirect)
+    // link-login = same but includes redirect handling
+    // We try both and save whichever is present
+    var linkLogin = params.get('link-login-only') || params.get('link-login') || null;
     if (linkLogin) {
         _loginUrl = linkLogin;
         localStorage.setItem('mikrotik_login_url', linkLogin);
-        console.log('[Login] MikroTik login URL:', _loginUrl);
+        console.log('[Login] MikroTik login URL from URL:', _loginUrl);
     } else {
         var savedUrl = localStorage.getItem('mikrotik_login_url');
         if (savedUrl) {
             _loginUrl = savedUrl;
             console.log('[Login] MikroTik login URL from localStorage:', _loginUrl);
         } else {
-            console.warn('[Login] No link-login param — using fallback.');
+            console.warn('[Login] No login URL found — using fallback 10.0.0.1');
         }
     }
 
+    // ── Save dst (original destination) ─────────────────────
+    var dst = params.get('dst') || '';
+    if (dst) localStorage.setItem('mikrotik_dst', dst);
+
+    // ── Voucher code auto-fill ───────────────────────────────
     var codeFromUrl = params.get('voucher');
     var savedCode   = localStorage.getItem('last_voucher');
     var savedDate   = localStorage.getItem('voucher_date');
@@ -247,9 +250,6 @@ window.onload = function() {
         var dateStr = savedDate ? savedDate.split(',')[0] : 'recently';
         document.getElementById('savedDate').innerText = dateStr;
     }
-
-    var dst = params.get('dst') || '';
-    if (dst) localStorage.setItem('mikrotik_dst', dst);
 };
 
 function restoreVoucher() {
@@ -267,7 +267,7 @@ async function connectWiFi() {
     var btn  = document.getElementById('loginBtn');
     var mac  = _mac;
 
-    console.log('[Login] Attempting — code:', code, '| mac:', mac, '| loginUrl:', _loginUrl);
+    console.log('[Login] Connect — code:', code, '| mac:', mac, '| loginUrl:', _loginUrl);
 
     if (!code) {
         showStatus('⚠️ Please enter a voucher code', '#ffa502');
@@ -299,42 +299,31 @@ async function connectWiFi() {
             return;
         }
 
-        // Calculate remaining seconds from expires_at
-        var remainingSeconds = 0;
-        if (data.expires_at) {
-            var expiryDate   = new Date(data.expires_at.replace(' ', 'T') + 'Z');
-            remainingSeconds = Math.floor((expiryDate.getTime() - Date.now()) / 1000);
-            if (remainingSeconds < 0) remainingSeconds = 0;
-            console.log('[Login] Remaining:', remainingSeconds + 's');
-        }
-
+        // Save voucher to localStorage
         localStorage.setItem('last_voucher', code);
         localStorage.setItem('voucher_date', new Date().toLocaleString());
 
         showStatus(
-            '<span class="success-checkmark">✅</span> Connected! Loading your session...',
+            '<span class="success-checkmark">✅</span> Voucher verified! Connecting...',
             '#4ecdc4'
         );
 
         setTimeout(function() {
-            // Submit MikroTik login into hidden iframe
-            // This authenticates the client without navigating away from our page
+            // Build MikroTik login form
+            // dst = status.html so MikroTik redirects to session status after granting internet
+            // MikroTik flow: POST credentials → authenticate → unblock internet → redirect to dst
             var form    = document.createElement('form');
             form.method = 'POST';
             form.action = _loginUrl;
-            form.target = 'mikrotik-frame';
 
-            var dst    = localStorage.getItem('mikrotik_dst') || '';
+            // Always redirect to status page after MikroTik grants internet
+            var dst = 'https://mobilehubuganda-github-io.pages.dev/status.html';
+
             var fields = [
                 ['username', code],
                 ['password', code],
                 ['dst',      dst]
             ];
-
-            if (remainingSeconds > 0) {
-                fields.push(['limit-uptime', String(remainingSeconds)]);
-                console.log('[Login] Passing limit-uptime:', remainingSeconds + 's');
-            }
 
             fields.forEach(function(pair) {
                 var input   = document.createElement('input');
@@ -345,15 +334,8 @@ async function connectWiFi() {
             });
 
             document.body.appendChild(form);
-            console.log('[Login] Submitting to MikroTik (background):', _loginUrl);
+            console.log('[Login] Submitting to MikroTik:', _loginUrl, '→ dst:', dst);
             form.submit();
-
-            // After MikroTik processes login, redirect to status page
-            // 2 second delay gives MikroTik time to authenticate the session
-            setTimeout(function() {
-                console.log('[Login] Redirecting to status page...');
-                window.location.href = 'status.html';
-            }, 2000);
 
         }, 1000);
 
@@ -366,8 +348,8 @@ async function connectWiFi() {
 }
 
 function showStatus(text, color) {
-    var el          = document.getElementById('status');
-    el.innerHTML    = text;
+    var el = document.getElementById('status');
+    el.innerHTML        = text;
     el.style.display    = 'block';
     el.style.color      = color;
     el.style.border     = '1px solid ' + color;
