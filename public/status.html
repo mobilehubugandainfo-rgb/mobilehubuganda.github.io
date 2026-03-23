@@ -6,448 +6,195 @@
 <title>Session Status | Mobile Hub Uganda</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-:root {
-  --cyan:#06b6d4; --violet:#7c3aed; --white:#f0f4ff;
-  --muted:rgba(200,210,255,0.55); --glass:rgba(8,4,24,0.82);
-}
-html, body {
-  width:100%; min-height:100%; background:#020008;
-  font-family:'Rajdhani',sans-serif; color:var(--white);
-  display:flex; align-items:center; justify-content:center; padding:20px;
-}
-#galaxy { position:fixed; inset:0; z-index:0; }
-.nebula {
-  position:fixed; inset:0; z-index:1; pointer-events:none;
-  background:
-    radial-gradient(ellipse 70% 55% at 18% 28%, rgba(124,58,237,.25) 0%,transparent 65%),
-    radial-gradient(ellipse 55% 45% at 82% 68%, rgba(6,182,212,.18) 0%,transparent 60%),
-    radial-gradient(ellipse 45% 38% at 8% 82%, rgba(79,70,229,.20) 0%,transparent 60%);
-  animation:nebDrift 20s ease-in-out infinite alternate;
-}
-@keyframes nebDrift{from{opacity:.85}to{opacity:1;transform:scale(1.06)}}
-.ss{position:fixed;z-index:2;pointer-events:none;width:2px;border-radius:2px;opacity:0;background:linear-gradient(to bottom,transparent,rgba(255,255,255,.88));}
-.ss1{height:90px;top:-90px;left:15%;animation:shoot 3.5s 0s linear infinite;}
-.ss2{height:70px;top:-70px;left:55%;animation:shoot 2.8s 1.8s linear infinite;}
-.ss3{height:110px;top:-110px;left:80%;animation:shoot 4.0s 3.2s linear infinite;}
-@keyframes shoot{0%{transform:translateY(0) rotate(14deg);opacity:0}6%{opacity:.8}85%{opacity:.2}100%{transform:translateY(115vh) rotate(14deg);opacity:0}}
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --cyan:#06b6d4; --violet:#7c3aed; --white:#f0f4ff;
+    --muted:rgba(200,210,255,0.55); --glass:rgba(8,4,24,0.85);
+  }
+  html, body {
+    width:100%; min-height:100%; background:#020008;
+    font-family:'Rajdhani',sans-serif; color:var(--white);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    overflow: hidden;
+  }
+  #galaxy { position:fixed; inset:0; z-index:0; }
+  .nebula {
+    position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:
+      radial-gradient(ellipse 70% 55% at 18% 28%, rgba(124,58,237,.25) 0%,transparent 65%),
+      radial-gradient(ellipse 55% 45% at 82% 68%, rgba(6,182,212,.18) 0%,transparent 60%);
+    animation:nebDrift 20s ease-in-out infinite alternate;
+  }
+  @keyframes nebDrift{from{opacity:.85}to{opacity:1;transform:scale(1.06)}}
+  
+  .card {
+    position:relative; z-index:10; width:100%; max-width:440px;
+    background:var(--glass); border:1.5px solid rgba(124,58,237,.5); border-radius:24px;
+    padding:30px 25px; text-align:center; backdrop-filter:blur(24px);
+    box-shadow:0 0 60px rgba(124,58,237,.2), 0 30px 80px rgba(0,0,0,.8);
+    animation:cardIn .6s cubic-bezier(.22,.68,0,1.2) both;
+  }
+  @keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
 
-.card {
-  position:relative; z-index:10; width:100%; max-width:460px;
-  background:var(--glass); border:1.5px solid rgba(124,58,237,.5); border-radius:24px;
-  padding:clamp(24px,6vw,40px) clamp(20px,6vw,36px); text-align:center;
-  backdrop-filter:blur(24px);
-  box-shadow:0 0 0 1px rgba(124,58,237,.1),0 0 60px rgba(124,58,237,.2),0 30px 80px rgba(0,0,0,.7);
-  animation:cardIn .6s cubic-bezier(.22,.68,0,1.2) both;
-}
-@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
-.hud{position:absolute;width:20px;height:20px;pointer-events:none;}
-.hud::before,.hud::after{content:'';position:absolute;background:var(--cyan);opacity:.55;}
-.hud::before{width:2px;height:12px;top:0;left:0}.hud::after{width:12px;height:2px;top:0;left:0}
-.hud.tl{top:12px;left:12px}.hud.tr{top:12px;right:12px;transform:scaleX(-1)}
-.hud.bl{bottom:12px;left:12px;transform:scaleY(-1)}.hud.br{bottom:12px;right:12px;transform:scale(-1)}
-.card::before{content:'';position:absolute;inset:0;border-radius:24px;pointer-events:none;z-index:0;
-  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(124,58,237,.018) 3px,rgba(124,58,237,.018) 4px);}
-.card > * { position:relative; z-index:1; }
+  .logo {
+    font-family:'Orbitron',sans-serif; font-size:1.5rem; font-weight:900; letter-spacing:4px;
+    background:linear-gradient(90deg,#c084fc,#67e8f9); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.4),transparent);margin:15px 0;}
 
-.logo {
-  font-family:'Orbitron',sans-serif; font-size:clamp(1.2rem,4vw,1.6rem);
-  font-weight:900; letter-spacing:4px; text-transform:uppercase;
-  background:linear-gradient(90deg,#c084fc,#a78bfa,#67e8f9,#f0abfc);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  filter:drop-shadow(0 0 18px rgba(167,139,250,.8)); margin-bottom:4px;
-}
-.logo-sub {
-  font-size:clamp(.52rem,1.8vw,.64rem); letter-spacing:2.5px; text-transform:uppercase;
-  color:#67e8f9; font-weight:600; text-shadow:0 0 14px rgba(6,182,212,.9); margin-bottom:16px;
-}
-.divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.4),rgba(6,182,212,.4),transparent);margin:14px 0;}
+  .timer-wrap { position:relative; width:160px; height:160px; margin:0 auto 20px; }
+  .timer-svg { transform:rotate(-90deg); }
+  .timer-track { fill:none; stroke:rgba(124,58,237,.1); stroke-width:10; }
+  .timer-bar { fill:none; stroke-width:10; stroke-linecap:round; stroke-dasharray:471; stroke-dashoffset:471; transition:all 0.5s ease; }
+  .timer-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .timer-value { font-family:'Orbitron',sans-serif; font-size:1.8rem; font-weight:900; color:#67e8f9; text-shadow:0 0 15px rgba(6,182,212,0.5); }
+  .timer-label { font-size:.5rem; letter-spacing:2px; color:#a78bfa; text-transform:uppercase; margin-top:2px; }
 
-.timer-wrap { position:relative; width:170px; height:170px; margin:0 auto 16px; }
-.timer-svg { transform:rotate(-90deg); }
-.timer-track { fill:none; stroke:rgba(124,58,237,.2); stroke-width:10; }
-.timer-bar { fill:none; stroke-width:10; stroke-linecap:round; stroke-dasharray:471; stroke-dashoffset:471; transition:stroke-dashoffset .8s ease, stroke .8s ease; }
-.timer-center {
-  position:absolute; inset:0; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; gap:3px;
-}
-.timer-value {
-  font-family:'Orbitron',sans-serif; font-size:clamp(1.5rem,5.5vw,1.9rem);
-  font-weight:900; letter-spacing:2px; line-height:1; color:#67e8f9;
-  text-shadow:0 0 20px rgba(6,182,212,.8);
-}
-.timer-label { font-size:.52rem; letter-spacing:2px; color:#a78bfa; text-transform:uppercase; font-family:'Orbitron',sans-serif; }
-.timer-sub { font-size:.6rem; color:var(--muted); letter-spacing:.5px; }
+  .stats-grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px; }
+  .stat-card { background:rgba(255,255,255,0.03); border:1px solid rgba(124,58,237,0.2); border-radius:12px; padding:12px; }
+  .stat-label { font-size:0.55rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+  .stat-value { font-family:'Orbitron',sans-serif; font-size:0.85rem; color:#fff; margin-top:4px; }
 
-.expiry-strip {
-  display:flex; align-items:center; justify-content:space-between;
-  background:rgba(124,58,237,.1); border:1px solid rgba(124,58,237,.3);
-  border-radius:10px; padding:10px 16px; margin-bottom:14px;
-}
-.exp-col { text-align:left; }
-.exp-label { font-size:.52rem; letter-spacing:1.5px; text-transform:uppercase; color:#a78bfa; font-family:'Orbitron',sans-serif; margin-bottom:3px; }
-.exp-val { font-family:'Orbitron',sans-serif; font-size:.82rem; font-weight:700; color:#67e8f9; letter-spacing:1.5px; }
-
-.voucher-display {
-  background:rgba(6,182,212,.06); border:1px dashed rgba(6,182,212,.3);
-  border-radius:10px; padding:8px 14px; margin-bottom:14px;
-  font-family:'Orbitron',sans-serif; font-size:.72rem; color:#67e8f9;
-  letter-spacing:2px; text-align:center;
-}
-.voucher-label { font-size:.5rem; color:#a78bfa; letter-spacing:2px; text-transform:uppercase; margin-bottom:3px; }
-
-.stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
-.stat-box {
-  background:rgba(255,255,255,.04); border:1px solid rgba(124,58,237,.22);
-  border-radius:12px; padding:12px 8px; text-align:center;
-}
-.stat-val { font-family:'Orbitron',sans-serif; font-size:clamp(.72rem,2.6vw,.86rem); font-weight:700; color:#fff; letter-spacing:1px; margin-bottom:3px; }
-.stat-lbl { font-size:.52rem; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; }
-.stat-icon { font-size:1.1rem; margin-bottom:5px; }
-
-.connect-btn {
-  display:block; width:100%; padding:14px; border-radius:13px; border:none; cursor:pointer;
-  font-family:'Orbitron',sans-serif; font-size:clamp(.65rem,2.3vw,.76rem);
-  font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#fff;
-  background:linear-gradient(118deg,#6d28d9,#7c3aed 38%,#4f46e5 68%,#06b6d4);
-  box-shadow:0 4px 28px rgba(124,58,237,.52);
-  transition:all .22s; animation:heroAura 3s ease-in-out infinite;
-  margin-bottom:10px; text-decoration:none;
-}
-@keyframes heroAura{0%,100%{box-shadow:0 4px 28px rgba(124,58,237,.5)}50%{box-shadow:0 6px 44px rgba(124,58,237,.75)}}
-.connect-btn:hover{transform:translateY(-2px);}
-.buy-btn {
-  display:block; width:100%; padding:13px; border-radius:13px;
-  font-family:'Orbitron',sans-serif; font-size:clamp(.62rem,2.3vw,.74rem);
-  font-weight:700; letter-spacing:2px; text-transform:uppercase;
-  background:rgba(251,191,36,.12); border:1.5px solid rgba(251,191,36,.38); color:#fde68a;
-  cursor:pointer; text-decoration:none; transition:all .22s; margin-bottom:10px;
-  animation:bipPulse 2.2s ease-in-out infinite;
-}
-@keyframes bipPulse{0%,100%{box-shadow:0 0 8px rgba(251,191,36,.15)}50%{box-shadow:0 4px 24px rgba(251,191,36,.45)}}
-.buy-btn:hover{background:rgba(251,191,36,.22);transform:translateY(-2px);}
-.wa-btn {
-  display:flex; align-items:center; justify-content:center; gap:8px;
-  background:rgba(34,197,94,.08); border:1.5px solid rgba(34,197,94,.32);
-  color:#86efac; padding:11px; border-radius:12px; text-decoration:none;
-  font-weight:700; font-size:.78rem; letter-spacing:.4px; transition:all .22s;
-}
-.wa-btn:hover{background:rgba(34,197,94,.18);transform:translateY(-2px);}
-
-.loading-state { padding:20px 0; }
-.loading-dots{display:inline-block;}
-.loading-dots span{animation:blink 1.4s infinite both;display:inline-block;}
-.loading-dots span:nth-child(2){animation-delay:.2s;}
-.loading-dots span:nth-child(3){animation-delay:.4s;}
-@keyframes blink{0%,80%,100%{opacity:0}40%{opacity:1}}
-.expired-state { display:none; }
-.no-voucher-state { display:none; }
-
-.card-footer { margin-top:14px; padding-top:12px; border-top:1px solid rgba(124,58,237,.18); }
-.card-footer span { font-size:.52rem; color:rgba(167,139,250,.35); letter-spacing:.5px; font-family:'Orbitron',sans-serif; }
+  .btn { display:block; width:100%; padding:14px; border-radius:12px; text-decoration:none; font-family:'Orbitron',sans-serif; font-size:0.75rem; font-weight:700; margin-top:10px; transition:0.3s; }
+  .btn-primary { background:linear-gradient(118deg,#7c3aed,#06b6d4); color:#fff; box-shadow:0 4px 15px rgba(124,58,237,0.4); }
+  .btn-outline { border:1px solid rgba(251,191,36,0.5); color:#fde68a; background:rgba(251,191,36,0.05); }
 </style>
 </head>
 <body>
+
 <canvas id="galaxy"></canvas>
 <div class="nebula"></div>
-<div class="ss ss1"></div><div class="ss ss2"></div><div class="ss ss3"></div>
 
 <div class="card">
-  <div class="hud tl"></div><div class="hud tr"></div>
-  <div class="hud bl"></div><div class="hud br"></div>
-
   <div class="logo">MOBILE HUB</div>
-  <div class="logo-sub">Session Status · Hotspot Central</div>
+  <div class="logo-sub" style="font-size:0.6rem; letter-spacing:2px; color:#67e8f9;">SESSION STATUS</div>
   <div class="divider"></div>
 
-  <!-- LOADING STATE -->
-  <div id="loadingState" class="loading-state">
-    <div style="font-size:2rem;margin-bottom:12px;">⏳</div>
-    <div style="font-family:'Orbitron',sans-serif;font-size:.8rem;color:#67e8f9;letter-spacing:2px;">
-      Loading session<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>
-    </div>
-  </div>
-
-  <!-- ACTIVE SESSION STATE -->
-  <div id="activeState" style="display:none;">
+  <div id="activeState">
     <div class="timer-wrap">
-      <svg class="timer-svg" width="170" height="170" viewBox="0 0 170 170">
-        <circle class="timer-track" cx="85" cy="85" r="75"/>
-        <circle class="timer-bar" id="timerBar" cx="85" cy="85" r="75" stroke="#06b6d4"/>
+      <svg width="160" height="160">
+        <circle class="timer-track" cx="80" cy="80" r="75"/>
+        <circle class="timer-bar" id="timerBar" cx="80" cy="80" r="75" stroke="#06b6d4"/>
       </svg>
       <div class="timer-center">
-        <div class="timer-value" id="timerVal">--:--</div>
-        <div class="timer-label">remaining</div>
-        <div class="timer-sub" id="timerSub"></div>
+        <div class="timer-value" id="timerVal">00:00</div>
+        <div class="timer-label">Remaining</div>
       </div>
     </div>
 
-    <div class="expiry-strip">
-      <div class="exp-col">
-        <div class="exp-label">Expires at</div>
-        <div class="exp-val" id="expiryTime">--:--</div>
+    <div class="stat-card" style="margin-bottom:10px; border-style: dashed; border-color: var(--cyan);">
+        <div class="stat-label">Active Voucher</div>
+        <div class="stat-value" id="voucherDisplay" style="color:var(--cyan); letter-spacing:3px;">----</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Expires At</div>
+        <div class="stat-value" id="expiryTime">--:--</div>
       </div>
-      <div class="exp-col" style="text-align:right;">
-        <div class="exp-label">Package</div>
-        <div class="exp-val" id="packageVal">--</div>
+      <div class="stat-card">
+        <div class="stat-label">Plan</div>
+        <div class="stat-value" id="packageVal">--</div>
       </div>
     </div>
 
-    <div class="voucher-display">
-      <div class="voucher-label">Your voucher code</div>
-      <div id="voucherDisplay">--------</div>
-    </div>
-
-    <div class="stats">
-      <div class="stat-box">
-        <div class="stat-icon">⏱️</div>
-        <div class="stat-val" id="sessionAge">--:--</div>
-        <div class="stat-lbl">Time used</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-icon">📦</div>
-        <div class="stat-val" id="totalTime">--:--</div>
-        <div class="stat-lbl">Total duration</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-icon">✅</div>
-        <div class="stat-val" id="usedAt">--:--</div>
-        <div class="stat-lbl">Activated at</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-icon">🌐</div>
-        <div class="stat-val" style="font-size:.65rem;">Connected</div>
-        <div class="stat-lbl">Status</div>
-      </div>
-    </div>
-
-    <a href="login.html" class="connect-btn">⚡ Re-enter Voucher</a>
-    <a href="index.html" class="buy-btn">💫 Buy New Voucher</a>
-  </div>
-
-  <!-- EXPIRED STATE -->
-  <div id="expiredState" class="expired-state">
-    <div style="font-size:2.5rem;margin-bottom:12px;">⌛</div>
-    <div style="font-family:'Orbitron',sans-serif;font-size:1rem;color:#f43f5e;letter-spacing:2px;margin-bottom:8px;">SESSION EXPIRED</div>
-    <p style="font-size:.8rem;color:var(--muted);margin-bottom:18px;">Your voucher time has run out. Purchase a new voucher to continue browsing.</p>
     <div class="divider"></div>
-    <a href="index.html" class="buy-btn">💫 Buy New Voucher</a>
-    <a href="login.html" class="connect-btn" style="margin-top:8px;">🔑 Enter a Voucher Code</a>
+    <a href="login.html" class="btn btn-primary">⚡ REFRESH CONNECTION</a>
+    <a href="index.html" class="btn btn-outline">💫 BUY NEW VOUCHER</a>
   </div>
 
-  <!-- NO VOUCHER STATE -->
-  <div id="noVoucherState" class="no-voucher-state">
-    <div style="font-size:2.5rem;margin-bottom:12px;">🔌</div>
-    <div style="font-family:'Orbitron',sans-serif;font-size:.9rem;color:#fbbf24;letter-spacing:2px;margin-bottom:8px;">NOT CONNECTED</div>
-    <p style="font-size:.8rem;color:var(--muted);margin-bottom:18px;">No active session found. Buy a voucher or enter your code to connect.</p>
-    <div class="divider"></div>
-    <a href="index.html" class="buy-btn">💫 Buy Voucher — from 500 UGX</a>
-    <a href="login.html" class="connect-btn" style="margin-top:8px;">🔑 Enter Voucher Code</a>
+  <div id="expiredState" style="display:none; padding:20px 0;">
+    <div style="font-size:3rem;">⌛</div>
+    <h3 style="font-family:'Orbitron'; color:#f43f5e; margin:10px 0;">EXPIRED</h3>
+    <p style="font-size:0.8rem; color:var(--muted);">Your session has ended. Please top up.</p>
+    <a href="index.html" class="btn btn-primary">BUY VOUCHER NOW</a>
   </div>
 
-  <a href="https://wa.me/256771999302" class="wa-btn" style="margin-top:10px;">💬 Need help? · 0771 999 302</a>
-
-  <div class="card-footer">
-    <span>✦ Mobile Hub Uganda · Fast · Reliable · Always On ✦</span>
+  <div class="card-footer" style="margin-top:20px; font-size:0.5rem; color:rgba(255,255,255,0.2);">
+    ✦ MOBILE HUB UGANDA 2026 ✦
   </div>
 </div>
 
 <script>
-var API = 'https://mobilehubuganda-github-io.pages.dev';
-
-// ── Keep in sync with activate.js PLAN_DURATIONS ─────────────
-var packageNames = {
-  p1: 'Quick Surf · 3hrs',
-  p2: 'Standard · 8hrs',
-  p3: 'Day Pass · 24hrs'
-};
-
-function pad(n) { return n < 10 ? '0' + n : String(n); }
+const API_URL = 'https://mobilehubuganda-github-io.pages.dev';
+const packageNames = { p1: '5 Min Test', p2: '24 Hours', p3: '7 Days', p4: '30 Days' };
 
 function fmtTime(secs) {
-  if (secs <= 0) return '00:00';
-  var h = Math.floor(secs / 3600);
-  var m = Math.floor((secs % 3600) / 60);
-  var s = secs % 60;
-  if (h > 0) return pad(h) + ':' + pad(m) + ':' + pad(s);
-  return pad(m) + ':' + pad(s);
+  if (secs <= 0) return "00:00";
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  return h > 0 ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
-
-function setRing(fraction) {
-  var bar = document.getElementById('timerBar');
-  var offset = 471 - (Math.max(0, Math.min(1, fraction)) * 471);
-  bar.style.strokeDashoffset = offset;
-  if (fraction > 0.5)       bar.setAttribute('stroke', '#06b6d4');
-  else if (fraction > 0.25) bar.setAttribute('stroke', '#fbbf24');
-  else                      bar.setAttribute('stroke', '#f43f5e');
-}
-
-function updateSub(secs) {
-  var sub = document.getElementById('timerSub');
-  if (secs > 3600) {
-    sub.textContent = (secs / 3600).toFixed(1) + ' hours left';
-    sub.style.color = '';
-  } else if (secs > 60) {
-    sub.textContent = Math.ceil(secs / 60) + ' minutes left';
-    sub.style.color = secs < 300 ? '#fbbf24' : '';
-  } else {
-    sub.textContent = 'Less than a minute!';
-    sub.style.color = '#f43f5e';
-  }
-}
-
-function showState(state) {
-  document.getElementById('loadingState').style.display   = state === 'loading'    ? 'block' : 'none';
-  document.getElementById('activeState').style.display    = state === 'active'     ? 'block' : 'none';
-  document.getElementById('expiredState').style.display   = state === 'expired'    ? 'block' : 'none';
-  document.getElementById('noVoucherState').style.display = state === 'no-voucher' ? 'block' : 'none';
-}
-
-var countdownTimer = null;
 
 async function loadStatus() {
-  showState('loading');
-
-  // Read voucher code from localStorage (saved by login.html on connect)
-  var code = localStorage.getItem('last_voucher');
-  var mac  = localStorage.getItem('client_mac') || 'unknown';
-
-  // Also check URL param (in case MikroTik passes it)
-  var params = new URLSearchParams(window.location.search);
-  var codeFromUrl = params.get('voucher');
-  if (codeFromUrl) {
-    code = codeFromUrl.toUpperCase();
-    localStorage.setItem('last_voucher', code);
-  }
-
-  if (!code) {
-    showState('no-voucher');
-    return;
-  }
+  const code = localStorage.getItem('last_voucher');
+  if (!code) { window.location.href = 'login.html'; return; }
 
   try {
-    // ── Call /api/voucher/session — dedicated read-only endpoint ──
-    var res = await fetch(API + '/api/voucher/session', {
-      method:  'POST',
+    const res = await fetch(`${API_URL}/api/voucher/session`, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ code: code, mac: mac })
+      body: JSON.stringify({ code: code.toUpperCase() })
     });
-    var data = await res.json();
+    const data = await res.json();
 
-    console.log('[Status] Session response:', JSON.stringify(data));
-
-    if (!data.success) {
-      // not_found, not_activated, mac_mismatch
-      showState('no-voucher');
+    if (!data.success || data.state === 'expired') {
+      document.getElementById('activeState').style.display = 'none';
+      document.getElementById('expiredState').style.display = 'block';
       return;
     }
 
-    if (data.state === 'expired') {
-      showState('expired');
-      return;
-    }
+    // 🕒 Setup Date (Universal Parsing)
+    const expiryStr = data.expires_at.replace(' ', 'T') + 'Z';
+    const expiryDate = new Date(expiryStr);
+    
+    document.getElementById('voucherDisplay').textContent = code.toUpperCase();
+    document.getElementById('packageVal').textContent = packageNames[data.package] || data.package;
+    document.getElementById('expiryTime').textContent = expiryDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
-    // ── Active session — populate UI ──────────────────────────
-    showState('active');
+    let remaining = Math.floor((expiryDate.getTime() - new Date().getTime()) / 1000);
+    const total = data.total_secs || 300; // default 5m for safety
 
-    var remainingSecs = data.remaining_secs;
-    var totalSecs     = data.total_secs;
-    var usedSecs      = data.used_secs;
-    var pkg           = data.package || 'p1';
-
-    // Expiry time in local time
-    var expiryDate  = new Date(data.expires_at.replace(' ', 'T') + 'Z');
-    var expiryLocal = expiryDate.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-    document.getElementById('expiryTime').textContent  = expiryLocal;
-    document.getElementById('packageVal').textContent  = packageNames[pkg] || pkg.toUpperCase();
-    document.getElementById('voucherDisplay').textContent = code;
-    document.getElementById('totalTime').textContent   = fmtTime(totalSecs);
-    document.getElementById('sessionAge').textContent  = fmtTime(usedSecs);
-
-    // Activated at — from DB (used_at), not localStorage
-    if (data.activated_at) {
-      var activatedDate = new Date(data.activated_at.replace(' ', 'T') + 'Z');
-      document.getElementById('usedAt').textContent =
-        activatedDate.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-    }
-
-    // Ring + countdown
-    setRing(remainingSecs / totalSecs);
-    document.getElementById('timerVal').textContent = fmtTime(remainingSecs);
-    updateSub(remainingSecs);
-
-    if (countdownTimer) clearInterval(countdownTimer);
-    var secs = remainingSecs;
-    countdownTimer = setInterval(function() {
-      secs--;
-      if (secs <= 0) {
-        clearInterval(countdownTimer);
-        showState('expired');
-        return;
+    const timerInt = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(timerInt);
+        location.reload();
       }
-      document.getElementById('timerVal').textContent    = fmtTime(secs);
-      document.getElementById('sessionAge').textContent  = fmtTime(totalSecs - secs);
-      setRing(secs / totalSecs);
-      updateSub(secs);
+      
+      document.getElementById('timerVal').textContent = fmtTime(remaining);
+      
+      // Update Progress Ring
+      const progress = Math.max(0, remaining / total);
+      const offset = 471 - (progress * 471);
+      document.getElementById('timerBar').style.strokeDashoffset = offset;
+      
+      // Color shifts
+      if (progress < 0.2) document.getElementById('timerBar').setAttribute('stroke', '#f43f5e');
+      else if (progress < 0.5) document.getElementById('timerBar').setAttribute('stroke', '#fbbf24');
     }, 1000);
 
-  } catch (err) {
-    console.error('[Status] Error:', err);
-    showState('no-voucher');
+  } catch (e) {
+    console.error(e);
   }
 }
 
 loadStatus();
 
-/* ═══ GALAXY CANVAS ═══ */
+// Galaxy BG Animation (Cleaned up)
 (function(){
   var cv=document.getElementById('galaxy'),ctx=cv.getContext('2d');
-  var W,H,stars=[],dust=[];
+  var W,H,stars=[];
   function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
-  function mkStars(){
-    stars=[];var n=Math.floor(W*H/1600);
-    for(var i=0;i<n;i++){
-      var big=Math.random()>.65;
-      stars.push({x:Math.random()*W,y:Math.random()*H,
-        r:big?Math.random()*1.9+.9:Math.random()*.75+.15,
-        a:Math.random(),da:(Math.random()*.005+.001)*(Math.random()<.5?1:-1),
-        vy:big?.012:.038,
-        col:['#ffffff','#c4b5fd','#93c5fd','#67e8f9','#fbcfe8'][Math.floor(Math.random()*5)]});
-    }
-  }
-  function mkDust(){
-    dust=[];
-    for(var i=0;i<7;i++)dust.push({
-      x:Math.random()*W,y:Math.random()*H,r:70+Math.random()*130,
-      a:.028+Math.random()*.045,
-      col:['rgba(124,58,237,','rgba(6,182,212,','rgba(236,72,153,','rgba(79,70,229,'][i%4],
-      dx:(Math.random()-.5)*.1,dy:(Math.random()-.5)*.1});
-  }
+  function mkStars(){ stars=[]; for(let i=0;i<100;i++) stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5,v:Math.random()*0.3}); }
   function draw(){
-    ctx.clearRect(0,0,W,H);
-    var g=ctx.createRadialGradient(W*.5,H*.38,0,W*.5,H*.38,Math.max(W,H)*.75);
-    g.addColorStop(0,'rgba(18,8,48,.95)');g.addColorStop(1,'rgba(2,0,8,1)');
-    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-    dust.forEach(function(d){
-      d.x+=d.dx;d.y+=d.dy;
-      if(d.x<-d.r)d.x=W+d.r;if(d.x>W+d.r)d.x=-d.r;
-      if(d.y<-d.r)d.y=H+d.r;if(d.y>H+d.r)d.y=-d.r;
-      var ng=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r);
-      ng.addColorStop(0,d.col+d.a+')');ng.addColorStop(1,d.col+'0)');
-      ctx.fillStyle=ng;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fill();
-    });
-    stars.forEach(function(s){
-      s.a+=s.da;if(s.a>1||s.a<0)s.da*=-1;
-      s.y-=s.vy;if(s.y<-2){s.y=H+2;s.x=Math.random()*W;}
-      ctx.globalAlpha=Math.max(0,Math.min(1,s.a));
-      if(s.r>1.1){ctx.shadowBlur=7;ctx.shadowColor=s.col;}
-      ctx.fillStyle=s.col;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();
-      ctx.shadowBlur=0;
-    });
-    ctx.globalAlpha=1;requestAnimationFrame(draw);
+    ctx.clearRect(0,0,W,H); ctx.fillStyle="#fff";
+    stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill(); s.y-=s.v; if(s.y<0) s.y=H; });
+    requestAnimationFrame(draw);
   }
-  window.addEventListener('resize',function(){resize();mkStars();mkDust();});
-  resize();mkStars();mkDust();draw();
+  window.addEventListener('resize', resize);
+  resize(); mkStars(); draw();
 })();
 </script>
 </body>
