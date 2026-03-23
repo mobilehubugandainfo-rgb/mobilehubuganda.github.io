@@ -1,0 +1,11 @@
+name = "mobilehub-enforcer"
+compatibility_date = "2026-03-24"
+
+# This points to your index.js or enforcer.js file
+main = "functions/enforcer.js"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mobilehub_db"
+# Replace the string below with your actual D1 Database ID from the dashboard
+database_id = "PASTE_YOUR_ACTUAL_D1_DATABASE_ID_HERE"
