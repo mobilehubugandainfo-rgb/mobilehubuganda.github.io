@@ -10,4 +10,4 @@ main = "functions/enforcer/index.js"
 binding = "DB"
 database_name = "mikrotick_voucher_db"
 # You MUST replace the string below with your actual D1 Database ID
-database_id = "PASTE_YOUR_D1_DATABASE_ID_HERE"
+database_id = "2322d6ed-2c61-448e-a969-d9023e36a6f3"
