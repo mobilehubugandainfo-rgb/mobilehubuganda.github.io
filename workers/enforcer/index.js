@@ -5,10 +5,10 @@ export default {
     const ugandaTime = new Date(now.getTime() + (3 * 60 * 60 * 1000));
     const currentTimeStr = ugandaTime.toISOString().replace('T', ' ').substring(0, 19);
 
-    // 1. Find vouchers that are 'used' and past their expiry time
+    // 1. Find vouchers that are 'used' OR 'assigned' AND past their expiry time
     const { results } = await env.DB.prepare(`
       SELECT code FROM vouchers 
-      WHERE status = 'used' 
+      WHERE (status = 'used' OR status = 'assigned') 
       AND expires_at <= ?
     `).bind(currentTimeStr).all();
 
@@ -21,7 +21,7 @@ export default {
       }
     }
 
-    // 3. ONLY return the codes as a plain string, or an empty string if none
+    // 3. Return only the codes as a plain comma-separated string for MikroTik
     const kickList = results.map(v => v.code).join(",");
     
     return new Response(kickList, {
