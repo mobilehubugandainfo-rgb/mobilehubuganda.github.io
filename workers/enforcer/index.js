@@ -1,18 +1,18 @@
 export default {
   async fetch(request, env) {
     const now = new Date();
-    // Uganda Time (EAT is UTC+3)
+    // Offset for Uganda Time (UTC+3)
     const ugandaTime = new Date(now.getTime() + (3 * 60 * 60 * 1000));
     const currentTimeStr = ugandaTime.toISOString().replace('T', ' ').substring(0, 19);
 
-    // 1. Find vouchers that are 'used' OR 'assigned' AND past their expiry time
+    // 1. READ: Find any active user (assigned/used) whose time is up
     const { results } = await env.DB.prepare(`
       SELECT code FROM vouchers 
       WHERE (status = 'used' OR status = 'assigned') 
       AND expires_at <= ?
     `).bind(currentTimeStr).all();
 
-    // 2. If we found any, mark them 'expired' in the DB immediately
+    // 2. SHIFT: Automatically change their status to 'expired' in D1
     if (results && results.length > 0) {
       for (let v of results) {
         await env.DB.prepare("UPDATE vouchers SET status = 'expired' WHERE code = ?")
@@ -21,7 +21,7 @@ export default {
       }
     }
 
-    // 3. Return only the codes as a plain comma-separated string for MikroTik
+    // 3. ORDER: Send the plain-text list of codes to MikroTik
     const kickList = results.map(v => v.code).join(",");
     
     return new Response(kickList, {
