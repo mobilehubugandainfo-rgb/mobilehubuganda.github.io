@@ -21,10 +21,14 @@ export default {
       }
     }
 
-    // 3. Return a simple comma-separated list for the MikroTik to read
+    // 3. ONLY return the codes as a plain string, or an empty string if none
     const kickList = results.map(v => v.code).join(",");
+    
     return new Response(kickList, {
-      headers: { "Content-Type": "text/plain" }
+      headers: { 
+        "Content-Type": "text/plain",
+        "Cache-Control": "no-store" 
+      }
     });
   }
 };
