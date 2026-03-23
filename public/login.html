@@ -9,7 +9,7 @@
         *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
         :root {
             --cyan:#06b6d4; --violet:#7c3aed; --white:#f0f4ff;
-            --muted:rgba(200,210,255,0.55); --glass:rgba(8,4,24,0.82); --border:rgba(124,58,237,0.38);
+            --muted:rgba(200,210,255,0.55); --glass:rgba(8,4,24,0.85); --border:rgba(124,58,237,0.38);
         }
         html, body {
             width:100%; min-height:100%; background:#020008;
@@ -39,15 +39,10 @@
             background:var(--glass); border:1.5px solid rgba(124,58,237,.5); border-radius:24px;
             padding:clamp(28px,6vw,44px) clamp(22px,6vw,40px); text-align:center;
             backdrop-filter:blur(24px);
-            box-shadow:0 0 0 1px rgba(124,58,237,.1),0 0 60px rgba(124,58,237,.2),0 30px 80px rgba(0,0,0,.7);
+            box-shadow:0 0 60px rgba(124,58,237,.2),0 30px 80px rgba(0,0,0,.7);
             animation:cardIn .6s cubic-bezier(.22,.68,0,1.2) both;
         }
         @keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
-        .hud{position:absolute;width:20px;height:20px;pointer-events:none;}
-        .hud::before,.hud::after{content:'';position:absolute;background:var(--cyan);opacity:.55;}
-        .hud::before{width:2px;height:12px;top:0;left:0} .hud::after{width:12px;height:2px;top:0;left:0}
-        .hud.tl{top:12px;left:12px} .hud.tr{top:12px;right:12px;transform:scaleX(-1)}
-        .hud.bl{bottom:12px;left:12px;transform:scaleY(-1)} .hud.br{bottom:12px;right:12px;transform:scale(-1)}
         .logo-wrap { margin-bottom:18px; }
         .logo {
             font-family:'Orbitron',sans-serif;
@@ -66,9 +61,8 @@
             padding:4px 12px; font-family:'Orbitron',sans-serif;
             font-size:.5rem; letter-spacing:1.5px; color:#67e8f9; text-transform:uppercase; margin-bottom:20px;
         }
-        .orbit-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:oPulse 1.7s ease-in-out infinite;flex-shrink:0;}
+        .orbit-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:oPulse 1.7s ease-in-out infinite;}
         @keyframes oPulse{0%,100%{box-shadow:0 0 5px var(--cyan)}50%{box-shadow:0 0 12px var(--cyan);transform:scale(1.4)}}
-        .divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.4),rgba(6,182,212,.4),transparent);margin-bottom:22px;}
         .form-group { margin-bottom:18px; text-align:left; }
         .field-label {
             font-size:.58rem; letter-spacing:2px; text-transform:uppercase;
@@ -79,7 +73,7 @@
             border:1.5px solid rgba(124,58,237,.35); border-radius:13px; color:#fff;
             font-family:'Orbitron',sans-serif; font-size:clamp(1rem,3.5vw,1.25rem);
             text-align:center; letter-spacing:4px; text-transform:uppercase;
-            transition:border-color .2s, box-shadow .2s, background .2s;
+            transition:all .2s;
         }
         input[type="text"]:focus {
             outline:none; border-color:var(--cyan); background:rgba(6,182,212,.06);
@@ -97,6 +91,7 @@
         .status-msg {
             margin-top:14px; padding:11px 14px; border-radius:11px;
             font-size:.8rem; font-weight:600; display:none;
+            animation:cardIn 0.3s ease-out;
         }
         .whatsapp-btn {
             margin-top:14px; display:flex; align-items:center; justify-content:center; gap:9px;
@@ -104,8 +99,8 @@
             color:#86efac; padding:12px 16px; border-radius:12px;
             text-decoration:none; font-weight:700; font-size:.82rem;
         }
-        .card-footer { margin-top:18px; padding-top:14px; border-top:1px solid rgba(124,58,237,.18); }
-        .card-footer span { font-size:.56rem; color:rgba(167,139,250,.4); font-family:'Orbitron',sans-serif; }
+        .recovery-box { margin-top:12px; font-size:0.7rem; color:var(--muted); }
+        .restore-link { color:var(--cyan); cursor:pointer; text-decoration:underline; background:none; border:none; font-family:inherit; }
     </style>
 </head>
 <body>
@@ -115,31 +110,33 @@
 <div class="ss ss1"></div><div class="ss ss2"></div><div class="ss ss3"></div>
 
 <div class="login-card">
-    <div class="hud tl"></div><div class="hud tr"></div>
-    <div class="hud bl"></div><div class="hud br"></div>
     <div class="logo-wrap">
         <div class="logo">MOBILE HUB</div>
         <div class="logo-sub">Internet Access Portal</div>
     </div>
+    
     <div class="status-pod"><div class="orbit-dot"></div>Hotspot Central · Active</div>
-    <div class="divider"></div>
+    
     <div class="form-group">
         <label class="field-label">Voucher Code</label>
-        <input type="text" id="voucherCode" placeholder="ENTER CODE" autocomplete="off">
+        <input type="text" id="voucherCode" placeholder="ENTER CODE" autocomplete="off" maxlength="15">
     </div>
+    
     <button onclick="connectWiFi()" class="connect-btn" id="loginBtn">⚡ CONNECT NOW</button>
     
-    <div id="recoverySection" style="display:none; margin-top:10px; font-size:0.7rem;">
-        <p>Last used: <span id="savedDate" style="color:#f093fb;"></span></p>
-        <button onclick="restoreVoucher()" style="background:none; border:none; color:#06b6d4; cursor:pointer; text-decoration:underline;">Restore Code</button>
+    <div id="recoverySection" class="recovery-box" style="display:none;">
+        <p>Last used: <span id="savedDate" style="color:#f0abfc;"></span></p>
+        <button onclick="restoreVoucher()" class="restore-link">Restore Code</button>
     </div>
 
     <div id="status" class="status-msg"></div>
 
-    <a href="index.html" style="color:var(--muted); font-size:0.7rem; display:block; margin-top:15px; text-decoration:none;">✦ Need a voucher? Buy here.</a>
+    <a href="index.html" style="color:var(--muted); font-size:0.7rem; display:block; margin-top:15px; text-decoration:none; letter-spacing:1px;">✦ Need a voucher? Buy here.</a>
     <a href="https://wa.me/256771999302" class="whatsapp-btn"><span>💬</span> WhatsApp Support</a>
     
-    <div class="card-footer"><span>✦ Mobile Hub Uganda · 2026 ✦</span></div>
+    <div style="margin-top:18px; padding-top:14px; border-top:1px solid rgba(124,58,237,.18);">
+        <span style="font-size:.56rem; color:rgba(167,139,250,.4); font-family:'Orbitron',sans-serif;">✦ Mobile Hub Uganda · 2026 ✦</span>
+    </div>
 </div>
 
 <script>
@@ -166,14 +163,19 @@
         }
     };
 
+    // Auto-uppercase input
+    document.getElementById('voucherCode').addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+
     function restoreVoucher() {
         document.getElementById('voucherCode').value = localStorage.getItem('last_voucher');
+        setTimeout(connectWiFi, 300);
     }
 
     async function connectWiFi() {
         var code = document.getElementById('voucherCode').value.trim().toUpperCase();
         var btn = document.getElementById('loginBtn');
-        var mac = _mac;
 
         if (!code) {
             showStatus('⚠️ Enter voucher code', '#ffa502');
@@ -185,28 +187,28 @@
         showStatus('⏳ Verifying...', '#67e8f9');
 
         try {
-            // STEP 1: API Activation
+            // 1. Activate on Cloudflare
             var actRes = await fetch('https://mobilehubuganda-github-io.pages.dev/api/voucher/activate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: code, mac: mac })
+                body: JSON.stringify({ code: code, mac: _mac })
             });
             var actData = await actRes.json();
-            if (!actData.success) throw new Error(actData.error || 'Activation Failed');
+            if (!actData.success) throw new Error(actData.error || 'Invalid Voucher');
 
-            // STEP 2: The Silent MikroTik Handshake
+            // 2. Local Storage for UX
             localStorage.setItem('last_voucher', code);
             localStorage.setItem('voucher_date', new Date().toLocaleDateString());
-            showStatus('✅ Connected! Redirecting...', '#4ecdc4');
+            showStatus('✅ Verified! Redirecting...', '#4ecdc4');
 
-            // Send login to MikroTik in background
-            var ping = new Image();
-            ping.src = _loginUrl + "?username=" + encodeURIComponent(code) + "&password=" + encodeURIComponent(code);
+            // 3. Robust MikroTik Handshake
+            const mikrotikAuth = `${_loginUrl}?username=${encodeURIComponent(code)}&password=${encodeURIComponent(code)}`;
+            await fetch(mikrotikAuth, { mode: 'no-cors' }).catch(() => {});
 
-            // STEP 3: Hardcoded Jump to Status Page
+            // 4. Redirect
             setTimeout(function() {
                 window.location.href = "https://mobilehubuganda-github-io.pages.dev/status.html";
-            }, 1500);
+            }, 1200);
 
         } catch (err) {
             showStatus('⛔ ' + err.message, '#f87171');
@@ -224,17 +226,18 @@
         el.style.background = col + '15';
     }
 
+    // Background Animation
     (function(){
         var cv=document.getElementById('galaxy'), ctx=cv.getContext('2d');
         var W, H, stars=[];
         function resize(){ W=cv.width=window.innerWidth; H=cv.height=window.innerHeight; }
         function mkStars(){
             stars=[];
-            for(var i=0; i<100; i++) stars.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.2, v:Math.random()*0.3});
+            for(var i=0; i<85; i++) stars.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.3, v:Math.random()*0.35});
         }
         function draw(){
             ctx.clearRect(0,0,W,H);
-            ctx.fillStyle="#fff";
+            ctx.fillStyle="rgba(255,255,255,0.8)";
             stars.forEach(s => {
                 ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
                 s.y -= s.v; if(s.y < 0) s.y = H;
