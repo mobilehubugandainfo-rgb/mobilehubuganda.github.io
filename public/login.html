@@ -128,6 +128,11 @@ input[type="text"]::placeholder { color:rgba(200,210,255,.25); font-size:.75rem;
   color:var(--muted); text-decoration:none; transition:color .2s;
 }
 .help-link:hover{color:var(--cyan);}
+.status-link {
+  display:inline-block; margin-top:8px; font-size:.72rem; letter-spacing:.5px;
+  color:#67e8f9; text-decoration:none; transition:color .2s;
+}
+.status-link:hover{color:var(--cyan);}
 .whatsapp-btn {
   margin-top:14px; display:flex; align-items:center; justify-content:center; gap:9px;
   background:rgba(37,211,102,.1); border:1.5px solid rgba(37,211,102,.4);
@@ -150,6 +155,9 @@ input[type="text"]::placeholder { color:rgba(200,210,255,.25); font-size:.75rem;
 <div class="ss ss1"></div><div class="ss ss2"></div><div class="ss ss3"></div>
 <div class="ss ss4"></div><div class="ss ss5"></div>
 
+<!-- Hidden iframe — MikroTik login submits here so we keep control of the page -->
+<iframe id="mikrotik-frame" name="mikrotik-frame" style="display:none;"></iframe>
+
 <div class="login-card">
   <div class="hud tl"></div><div class="hud tr"></div>
   <div class="hud bl"></div><div class="hud br"></div>
@@ -170,6 +178,7 @@ input[type="text"]::placeholder { color:rgba(200,210,255,.25); font-size:.75rem;
   </div>
   <div id="status" class="status-msg"></div>
   <a href="index.html" class="help-link">✦ Need a voucher? Buy one here.</a>
+  <a href="status.html" class="status-link">⏱ Check my session &amp; time remaining</a>
   <a href="https://wa.me/256771999302?text=Hello%20Mobile%20Hub,%20I%20am%20having%20trouble%20with%20my%20WiFi%20voucher." class="whatsapp-btn">
     <span>💬</span> Chat with Support on WhatsApp
   </a>
@@ -193,7 +202,6 @@ window.onload = function() {
     }
     if (!hasParams) console.warn('[Login] No URL params — not via MikroTik redirect');
 
-    // MAC capture
     var macFromUrl =
         params.get('mac') || params.get('MAC') ||
         params.get('client-mac') || params.get('chap-id') || null;
@@ -201,34 +209,32 @@ window.onload = function() {
     if (macFromUrl) {
         _mac = macFromUrl;
         localStorage.setItem('client_mac', macFromUrl);
-        console.log('[Login] ✅ MAC from URL:', _mac);
+        console.log('[Login] MAC from URL:', _mac);
     } else {
         var savedMac = localStorage.getItem('client_mac');
         if (savedMac && savedMac !== 'unknown') {
             _mac = savedMac;
             console.log('[Login] MAC from localStorage:', _mac);
         } else {
-            console.warn('[Login] ⚠️ MAC not found.');
+            console.warn('[Login] MAC not found.');
         }
     }
 
-    // MikroTik login URL capture
     var linkLogin = params.get('link-login') || params.get('link-login-only') || null;
     if (linkLogin) {
         _loginUrl = linkLogin;
         localStorage.setItem('mikrotik_login_url', linkLogin);
-        console.log('[Login] ✅ MikroTik login URL:', _loginUrl);
+        console.log('[Login] MikroTik login URL:', _loginUrl);
     } else {
         var savedUrl = localStorage.getItem('mikrotik_login_url');
         if (savedUrl) {
             _loginUrl = savedUrl;
             console.log('[Login] MikroTik login URL from localStorage:', _loginUrl);
         } else {
-            console.warn('[Login] ⚠️ No link-login param — using fallback.');
+            console.warn('[Login] No link-login param — using fallback.');
         }
     }
 
-    // Voucher code auto-fill
     var codeFromUrl = params.get('voucher');
     var savedCode   = localStorage.getItem('last_voucher');
     var savedDate   = localStorage.getItem('voucher_date');
@@ -293,33 +299,30 @@ async function connectWiFi() {
             return;
         }
 
-        // ── REMAINING TIME CALCULATION ───────────────────────────────
-        // validate.js returns expires_at as "YYYY-MM-DD HH:MM:SS" UTC
-        // We convert this to seconds remaining and pass it to MikroTik
-        // as session-timeout so the client gets ONLY their remaining time
-        // — not a fresh full duration on every reconnect
+        // Calculate remaining seconds from expires_at
         var remainingSeconds = 0;
         if (data.expires_at) {
             var expiryDate   = new Date(data.expires_at.replace(' ', 'T') + 'Z');
             remainingSeconds = Math.floor((expiryDate.getTime() - Date.now()) / 1000);
             if (remainingSeconds < 0) remainingSeconds = 0;
-            var mins = Math.floor(remainingSeconds / 60);
-            var secs = remainingSeconds % 60;
-            console.log('[Login] Time remaining:', remainingSeconds + 's (' + mins + 'm ' + secs + 's)');
+            console.log('[Login] Remaining:', remainingSeconds + 's');
         }
 
         localStorage.setItem('last_voucher', code);
         localStorage.setItem('voucher_date', new Date().toLocaleString());
 
         showStatus(
-            '<span class="success-checkmark">✅</span> Voucher verified! Connecting...',
+            '<span class="success-checkmark">✅</span> Connected! Loading your session...',
             '#4ecdc4'
         );
 
         setTimeout(function() {
+            // Submit MikroTik login into hidden iframe
+            // This authenticates the client without navigating away from our page
             var form    = document.createElement('form');
             form.method = 'POST';
             form.action = _loginUrl;
+            form.target = 'mikrotik-frame';
 
             var dst    = localStorage.getItem('mikrotik_dst') || '';
             var fields = [
@@ -328,13 +331,9 @@ async function connectWiFi() {
                 ['dst',      dst]
             ];
 
-            // Pass remaining seconds to MikroTik — this is the key:
-            // First login  → full duration (e.g. 10800s for 3h)
-            // Reconnection → whatever is left (e.g. 5400s = 1h 30m remaining)
-            // MikroTik disconnects the client at exactly the right moment
             if (remainingSeconds > 0) {
-                fields.push(['session-timeout', String(remainingSeconds)]);
-                console.log('[Login] Passing session-timeout:', remainingSeconds + 's to MikroTik');
+                fields.push(['limit-uptime', String(remainingSeconds)]);
+                console.log('[Login] Passing limit-uptime:', remainingSeconds + 's');
             }
 
             fields.forEach(function(pair) {
@@ -346,8 +345,16 @@ async function connectWiFi() {
             });
 
             document.body.appendChild(form);
-            console.log('[Login] Submitting to MikroTik at:', _loginUrl);
+            console.log('[Login] Submitting to MikroTik (background):', _loginUrl);
             form.submit();
+
+            // After MikroTik processes login, redirect to status page
+            // 2 second delay gives MikroTik time to authenticate the session
+            setTimeout(function() {
+                console.log('[Login] Redirecting to status page...');
+                window.location.href = 'status.html';
+            }, 2000);
+
         }, 1000);
 
     } catch (err) {
@@ -371,7 +378,7 @@ document.getElementById('voucherCode').addEventListener('keypress', function(e) 
     if (e.key === 'Enter') connectWiFi();
 });
 
-/* ═══ GALAXY CANVAS ═══ */
+/* GALAXY CANVAS */
 (function(){
   var cv=document.getElementById('galaxy'),ctx=cv.getContext('2d');
   var W,H,stars=[],dust=[];
