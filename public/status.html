@@ -6,195 +6,813 @@
 <title>Session Status | Mobile Hub Uganda</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
   :root {
-    --cyan:#06b6d4; --violet:#7c3aed; --white:#f0f4ff;
-    --muted:rgba(200,210,255,0.55); --glass:rgba(8,4,24,0.85);
+    --cyan:#06b6d4; --violet:#7c3aed; --green:#10b981; --amber:#f59e0b;
+    --red:#f43f5e; --white:#f0f4ff; --muted:rgba(200,210,255,0.5);
+    --glass:rgba(6,3,20,0.82); --card-border:rgba(124,58,237,0.45);
   }
+
   html, body {
-    width:100%; min-height:100%; background:#020008;
+    width:100%; min-height:100vh; background:#010007;
     font-family:'Rajdhani',sans-serif; color:var(--white);
-    display:flex; align-items:center; justify-content:center; padding:20px;
-    overflow: hidden;
+    overflow-x:hidden; position:relative;
   }
-  #galaxy { position:fixed; inset:0; z-index:0; }
-  .nebula {
+
+  /* ══════════════════════════════════════════════
+     GALAXY BACKGROUND - Full screen animated stars
+     ══════════════════════════════════════════════ */
+  #galaxy {
+    position:fixed; inset:0; z-index:0;
+    width:100%; height:100%;
+  }
+
+  .nebula-layer {
     position:fixed; inset:0; z-index:1; pointer-events:none;
     background:
-      radial-gradient(ellipse 70% 55% at 18% 28%, rgba(124,58,237,.25) 0%,transparent 65%),
-      radial-gradient(ellipse 55% 45% at 82% 68%, rgba(6,182,212,.18) 0%,transparent 60%);
-    animation:nebDrift 20s ease-in-out infinite alternate;
+      radial-gradient(ellipse 80% 60% at 15% 20%, rgba(124,58,237,.3) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 85% 75%, rgba(6,182,212,.22) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(16,185,129,.08) 0%, transparent 50%);
+    animation: nebDrift 25s ease-in-out infinite alternate;
   }
-  @keyframes nebDrift{from{opacity:.85}to{opacity:1;transform:scale(1.06)}}
-  
-  .card {
-    position:relative; z-index:10; width:100%; max-width:440px;
-    background:var(--glass); border:1.5px solid rgba(124,58,237,.5); border-radius:24px;
-    padding:30px 25px; text-align:center; backdrop-filter:blur(24px);
-    box-shadow:0 0 60px rgba(124,58,237,.2), 0 30px 80px rgba(0,0,0,.8);
-    animation:cardIn .6s cubic-bezier(.22,.68,0,1.2) both;
+  @keyframes nebDrift {
+    0%   { opacity:.8;  transform:scale(1) rotate(0deg); }
+    50%  { opacity:1;   transform:scale(1.04) rotate(.5deg); }
+    100% { opacity:.85; transform:scale(1.02) rotate(-.3deg); }
   }
-  @keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+
+  /* ══════════════════════════════════════════════
+     LAYOUT
+     ══════════════════════════════════════════════ */
+  .page {
+    position:relative; z-index:10;
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:20px 16px 32px;
+  }
+
+  /* ══════════════════════════════════════════════
+     HEADER
+     ══════════════════════════════════════════════ */
+  .header {
+    text-align:center; margin-bottom:22px;
+    animation: fadeDown .7s cubic-bezier(.22,.68,0,1.2) both;
+  }
+  @keyframes fadeDown { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:none} }
 
   .logo {
-    font-family:'Orbitron',sans-serif; font-size:1.5rem; font-weight:900; letter-spacing:4px;
-    background:linear-gradient(90deg,#c084fc,#67e8f9); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    font-family:'Orbitron',sans-serif; font-size:clamp(1.4rem,5vw,2rem);
+    font-weight:900; letter-spacing:4px;
+    background:linear-gradient(90deg,#c084fc,#67e8f9,#34d399);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-size:200%; animation:shimmer 6s linear infinite;
   }
-  .divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.4),transparent);margin:15px 0;}
+  @keyframes shimmer { 0%{background-position:0%} 100%{background-position:200%} }
+  
+  .subtitle {
+    font-family:'Orbitron',sans-serif; font-size:.52rem; letter-spacing:3px;
+    color:#67e8f9; text-transform:uppercase; margin-top:4px; opacity:.8;
+  }
 
-  .timer-wrap { position:relative; width:160px; height:160px; margin:0 auto 20px; }
-  .timer-svg { transform:rotate(-90deg); }
+  /* ══════════════════════════════════════════════
+     MAIN CARD
+     ══════════════════════════════════════════════ */
+  .card {
+    width:100%; max-width:520px;
+    background:var(--glass); border:1.5px solid var(--card-border);
+    border-radius:24px; padding:26px 22px;
+    backdrop-filter:blur(28px);
+    box-shadow:0 0 80px rgba(124,58,237,.18), 0 40px 100px rgba(0,0,0,.7);
+    animation: cardIn .6s cubic-bezier(.22,.68,0,1.2) .1s both;
+  }
+  @keyframes cardIn { from{opacity:0;transform:translateY(18px) scale(.97)} to{opacity:1;transform:none} }
+
+  /* ══════════════════════════════════════════════
+     VOUCHER BADGE
+     ══════════════════════════════════════════════ */
+  .voucher-badge {
+    display:flex; align-items:center; justify-content:space-between;
+    background:rgba(6,182,212,.07); border:1px dashed rgba(6,182,212,.4);
+    border-radius:14px; padding:12px 16px; margin-bottom:20px;
+    gap:10px; flex-wrap:wrap;
+  }
+  .voucher-label {
+    font-size:.52rem; letter-spacing:2px; color:var(--muted);
+    text-transform:uppercase; margin-bottom:3px;
+  }
+  .voucher-code {
+    font-family:'Orbitron',sans-serif; font-size:clamp(.85rem,3.5vw,1.1rem);
+    color:#67e8f9; letter-spacing:3px; font-weight:700;
+  }
+  .plan-name {
+    font-family:'Orbitron',sans-serif; font-size:clamp(.65rem,2.5vw,.8rem);
+    color:#c084fc; font-weight:700;
+  }
+  .status-dot {
+    width:11px; height:11px; border-radius:50%; background:var(--green);
+    box-shadow:0 0 12px var(--green); animation:blink 2s ease-in-out infinite; flex-shrink:0;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+  /* ══════════════════════════════════════════════
+     TIMER RING - Circular progress
+     ══════════════════════════════════════════════ */
+  .timer-section { display:flex; flex-direction:column; align-items:center; margin-bottom:20px; }
+  .timer-wrap { position:relative; width:clamp(138px,36vw,168px); height:clamp(138px,36vw,168px); }
+  .timer-svg { width:100%; height:100%; transform:rotate(-90deg); }
   .timer-track { fill:none; stroke:rgba(124,58,237,.1); stroke-width:10; }
-  .timer-bar { fill:none; stroke-width:10; stroke-linecap:round; stroke-dasharray:471; stroke-dashoffset:471; transition:all 0.5s ease; }
-  .timer-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .timer-value { font-family:'Orbitron',sans-serif; font-size:1.8rem; font-weight:900; color:#67e8f9; text-shadow:0 0 15px rgba(6,182,212,0.5); }
-  .timer-label { font-size:.5rem; letter-spacing:2px; color:#a78bfa; text-transform:uppercase; margin-top:2px; }
+  .timer-bar { fill:none; stroke-width:10; stroke-linecap:round; transition:stroke-dashoffset .8s ease, stroke .8s ease; }
+  .timer-center {
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .timer-main {
+    font-family:'Orbitron',sans-serif; font-size:clamp(1.15rem,4vw,1.55rem);
+    font-weight:900; color:#67e8f9; text-shadow:0 0 20px rgba(6,182,212,.6); line-height:1;
+  }
+  .timer-sub {
+    font-size:.5rem; letter-spacing:2px; color:#a78bfa;
+    text-transform:uppercase; margin-top:3px;
+  }
+  .timer-pct {
+    font-size:.58rem; color:var(--muted); margin-top:3px;
+    font-family:'Orbitron',sans-serif;
+  }
 
-  .stats-grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px; }
-  .stat-card { background:rgba(255,255,255,0.03); border:1px solid rgba(124,58,237,0.2); border-radius:12px; padding:12px; }
-  .stat-label { font-size:0.55rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
-  .stat-value { font-family:'Orbitron',sans-serif; font-size:0.85rem; color:#fff; margin-top:4px; }
+  /* ══════════════════════════════════════════════
+     TIME PROGRESS BAR - Shows time used
+     ══════════════════════════════════════════════ */
+  .bar-section { margin-bottom:18px; }
+  .bar-labels {
+    display:flex; justify-content:space-between; font-size:.53rem;
+    letter-spacing:1px; color:var(--muted); text-transform:uppercase; margin-bottom:6px;
+  }
+  .bar-track {
+    width:100%; height:6px; background:rgba(255,255,255,.06);
+    border-radius:99px; overflow:hidden;
+  }
+  .bar-fill {
+    height:100%; border-radius:99px;
+    background:linear-gradient(90deg,#7c3aed,#06b6d4);
+    transition:width .8s ease, background .8s ease; width:0%;
+  }
 
-  .btn { display:block; width:100%; padding:14px; border-radius:12px; text-decoration:none; font-family:'Orbitron',sans-serif; font-size:0.75rem; font-weight:700; margin-top:10px; transition:0.3s; }
-  .btn-primary { background:linear-gradient(118deg,#7c3aed,#06b6d4); color:#fff; box-shadow:0 4px 15px rgba(124,58,237,0.4); }
-  .btn-outline { border:1px solid rgba(251,191,36,0.5); color:#fde68a; background:rgba(251,191,36,0.05); }
+  /* ══════════════════════════════════════════════
+     STATS GRID - 4 stat cards
+     ══════════════════════════════════════════════ */
+  .stats-grid {
+    display:grid; grid-template-columns:repeat(2,1fr); gap:9px; margin-bottom:16px;
+  }
+  @media(min-width:460px) { .stats-grid { grid-template-columns:repeat(4,1fr); } }
+  
+  .stat {
+    background:rgba(255,255,255,.03); border:1px solid rgba(124,58,237,.18);
+    border-radius:13px; padding:12px 8px; text-align:center; transition:.3s;
+  }
+  .stat:hover { border-color:rgba(6,182,212,.35); background:rgba(6,182,212,.04); }
+  .stat-icon { font-size:1rem; margin-bottom:4px; display:block; }
+  .stat-val {
+    font-family:'Orbitron',sans-serif; font-size:clamp(.65rem,2.5vw,.82rem);
+    color:#fff; font-weight:700; display:block;
+  }
+  .stat-lbl {
+    font-size:.5rem; letter-spacing:1.5px; color:var(--muted);
+    text-transform:uppercase; display:block; margin-top:2px;
+  }
+
+  /* ══════════════════════════════════════════════
+     DATA USAGE - Download/Upload cards
+     ══════════════════════════════════════════════ */
+  .data-row { display:flex; gap:9px; margin-bottom:16px; }
+  .data-card {
+    flex:1; background:rgba(255,255,255,.03); border:1px solid rgba(124,58,237,.18);
+    border-radius:13px; padding:11px 12px; display:flex; align-items:center; gap:9px;
+  }
+  .data-arrow { font-size:1.25rem; flex-shrink:0; }
+  .data-val {
+    font-family:'Orbitron',sans-serif; font-size:clamp(.7rem,2.5vw,.82rem);
+    color:#fff; font-weight:700;
+  }
+  .data-lbl {
+    font-size:.5rem; letter-spacing:1.5px; color:var(--muted);
+    text-transform:uppercase; margin-top:2px;
+  }
+
+  /* ══════════════════════════════════════════════
+     DIVIDER
+     ══════════════════════════════════════════════ */
+  .divider {
+    width:100%; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(124,58,237,.35),transparent);
+    margin:14px 0;
+  }
+
+  /* ══════════════════════════════════════════════
+     BUTTONS
+     ══════════════════════════════════════════════ */
+  .btn {
+    display:block; width:100%; padding:14px; border-radius:13px; text-decoration:none;
+    font-family:'Orbitron',sans-serif; font-size:.73rem; font-weight:700;
+    letter-spacing:1.5px; text-transform:uppercase; text-align:center;
+    margin-top:9px; border:none; cursor:pointer; transition:.25s;
+  }
+  .btn-primary {
+    background:linear-gradient(118deg,#7c3aed,#06b6d4); color:#fff;
+    box-shadow:0 4px 20px rgba(124,58,237,.35);
+  }
+  .btn-primary:hover { box-shadow:0 6px 28px rgba(124,58,237,.55); transform:translateY(-1px); }
+  .btn-outline {
+    border:1px solid rgba(251,191,36,.45); color:#fde68a;
+    background:rgba(251,191,36,.05);
+  }
+  .btn-outline:hover { background:rgba(251,191,36,.12); }
+
+  /* ══════════════════════════════════════════════
+     REFRESH ROW
+     ══════════════════════════════════════════════ */
+  .refresh-row {
+    display:flex; align-items:center; justify-content:center; gap:7px;
+    margin-top:13px; font-size:.5rem; letter-spacing:1.5px;
+    color:rgba(255,255,255,.2); text-transform:uppercase;
+  }
+  .refresh-dot {
+    width:6px; height:6px; border-radius:50%;
+    background:rgba(6,182,212,.4); flex-shrink:0;
+  }
+  .refresh-dot.spinning {
+    animation:spin .8s linear infinite;
+    border:1.5px solid rgba(6,182,212,.5);
+    border-top-color:#06b6d4; background:transparent;
+  }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  /* ══════════════════════════════════════════════
+     LOADING STATE
+     ══════════════════════════════════════════════ */
+  #loadingState {
+    display:flex; flex-direction:column; align-items:center;
+    justify-content:center; padding:50px 0; gap:14px;
+  }
+  .loader-ring {
+    width:42px; height:42px; border-radius:50%;
+    border:3px solid rgba(124,58,237,.2);
+    border-top-color:#7c3aed; animation:spin .9s linear infinite;
+  }
+  .loader-txt {
+    font-family:'Orbitron',sans-serif; font-size:.58rem;
+    letter-spacing:2px; color:#a78bfa; animation:pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+  /* ══════════════════════════════════════════════
+     EXPIRED STATE
+     ══════════════════════════════════════════════ */
+  #expiredState {
+    display:none; flex-direction:column; align-items:center;
+    padding:28px 0; gap:10px; text-align:center;
+  }
+  .expired-icon { font-size:2.8rem; animation:pulse 2s ease-in-out infinite; }
+  .expired-title {
+    font-family:'Orbitron',sans-serif; font-size:1.15rem; font-weight:900;
+    color:var(--red); text-shadow:0 0 20px rgba(244,63,94,.4);
+  }
+  .expired-msg {
+    font-size:.82rem; color:var(--muted); max-width:270px; line-height:1.5;
+  }
+  .redirect-notice {
+    font-family:'Orbitron',sans-serif; font-size:.55rem; letter-spacing:2px;
+    color:rgba(244,63,94,.6); animation:pulse 1.2s ease-in-out infinite;
+  }
+
+  /* ══════════════════════════════════════════════
+     FOOTER
+     ══════════════════════════════════════════════ */
+  .footer {
+    margin-top:16px; font-size:.46rem; letter-spacing:2px;
+    color:rgba(255,255,255,.14); text-align:center; text-transform:uppercase;
+  }
+
+  /* ══════════════════════════════════════════════
+     MOBILE RESPONSIVE
+     ══════════════════════════════════════════════ */
+  @media (max-width: 600px) {
+    .card { padding: 20px 16px; }
+    .timer-wrap { width: 130px; height: 130px; }
+    .data-row { flex-direction: column; }
+  }
 </style>
 </head>
 <body>
 
+<!-- Galaxy background canvas -->
 <canvas id="galaxy"></canvas>
-<div class="nebula"></div>
+<div class="nebula-layer"></div>
 
-<div class="card">
-  <div class="logo">MOBILE HUB</div>
-  <div class="logo-sub" style="font-size:0.6rem; letter-spacing:2px; color:#67e8f9;">SESSION STATUS</div>
-  <div class="divider"></div>
+<div class="page">
 
-  <div id="activeState">
-    <div class="timer-wrap">
-      <svg width="160" height="160">
-        <circle class="timer-track" cx="80" cy="80" r="75"/>
-        <circle class="timer-bar" id="timerBar" cx="80" cy="80" r="75" stroke="#06b6d4"/>
-      </svg>
-      <div class="timer-center">
-        <div class="timer-value" id="timerVal">00:00</div>
-        <div class="timer-label">Remaining</div>
-      </div>
-    </div>
-
-    <div class="stat-card" style="margin-bottom:10px; border-style: dashed; border-color: var(--cyan);">
-        <div class="stat-label">Active Voucher</div>
-        <div class="stat-value" id="voucherDisplay" style="color:var(--cyan); letter-spacing:3px;">----</div>
-    </div>
-
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Expires At</div>
-        <div class="stat-value" id="expiryTime">--:--</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Plan</div>
-        <div class="stat-value" id="packageVal">--</div>
-      </div>
-    </div>
-
-    <div class="divider"></div>
-    <a href="login.html" class="btn btn-primary">⚡ REFRESH CONNECTION</a>
-    <a href="index.html" class="btn btn-outline">💫 BUY NEW VOUCHER</a>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">MOBILE HUB</div>
+    <div class="subtitle">✦ Active Session Dashboard ✦</div>
   </div>
 
-  <div id="expiredState" style="display:none; padding:20px 0;">
-    <div style="font-size:3rem;">⌛</div>
-    <h3 style="font-family:'Orbitron'; color:#f43f5e; margin:10px 0;">EXPIRED</h3>
-    <p style="font-size:0.8rem; color:var(--muted);">Your session has ended. Please top up.</p>
-    <a href="index.html" class="btn btn-primary">BUY VOUCHER NOW</a>
+  <div class="card">
+
+    <!-- ══════════════════════════════════════════════
+         LOADING STATE
+         ══════════════════════════════════════════════ -->
+    <div id="loadingState">
+      <div class="loader-ring"></div>
+      <div class="loader-txt">Fetching Session...</div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         ACTIVE SESSION STATE
+         ══════════════════════════════════════════════ -->
+    <div id="activeState" style="display:none;">
+
+      <!-- Voucher Badge -->
+      <div class="voucher-badge">
+        <div>
+          <div class="voucher-label">Active Voucher</div>
+          <div class="voucher-code" id="voucherCode">----</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="voucher-label">Plan</div>
+          <div class="plan-name" id="planName">--</div>
+        </div>
+        <div class="status-dot" id="statusDot"></div>
+      </div>
+
+      <!-- Timer Ring -->
+      <div class="timer-section">
+        <div class="timer-wrap">
+          <svg class="timer-svg" viewBox="0 0 160 160">
+            <circle class="timer-track" cx="80" cy="80" r="70"/>
+            <circle class="timer-bar" id="timerBar" cx="80" cy="80" r="70"
+              stroke="#06b6d4"
+              style="stroke-dasharray:439.82; stroke-dashoffset:0;"/>
+          </svg>
+          <div class="timer-center">
+            <div class="timer-main" id="timeRemaining">--:--</div>
+            <div class="timer-sub">Remaining</div>
+            <div class="timer-pct" id="timePct">--%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time Progress Bar -->
+      <div class="bar-section">
+        <div class="bar-labels">
+          <span>Used: <strong id="timeUsedLabel">--:--</strong></span>
+          <span>Total: <strong id="totalTimeLabel">--:--</strong></span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" id="timeBarFill"></div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat">
+          <span class="stat-icon">⏰</span>
+          <span class="stat-val" id="expiresAt">--:--</span>
+          <span class="stat-lbl">Expires At</span>
+        </div>
+        <div class="stat">
+          <span class="stat-icon">🕐</span>
+          <span class="stat-val" id="elapsedDisplay">--:--</span>
+          <span class="stat-lbl">Time Used</span>
+        </div>
+        <div class="stat">
+          <span class="stat-icon">📅</span>
+          <span class="stat-val" id="startedAt">--:--</span>
+          <span class="stat-lbl">Started</span>
+        </div>
+        <div class="stat">
+          <span class="stat-icon">🔄</span>
+          <span class="stat-val" id="nextRefresh">60s</span>
+          <span class="stat-lbl">Next Sync</span>
+        </div>
+      </div>
+
+      <!-- Data Usage -->
+      <div class="data-row">
+        <div class="data-card">
+          <div class="data-arrow" style="color:#34d399;">⬇</div>
+          <div>
+            <div class="data-val" id="bytesDown">-- MB</div>
+            <div class="data-lbl">Downloaded</div>
+          </div>
+        </div>
+        <div class="data-card">
+          <div class="data-arrow" style="color:#f59e0b;">⬆</div>
+          <div>
+            <div class="data-val" id="bytesUp">-- MB</div>
+            <div class="data-lbl">Uploaded</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <a href="https://mobilehubuganda-github-io.pages.dev/login.html" class="btn btn-primary">⚡ Reconnect / Change Voucher</a>
+      <a href="https://mobilehubuganda-github-io.pages.dev/index.html" class="btn btn-outline">💫 Buy New Voucher</a>
+
+      <div class="refresh-row">
+        <div class="refresh-dot" id="refreshDot"></div>
+        <span id="refreshLabel">Auto-sync every 60s</span>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         EXPIRED STATE
+         ══════════════════════════════════════════════ -->
+    <div id="expiredState">
+      <div class="expired-icon">⌛</div>
+      <div class="expired-title">SESSION EXPIRED</div>
+      <div class="expired-msg">Your voucher time has run out. You will be disconnected shortly...</div>
+      <div class="redirect-notice" id="redirectNotice">Logging out in 5s...</div>
+      <div class="divider"></div>
+      <a href="https://mobilehubuganda-github-io.pages.dev/index.html" class="btn btn-primary" style="margin-top:4px;">💫 Buy New Voucher</a>
+      <a href="https://mobilehubuganda-github-io.pages.dev/login.html" class="btn btn-outline">↩ Back to Login</a>
+    </div>
+
+    <div class="footer">✦ Mobile Hub Uganda 2026 ✦</div>
   </div>
 
-  <div class="card-footer" style="margin-top:20px; font-size:0.5rem; color:rgba(255,255,255,0.2);">
-    ✦ MOBILE HUB UGANDA 2026 ✦
-  </div>
 </div>
 
 <script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIGURATION
+// ═══════════════════════════════════════════════════════════════
 const API_URL = 'https://mobilehubuganda-github-io.pages.dev';
-const packageNames = { p1: '5 Min Test', p2: '24 Hours', p3: '7 Days', p4: '30 Days' };
+const REFRESH_INTERVAL = 60; // seconds between API syncs
+const CIRCUMFERENCE = 439.82; // 2 * π * 70 (for circular progress)
 
-function fmtTime(secs) {
-  if (secs <= 0) return "00:00";
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = secs % 60;
-  return h > 0 ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+const PACKAGE_NAMES = {
+  'p1': '3 Hours',
+  'p2': '24 Hours',
+  'p3': '7 Days',
+  'p4': '30 Days',
+  'free-trial': '5 Minutes'
+};
+
+const PACKAGE_DURATIONS = {
+  'p1': 3 * 60 * 60,        // 3 hours in seconds
+  'p2': 24 * 60 * 60,       // 24 hours
+  'p3': 7 * 24 * 60 * 60,   // 7 days
+  'p4': 30 * 24 * 60 * 60,  // 30 days
+  'free-trial': 5 * 60      // 5 minutes
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  STATE VARIABLES
+// ═══════════════════════════════════════════════════════════════
+let ticker = null;
+let refreshCountdown = REFRESH_INTERVAL;
+let remainingSeconds = 0;
+let totalSeconds = 0;
+let elapsedSeconds = 0;
+let lastApiData = null;
+let expired = false;
+
+// ═══════════════════════════════════════════════════════════════
+//  HELPER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
+function formatTime(seconds) {
+  if (!seconds || isNaN(seconds) || seconds < 0) seconds = 0;
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  
+  if (h > 0) return `${h}h ${String(m).padStart(2,'0')}m`;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
-async function loadStatus() {
-  const code = localStorage.getItem('last_voucher');
-  if (!code) { window.location.href = 'login.html'; return; }
+function formatBytes(bytes) {
+  if (!bytes || isNaN(bytes) || bytes === 0) return '0 B';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1073741824) return (bytes / 1048576).toFixed(2) + ' MB';
+  return (bytes / 1073741824).toFixed(2) + ' GB';
+}
+
+function formatClock(date) {
+  if (!date || isNaN(date)) return '--:--';
+  return date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function el(id) { return document.getElementById(id); }
+function setText(id, value) {
+  const element = el(id);
+  if (element) element.textContent = value;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER UI - Called every second
+// ═══════════════════════════════════════════════════════════════
+function renderUI() {
+  // Calculate percentages
+  const percentRemaining = totalSeconds > 0 ? Math.max(0, Math.min(1, remainingSeconds / totalSeconds)) : 0;
+  const percentUsed = 1 - percentRemaining;
+
+  // Update circular progress ring
+  const offset = CIRCUMFERENCE - percentRemaining * CIRCUMFERENCE;
+  const bar = el('timerBar');
+  if (bar) {
+    bar.style.strokeDashoffset = offset.toFixed(2);
+    // Change color based on time remaining
+    bar.setAttribute('stroke',
+      percentRemaining > 0.5 ? '#06b6d4' : // Cyan when >50%
+      percentRemaining > 0.2 ? '#f59e0b' : // Amber when 20-50%
+      '#f43f5e'                             // Red when <20%
+    );
+  }
+
+  // Update time displays
+  setText('timeRemaining', formatTime(remainingSeconds));
+  setText('timePct', Math.round(percentRemaining * 100) + '% left');
+  setText('timeUsedLabel', formatTime(elapsedSeconds));
+  setText('totalTimeLabel', formatTime(totalSeconds));
+  setText('elapsedDisplay', formatTime(elapsedSeconds));
+
+  // Update progress bar (time used)
+  const fill = el('timeBarFill');
+  if (fill) {
+    fill.style.width = (percentUsed * 100).toFixed(1) + '%';
+    fill.style.background =
+      percentRemaining > 0.5 ? 'linear-gradient(90deg,#7c3aed,#06b6d4)' :
+      percentRemaining > 0.2 ? 'linear-gradient(90deg,#7c3aed,#f59e0b)' :
+                                'linear-gradient(90deg,#7c3aed,#f43f5e)';
+  }
+
+  // Update refresh countdown
+  setText('nextRefresh', refreshCountdown + 's');
+
+  // Update data usage (from last API fetch)
+  if (lastApiData) {
+    const bytesDown = lastApiData.bytes_in || lastApiData.bytes_down || lastApiData.download || 0;
+    const bytesUp = lastApiData.bytes_out || lastApiData.bytes_up || lastApiData.upload || 0;
+    setText('bytesDown', formatBytes(bytesDown));
+    setText('bytesUp', formatBytes(bytesUp));
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  APPLY API DATA
+// ═══════════════════════════════════════════════════════════════
+function applyApiData(data) {
+  lastApiData = data;
+
+  // Get voucher code
+  const voucherCode = (data.code || localStorage.getItem('last_voucher') || '').toUpperCase();
+  setText('voucherCode', voucherCode || '----');
+
+  // Get package info
+  const packageType = data.package || data.package_type || 'p2';
+  setText('planName', PACKAGE_NAMES[packageType] || packageType);
+
+  // Calculate timing
+  totalSeconds = data.limit_uptime || PACKAGE_DURATIONS[packageType] || 3600;
+  const uptimeUsed = data.uptime || 0;
+  remainingSeconds = Math.max(0, totalSeconds - uptimeUsed);
+  elapsedSeconds = uptimeUsed;
+
+  // Set clock displays
+  const now = new Date();
+  const startTime = new Date(now.getTime() - (uptimeUsed * 1000));
+  const expiryTime = new Date(now.getTime() + (remainingSeconds * 1000));
+
+  setText('startedAt', formatClock(startTime));
+  setText('expiresAt', formatClock(expiryTime));
+
+  renderUI();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HANDLE SESSION EXPIRY
+// ═══════════════════════════════════════════════════════════════
+function handleExpiry() {
+  if (expired) return;
+  expired = true;
+  clearInterval(ticker);
+
+  // Hide active state, show expired state
+  el('loadingState').style.display = 'none';
+  el('activeState').style.display = 'none';
+  el('expiredState').style.display = 'flex';
+
+  // Change status dot to red
+  const dot = el('statusDot');
+  if (dot) {
+    dot.style.background = '#f43f5e';
+    dot.style.boxShadow = '0 0 12px #f43f5e';
+    dot.style.animation = 'none';
+  }
+
+  // Countdown to logout
+  let countdown = 5;
+  const notice = el('redirectNotice');
+  const timer = setInterval(() => {
+    countdown--;
+    if (notice) notice.textContent = `Logging out in ${countdown}s...`;
+    if (countdown <= 0) {
+      clearInterval(timer);
+      // Trigger MikroTik logout
+      window.location.href = 'http://10.0.0.1/logout';
+    }
+  }, 1000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FETCH SESSION DATA FROM API
+// ═══════════════════════════════════════════════════════════════
+async function fetchSessionData(isFirstFetch) {
+  // Get voucher code from URL or localStorage
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlVoucher = urlParams.get('voucher');
+  if (urlVoucher) localStorage.setItem('last_voucher', urlVoucher.toUpperCase());
+
+  const voucherCode = (urlVoucher || localStorage.getItem('last_voucher') || '').toUpperCase();
+  if (!voucherCode) {
+    window.location.href = 'https://mobilehubuganda-github-io.pages.dev/login.html';
+    return;
+  }
+
+  // Show syncing indicator
+  const dot = el('refreshDot');
+  const label = el('refreshLabel');
+  if (dot) dot.classList.add('spinning');
+  if (label) label.textContent = 'Syncing...';
 
   try {
-    const res = await fetch(`${API_URL}/api/voucher/session`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: code.toUpperCase() })
-    });
-    const data = await res.json();
+    // Call MikroTik status API
+    const response = await fetch(`http://10.0.0.1/status?user=${encodeURIComponent(voucherCode)}`);
+    
+    if (!response.ok) throw new Error('API request failed');
 
-    if (!data.success || data.state === 'expired') {
-      document.getElementById('activeState').style.display = 'none';
-      document.getElementById('expiredState').style.display = 'block';
+    const data = await response.json();
+
+    // Remove syncing indicator
+    if (dot) dot.classList.remove('spinning');
+    if (label) label.textContent = 'Auto-sync every 60s';
+
+    // Hide loading on first fetch
+    if (isFirstFetch) {
+      el('loadingState').style.display = 'none';
+      el('activeState').style.display = 'block';
+    }
+
+    // Check if session is active
+    if (!data || data.logged_in === 'no' || data.logged_in === false) {
+      handleExpiry();
       return;
     }
 
-    // 🕒 Setup Date (Universal Parsing)
-    const expiryStr = data.expires_at.replace(' ', 'T') + 'Z';
-    const expiryDate = new Date(expiryStr);
-    
-    document.getElementById('voucherDisplay').textContent = code.toUpperCase();
-    document.getElementById('packageVal').textContent = packageNames[data.package] || data.package;
-    document.getElementById('expiryTime').textContent = expiryDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    applyApiData(data);
 
-    let remaining = Math.floor((expiryDate.getTime() - new Date().getTime()) / 1000);
-    const total = data.total_secs || 300; // default 5m for safety
+  } catch (error) {
+    console.error('[STATUS] API Error:', error);
+    if (dot) dot.classList.remove('spinning');
+    if (label) label.textContent = 'Sync failed — retrying...';
 
-    const timerInt = setInterval(() => {
-      remaining--;
-      if (remaining <= 0) {
-        clearInterval(timerInt);
-        location.reload();
-      }
-      
-      document.getElementById('timerVal').textContent = fmtTime(remaining);
-      
-      // Update Progress Ring
-      const progress = Math.max(0, remaining / total);
-      const offset = 471 - (progress * 471);
-      document.getElementById('timerBar').style.strokeDashoffset = offset;
-      
-      // Color shifts
-      if (progress < 0.2) document.getElementById('timerBar').setAttribute('stroke', '#f43f5e');
-      else if (progress < 0.5) document.getElementById('timerBar').setAttribute('stroke', '#fbbf24');
-    }, 1000);
-
-  } catch (e) {
-    console.error(e);
+    if (isFirstFetch) {
+      el('loadingState').style.display = 'none';
+      el('activeState').style.display = 'block';
+    }
   }
 }
 
-loadStatus();
+// ═══════════════════════════════════════════════════════════════
+//  TICKER - Runs every second
+// ═══════════════════════════════════════════════════════════════
+function startTicker() {
+  ticker = setInterval(() => {
+    if (expired) return;
 
-// Galaxy BG Animation (Cleaned up)
-(function(){
-  var cv=document.getElementById('galaxy'),ctx=cv.getContext('2d');
-  var W,H,stars=[];
-  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
-  function mkStars(){ stars=[]; for(let i=0;i<100;i++) stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5,v:Math.random()*0.3}); }
-  function draw(){
-    ctx.clearRect(0,0,W,H); ctx.fillStyle="#fff";
-    stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill(); s.y-=s.v; if(s.y<0) s.y=H; });
+    // Decrement counters
+    remainingSeconds--;
+    elapsedSeconds++;
+    refreshCountdown--;
+
+    // Check if expired
+    if (remainingSeconds <= 0) {
+      handleExpiry();
+      return;
+    }
+
+    // Refresh API data when countdown reaches 0
+    if (refreshCountdown <= 0) {
+      refreshCountdown = REFRESH_INTERVAL;
+      fetchSessionData(false);
+    }
+
+    renderUI();
+  }, 1000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INITIALIZE
+// ═══════════════════════════════════════════════════════════════
+window.onload = async function() {
+  await fetchSessionData(true);
+  startTicker();
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  GALAXY BACKGROUND - Animated stars and nebula
+// ═══════════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('galaxy');
+  const ctx = canvas.getContext('2d');
+  let width, height, stars = [], shootingStars = [], frame = 0;
+
+  function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  }
+
+  function createStars() {
+    stars = [];
+    const count = Math.min(Math.floor(width * height / 7500), 250);
+    for (let i = 0; i < count; i++) {
+      stars.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 1.4 + 0.2,
+        velocity: Math.random() * 0.2 + 0.04,
+        opacity: Math.random() * 0.55 + 0.2,
+        twinkleOffset: Math.random() * 300
+      });
+    }
+  }
+
+  // Create shooting stars periodically
+  setInterval(() => {
+    if (Math.random() < 0.45) {
+      shootingStars.push({
+        x: Math.random() * width * 0.65,
+        y: Math.random() * height * 0.35,
+        length: Math.random() * 130 + 55,
+        speed: Math.random() * 7 + 4,
+        opacity: 1,
+        angle: Math.PI / 5 + (Math.random() - 0.5) * 0.3
+      });
+    }
+  }, 2800);
+
+  function draw() {
+    frame++;
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw stars
+    stars.forEach(star => {
+      const twinkle = 0.55 + 0.45 * Math.sin((frame + star.twinkleOffset) * 0.038);
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${(star.opacity * twinkle).toFixed(2)})`;
+      ctx.fill();
+      
+      // Move star slowly upward
+      star.y -= star.velocity;
+      if (star.y < -2) {
+        star.y = height + 2;
+        star.x = Math.random() * width;
+      }
+    });
+
+    // Draw shooting stars
+    shootingStars = shootingStars.filter(ss => ss.opacity > 0.02);
+    shootingStars.forEach(ss => {
+      const endX = ss.x + Math.cos(ss.angle) * ss.length;
+      const endY = ss.y + Math.sin(ss.angle) * ss.length;
+      const gradient = ctx.createLinearGradient(ss.x, ss.y, endX, endY);
+      gradient.addColorStop(0, 'rgba(255,255,255,0)');
+      gradient.addColorStop(1, `rgba(210,225,255,${ss.opacity.toFixed(2)})`);
+      
+      ctx.beginPath();
+      ctx.moveTo(ss.x, ss.y);
+      ctx.lineTo(endX, endY);
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      
+      ss.x += ss.speed * Math.cos(ss.angle);
+      ss.y += ss.speed * Math.sin(ss.angle);
+      ss.opacity -= 0.017;
+    });
+
     requestAnimationFrame(draw);
   }
-  window.addEventListener('resize', resize);
-  resize(); mkStars(); draw();
+
+  window.addEventListener('resize', () => { resize(); createStars(); });
+  resize();
+  createStars();
+  draw();
 })();
 </script>
 </body>
