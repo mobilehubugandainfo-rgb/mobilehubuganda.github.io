@@ -37,7 +37,6 @@
         .form-group { margin-bottom:20px; text-align:left; }
         .field-label { font-size:.6rem; letter-spacing:2px; text-transform:uppercase; color:#a78bfa; font-weight:700; font-family:'Orbitron',sans-serif; display:block; margin-bottom:8px; }
 
-        /* Restore hint shown when a previous voucher is found */
         .restore-hint {
             font-size:0.55rem; color:#67e8f9; letter-spacing:1px;
             margin-bottom:8px; display:none; cursor:pointer;
@@ -49,12 +48,11 @@
 
         input[type="text"] { width:100%; padding:15px; background:rgba(255,255,255,.05); border:1.5px solid rgba(124,58,237,.4); border-radius:12px; color:#fff; font-family:'Orbitron',sans-serif; font-size:1.2rem; text-align:center; letter-spacing:3px; text-transform:uppercase; transition: 0.3s; }
         input[type="text"]:focus { border-color:var(--cyan); outline:none; box-shadow: 0 0 15px rgba(6,182,212,0.3); }
-        .connect-btn { width:100%; padding:16px; border:none; border-radius:12px; cursor:pointer; font-family:'Orbitron',sans-serif; font-size:.9rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#fff; background:linear-gradient(115deg,#7c3aed, #06b6d4); box-shadow:0 4px 20px rgba(124,58,237,0.4); }
+        .connect-btn { width:100%; padding:16px; border:none; border-radius:12px; cursor:pointer; font-family:'Orbitron',sans-serif; font-size:.9rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#fff; background:linear-gradient(115deg,#7c3aed, #06b6d4); box-shadow:0 4px 20px rgba(124,58,237,0.4); transition: opacity 0.2s; }
         .connect-btn:disabled { opacity:0.5; cursor:not-allowed; }
         .status-msg { margin-top:15px; padding:12px; border-radius:10px; font-size:.85rem; display:none; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from{opacity:0} to{opacity:1} }
 
-        /* Buy voucher link */
         .buy-link {
             display:block; margin-top:18px;
             font-size:0.6rem; letter-spacing:1.5px; text-transform:uppercase;
@@ -62,6 +60,9 @@
             text-decoration:none; opacity:0.75;
         }
         .buy-link:hover { opacity:1; color:#67e8f9; }
+
+        /* Countdown indicator */
+        .countdown { font-family:'Orbitron',sans-serif; font-size:0.65rem; color:#67e8f9; margin-top:8px; display:none; letter-spacing:1px; }
     </style>
 </head>
 <body>
@@ -76,7 +77,6 @@
     <div class="form-group">
         <label class="field-label">Your Active Voucher</label>
 
-        <!-- Restore hint: tapping it re-fills the last used voucher -->
         <div class="restore-hint" id="restoreHint" onclick="restoreVoucher()">
             ↩ Tap to restore last voucher: <span id="hintCode"></span>
         </div>
@@ -88,6 +88,7 @@
     <button onclick="connectWiFi()" class="connect-btn" id="loginBtn">⚡ ACTIVATE INTERNET</button>
     
     <div id="status" class="status-msg"></div>
+    <div class="countdown" id="countdown"></div>
 
     <a href="https://mobilehubuganda-github-io.pages.dev/index.html" class="buy-link">💫 Buy a new voucher</a>
 </div>
@@ -113,7 +114,7 @@
             const clean = urlVoucher.toUpperCase();
             document.getElementById('voucherCode').value = clean;
             showStatus('🚀 Voucher received! Click Activate.', '#67e8f9');
-            return; // Don't show restore hint if we already have a voucher
+            return;
         }
 
         // 3. RESTORE HINT — show previously used voucher for easy re-entry
@@ -121,13 +122,11 @@
         if (lastVoucher) {
             document.getElementById('hintCode').textContent = lastVoucher.toUpperCase();
             document.getElementById('restoreHint').style.display = 'block';
-            // Auto-fill it too so they can just tap Activate
             document.getElementById('voucherCode').value = lastVoucher.toUpperCase();
             showStatus('↩ Previous voucher restored. Tap Activate to reconnect.', '#a78bfa');
         }
     };
 
-    // Called when user taps the restore hint bar
     function restoreVoucher() {
         const lastVoucher = localStorage.getItem('last_voucher');
         if (lastVoucher) {
@@ -159,22 +158,22 @@
             const actData = await actRes.json();
             if (!actData.success) throw new Error(actData.error || 'Activation Failed');
 
-            // ✅ FIX: Save voucher BEFORE submitting to MikroTik
-            // so status.html can read it after redirect
+            // Save voucher BEFORE submitting to MikroTik
             localStorage.setItem('last_voucher', code);
 
-            // Step 2: Submit login form to MikroTik
+            // Step 2: Create hidden iframe — submit login to MikroTik silently
+            // This keeps YOUR page in control so you can redirect yourself
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.name = 'mikrotik_frame';
+            document.body.appendChild(iframe);
+
             const loginForm = document.createElement('form');
             loginForm.method = 'POST';
             loginForm.action = _loginUrl;
+            loginForm.target = 'mikrotik_frame'; // POST inside hidden iframe, not main window
 
-            const fields = {
-                'username': code,
-                'password': '',
-                // After MikroTik auth, redirect to YOUR status page
-                'dst': 'https://mobilehubuganda-github-io.pages.dev/status.html'
-            };
-
+            const fields = { 'username': code, 'password': '' };
             for (const key in fields) {
                 const input = document.createElement('input');
                 input.type = 'hidden';
@@ -184,15 +183,37 @@
             }
 
             document.body.appendChild(loginForm);
-            showStatus('✅ Authenticated! Loading your session...', '#4ecdc4');
-            
-            setTimeout(() => { loginForm.submit(); }, 800);
+            loginForm.submit();
+
+            // Step 3: Show countdown, then redirect to YOUR status page
+            showStatus('✅ Authenticated! Preparing your session...', '#4ecdc4');
+            startCountdown(3, function() {
+                window.location.href = 'https://mobilehubuganda-github-io.pages.dev/status.html?voucher=' + encodeURIComponent(code);
+            });
 
         } catch (err) {
             showStatus('⛔ ' + err.message, '#f87171');
             btn.disabled = false;
             btn.textContent = '⚡ ACTIVATE INTERNET';
         }
+    }
+
+    // Counts down N seconds then calls callback
+    function startCountdown(seconds, callback) {
+        const el = document.getElementById('countdown');
+        el.style.display = 'block';
+        let remaining = seconds;
+        el.textContent = `Redirecting in ${remaining}s...`;
+        const timer = setInterval(function() {
+            remaining--;
+            if (remaining <= 0) {
+                clearInterval(timer);
+                el.textContent = 'Launching...';
+                callback();
+            } else {
+                el.textContent = `Redirecting in ${remaining}s...`;
+            }
+        }, 1000);
     }
 
     function showStatus(txt, col) {
