@@ -187,7 +187,16 @@
             document.body.appendChild(form);
 
             // Short delay so the user sees the "Connecting..." message
-            setTimeout(() => form.submit(), 600);
+            // Submit to MikroTik after a brief delay
+        setTimeout(() => { 
+            form.submit(); 
+            
+            // NEW: Safety redirect to GitHub status page 1.5 seconds later
+            setTimeout(() => {
+                window.location.href = 'https://mobilehubuganda-github-io.pages.dev/status.html';
+            }, 1500);
+
+        }, 600);
 
         } catch (err) {
             showStatus('⛔ ' + err.message, '#f87171');
