@@ -7,84 +7,40 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
   :root {
     --cyan:#06b6d4; --violet:#7c3aed; --green:#10b981; --amber:#f59e0b;
     --red:#f43f5e; --white:#f0f4ff; --muted:rgba(200,210,255,0.5);
     --glass:rgba(6,3,20,0.82); --card-border:rgba(124,58,237,0.45);
   }
-
-  html, body {
-    width:100%; min-height:100vh; background:#010007;
-    font-family:'Rajdhani',sans-serif; color:var(--white);
-    overflow-x:hidden;
-  }
-
+  html, body { width:100%; min-height:100vh; background:#010007; font-family:'Rajdhani',sans-serif; color:var(--white); overflow-x:hidden; }
   #galaxy { position:fixed; inset:0; z-index:0; width:100%; height:100%; }
-
   .nebula-layer {
     position:fixed; inset:0; z-index:1; pointer-events:none;
     background:
       radial-gradient(ellipse 80% 60% at 15% 20%, rgba(124,58,237,.3) 0%, transparent 60%),
       radial-gradient(ellipse 60% 50% at 85% 75%, rgba(6,182,212,.22) 0%, transparent 55%),
       radial-gradient(ellipse 50% 40% at 50% 50%, rgba(16,185,129,.08) 0%, transparent 50%);
-    animation: nebDrift 25s ease-in-out infinite alternate;
+    animation:nebDrift 25s ease-in-out infinite alternate;
   }
-  @keyframes nebDrift {
-    0%   { opacity:.8;  transform:scale(1) rotate(0deg); }
-    50%  { opacity:1;   transform:scale(1.04) rotate(.5deg); }
-    100% { opacity:.85; transform:scale(1.02) rotate(-.3deg); }
-  }
+  @keyframes nebDrift { 0%{opacity:.8;transform:scale(1)} 50%{opacity:1;transform:scale(1.04)} 100%{opacity:.85;transform:scale(1.02)} }
 
-  .page {
-    position:relative; z-index:10; min-height:100vh;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    padding:20px 16px 32px;
-  }
+  .page { position:relative; z-index:10; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px 16px 32px; }
 
-  .header {
-    text-align:center; margin-bottom:22px;
-    animation: fadeDown .7s cubic-bezier(.22,.68,0,1.2) both;
-  }
+  .header { text-align:center; margin-bottom:22px; animation:fadeDown .7s cubic-bezier(.22,.68,0,1.2) both; }
   @keyframes fadeDown { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:none} }
-
-  .logo {
-    font-family:'Orbitron',sans-serif; font-size:clamp(1.4rem,5vw,2rem);
-    font-weight:900; letter-spacing:4px;
-    background:linear-gradient(90deg,#c084fc,#67e8f9,#34d399);
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    background-size:200%; animation:shimmer 6s linear infinite;
-  }
+  .logo { font-family:'Orbitron',sans-serif; font-size:clamp(1.4rem,5vw,2rem); font-weight:900; letter-spacing:4px; background:linear-gradient(90deg,#c084fc,#67e8f9,#34d399); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-size:200%; animation:shimmer 6s linear infinite; }
   @keyframes shimmer { 0%{background-position:0%} 100%{background-position:200%} }
+  .subtitle { font-family:'Orbitron',sans-serif; font-size:.52rem; letter-spacing:3px; color:#67e8f9; text-transform:uppercase; margin-top:4px; opacity:.8; }
 
-  .subtitle {
-    font-family:'Orbitron',sans-serif; font-size:.52rem; letter-spacing:3px;
-    color:#67e8f9; text-transform:uppercase; margin-top:4px; opacity:.8;
-  }
-
-  .card {
-    width:100%; max-width:520px;
-    background:var(--glass); border:1.5px solid var(--card-border);
-    border-radius:24px; padding:26px 22px;
-    backdrop-filter:blur(28px);
-    box-shadow:0 0 80px rgba(124,58,237,.18), 0 40px 100px rgba(0,0,0,.7);
-    animation: cardIn .6s cubic-bezier(.22,.68,0,1.2) .1s both;
-  }
+  .card { width:100%; max-width:520px; background:var(--glass); border:1.5px solid var(--card-border); border-radius:24px; padding:26px 22px; backdrop-filter:blur(28px); box-shadow:0 0 80px rgba(124,58,237,.18),0 40px 100px rgba(0,0,0,.7); animation:cardIn .6s cubic-bezier(.22,.68,0,1.2) .1s both; }
   @keyframes cardIn { from{opacity:0;transform:translateY(18px) scale(.97)} to{opacity:1;transform:none} }
 
   /* VOUCHER BADGE */
-  .voucher-badge {
-    display:flex; align-items:center; justify-content:space-between;
-    background:rgba(6,182,212,.07); border:1px dashed rgba(6,182,212,.4);
-    border-radius:14px; padding:12px 16px; margin-bottom:20px; gap:10px; flex-wrap:wrap;
-  }
+  .voucher-badge { display:flex; align-items:center; justify-content:space-between; background:rgba(6,182,212,.07); border:1px dashed rgba(6,182,212,.4); border-radius:14px; padding:12px 16px; margin-bottom:20px; gap:10px; flex-wrap:wrap; }
   .voucher-label { font-size:.52rem; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:3px; }
   .voucher-code { font-family:'Orbitron',sans-serif; font-size:clamp(.85rem,3.5vw,1.1rem); color:#67e8f9; letter-spacing:3px; font-weight:700; }
   .plan-name { font-family:'Orbitron',sans-serif; font-size:clamp(.65rem,2.5vw,.8rem); color:#c084fc; font-weight:700; }
-  .status-dot {
-    width:11px; height:11px; border-radius:50%; background:var(--green);
-    box-shadow:0 0 12px var(--green); animation:blink 2s ease-in-out infinite; flex-shrink:0;
-  }
+  .status-dot { width:11px; height:11px; border-radius:50%; background:var(--green); box-shadow:0 0 12px var(--green); animation:blink 2s ease-in-out infinite; flex-shrink:0; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
 
   /* TIMER RING */
@@ -149,11 +105,7 @@
   .redirect-notice { font-family:'Orbitron',sans-serif; font-size:.55rem; letter-spacing:2px; color:rgba(244,63,94,.6); animation:pulse 1.2s ease-in-out infinite; }
 
   .footer { margin-top:16px; font-size:.46rem; letter-spacing:2px; color:rgba(255,255,255,.14); text-align:center; text-transform:uppercase; }
-
-  @media (max-width:400px) {
-    .card { padding:18px 14px; }
-    .data-row { flex-direction:column; }
-  }
+  @media(max-width:400px) { .card{padding:18px 14px;} .data-row{flex-direction:column;} }
 </style>
 </head>
 <body>
@@ -175,7 +127,7 @@
       <div class="loader-txt">Fetching Session...</div>
     </div>
 
-    <!-- ACTIVE -->
+    <!-- ACTIVE SESSION -->
     <div id="activeState" style="display:none;">
       <div class="voucher-badge">
         <div>
@@ -193,6 +145,7 @@
         <div class="timer-wrap">
           <svg class="timer-svg" viewBox="0 0 160 160">
             <circle class="timer-track" cx="80" cy="80" r="70"/>
+            <!-- circumference = 2 * π * 70 = 439.82 -->
             <circle class="timer-bar" id="timerBar" cx="80" cy="80" r="70"
               stroke="#06b6d4" style="stroke-dasharray:439.82; stroke-dashoffset:0;"/>
           </svg>
@@ -241,14 +194,14 @@
         <div class="data-card">
           <div class="data-arrow" style="color:#34d399;">⬇</div>
           <div>
-            <div class="data-val" id="bytesDown">-- MB</div>
+            <div class="data-val" id="bytesDown">N/A</div>
             <div class="data-lbl">Downloaded</div>
           </div>
         </div>
         <div class="data-card">
           <div class="data-arrow" style="color:#f59e0b;">⬆</div>
           <div>
-            <div class="data-val" id="bytesUp">-- MB</div>
+            <div class="data-val" id="bytesUp">N/A</div>
             <div class="data-lbl">Uploaded</div>
           </div>
         </div>
@@ -280,84 +233,96 @@
 </div>
 
 <script>
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  CONFIG
-// ═══════════════════════════════════════
-const API_URL       = 'https://mobilehubuganda-github-io.pages.dev';
-const REFRESH_SECS  = 60;
-const CIRCUMFERENCE = 439.82; // 2π × 70
+// ═══════════════════════════════════════════════════════
+const API_URL      = 'https://mobilehubuganda-github-io.pages.dev';
+const REFRESH_SECS = 60;
+const CIRC         = 439.82; // 2π × 70
 
-const PACKAGE_NAMES = {
-  p1:'3 Hours', p2:'24 Hours', p3:'7 Days', p4:'30 Days', 'free-trial':'5 Minutes'
+// Must match your session.js PLAN_DURATIONS keys exactly
+const PKG_NAMES = {
+  p1: '5 Minutes',
+  p2: '8 Hours',
+  p3: '24 Hours',
+  'free-trial': '5 Minutes'
 };
-const PACKAGE_DURATIONS = {
-  p1: 3*3600, p2: 24*3600, p3: 7*24*3600, p4: 30*24*3600, 'free-trial': 300
-};
 
-// ═══════════════════════════════════════
-//  STATE — all managed here, never reset to 0 accidentally
-// ═══════════════════════════════════════
-let ticker          = null;
-let refreshIn       = REFRESH_SECS;
-let remainingSecs   = -1;   // -1 = not yet loaded (IMPORTANT: never start ticker until this is set)
-let totalSecs       = 0;
-let elapsedSecs     = 0;
-let lastData        = null;
-let isExpired       = false;
-let sessionLoaded   = false; // guard: ticker only starts after first successful API load
+// ═══════════════════════════════════════════════════════
+//  STATE
+//  All timing values come directly from the API response.
+//  remainingSecs starts at -1 (unloaded) — nothing runs
+//  until the first successful fetch sets a real value.
+// ═══════════════════════════════════════════════════════
+let ticker        = null;
+let refreshIn     = REFRESH_SECS;
+let remainingSecs = -1;
+let totalSecs     = 0;
+let elapsedSecs   = 0;
+let isExpired     = false;
+let loaded        = false;
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  HELPERS
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+
+// Format seconds as "Xh MMm" or "MM:SS"
 function fmtTime(s) {
   if (!s || isNaN(s) || s < 0) s = 0;
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
+  const h   = Math.floor(s / 3600);
+  const m   = Math.floor((s % 3600) / 60);
   const sec = Math.floor(s % 60);
   if (h > 0) return `${h}h ${String(m).padStart(2,'0')}m`;
   return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 
+// Format bytes nicely
 function fmtBytes(b) {
-  if (!b || isNaN(b) || b === 0) return '0 B';
-  if (b < 1024)        return b + ' B';
-  if (b < 1048576)     return (b/1024).toFixed(1) + ' KB';
-  if (b < 1073741824)  return (b/1048576).toFixed(2) + ' MB';
-  return (b/1073741824).toFixed(2) + ' GB';
+  if (!b || isNaN(b) || b === 0) return 'N/A';
+  if (b < 1024)       return b + ' B';
+  if (b < 1048576)    return (b / 1024).toFixed(1) + ' KB';
+  if (b < 1073741824) return (b / 1048576).toFixed(2) + ' MB';
+  return (b / 1073741824).toFixed(2) + ' GB';
 }
 
-function fmtClock(d) {
-  if (!d || isNaN(d)) return '--:--';
-  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+// Parse UTC DB string "YYYY-MM-DD HH:MM:SS" → local time "HH:MM"
+// The DB stores UTC but without the Z suffix — we must add it
+// so JavaScript's Date constructor interprets it correctly.
+// Without the Z it's parsed as LOCAL time → wrong hour displayed.
+function fmtDbTime(str) {
+  if (!str) return '--:--';
+  const d = new Date(str.replace(' ', 'T') + 'Z');
+  if (isNaN(d)) return '--:--';
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 function $id(id) { return document.getElementById(id); }
-function setText(id, v) { const e=$id(id); if(e) e.textContent=v; }
+function setText(id, v) { const e = $id(id); if (e) e.textContent = v; }
 
-// ═══════════════════════════════════════
-//  RENDER — safe to call any time
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  RENDER — updates all visible values, safe to call any time
+// ═══════════════════════════════════════════════════════
 function render() {
-  if (remainingSecs < 0) return; // not loaded yet
+  if (remainingSecs < 0) return; // not loaded yet — do nothing
 
   const pct     = totalSecs > 0 ? Math.max(0, Math.min(1, remainingSecs / totalSecs)) : 0;
   const usedPct = 1 - pct;
 
-  // Ring
+  // Ring: cyan when healthy, amber when low, red when critical
+  const colour = pct > 0.5 ? '#06b6d4' : pct > 0.2 ? '#f59e0b' : '#f43f5e';
   const bar = $id('timerBar');
   if (bar) {
-    bar.style.strokeDashoffset = (CIRCUMFERENCE - pct * CIRCUMFERENCE).toFixed(2);
-    bar.setAttribute('stroke', pct > 0.5 ? '#06b6d4' : pct > 0.2 ? '#f59e0b' : '#f43f5e');
+    bar.style.strokeDashoffset = (CIRC - pct * CIRC).toFixed(2);
+    bar.setAttribute('stroke', colour);
   }
 
-  // Text
   setText('timeRemaining', fmtTime(remainingSecs));
-  setText('timePct',        Math.round(pct * 100) + '% left');
-  setText('timeUsedLabel',  fmtTime(elapsedSecs));
-  setText('totalTimeLabel', fmtTime(totalSecs));
-  setText('elapsedDisplay', fmtTime(elapsedSecs));
+  setText('timePct',       Math.round(pct * 100) + '% left');
+  setText('timeUsedLabel', fmtTime(elapsedSecs));
+  setText('totalTimeLabel',fmtTime(totalSecs));
+  setText('elapsedDisplay',fmtTime(elapsedSecs));
+  setText('nextRefresh',   refreshIn + 's');
 
-  // Bar
   const fill = $id('timeBarFill');
   if (fill) {
     fill.style.width = (usedPct * 100).toFixed(1) + '%';
@@ -367,63 +332,49 @@ function render() {
       ? 'linear-gradient(90deg,#7c3aed,#f59e0b)'
       : 'linear-gradient(90deg,#7c3aed,#f43f5e)';
   }
-
-  setText('nextRefresh', refreshIn + 's');
-
-  // Data usage
-  if (lastData) {
-    setText('bytesDown', fmtBytes(lastData.bytes_in  || lastData.bytes_down  || lastData.download || 0));
-    setText('bytesUp',   fmtBytes(lastData.bytes_out || lastData.bytes_up    || lastData.upload   || 0));
-  }
 }
 
-// ═══════════════════════════════════════
-//  APPLY DATA from API response
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  APPLY DATA
+//  Uses EXACT field names from your session.js response:
+//    remaining_secs  — seconds left right now
+//    total_secs      — total seconds for the plan
+//    used_secs       — seconds already consumed
+//    expires_at      — "YYYY-MM-DD HH:MM:SS" UTC string
+//    activated_at    — "YYYY-MM-DD HH:MM:SS" UTC string (= used_at)
+//    code            — voucher code string
+//    package         — plan key e.g. "p1", "p2"
+// ═══════════════════════════════════════════════════════
 function applyData(data) {
-  lastData = data;
+  // ── Core timing — straight from API, no local computation ─────
+  remainingSecs = data.remaining_secs ?? 0;
+  totalSecs     = data.total_secs     ?? 0;
+  elapsedSecs   = data.used_secs      ?? 0;
 
+  // ── Voucher & plan ────────────────────────────────────────────
   const code = (data.code || localStorage.getItem('last_voucher') || '').toUpperCase();
   setText('voucherCode', code || '----');
+  setText('planName', PKG_NAMES[data.package] || data.package || '--');
 
-  const pkg  = data.package || data.package_type || 'p2';
-  setText('planName', PACKAGE_NAMES[pkg] || pkg);
+  // ── Clock displays — UTC strings parsed with +Z to avoid
+  //    local-timezone misinterpretation ──────────────────────────
+  setText('expiresAt', fmtDbTime(data.expires_at));
+  setText('startedAt', fmtDbTime(data.activated_at)); // session.js returns this as used_at alias
 
-  // ── KEY FIX: use expires_at timestamp if available (most reliable) ──
-  if (data.expires_at) {
-    const raw  = data.expires_at.replace(' ','T');
-    const exp  = new Date(raw.endsWith('Z') ? raw : raw + 'Z');
-    remainingSecs = Math.max(0, Math.floor((exp.getTime() - Date.now()) / 1000));
-    totalSecs     = data.total_secs || data.limit_uptime || PACKAGE_DURATIONS[pkg] || 3600;
-    elapsedSecs   = Math.max(0, totalSecs - remainingSecs);
-    setText('expiresAt', fmtClock(exp));
-    const start = new Date(exp.getTime() - totalSecs * 1000);
-    setText('startedAt', fmtClock(start));
-
-  // ── FALLBACK: use uptime seconds from MikroTik ──
-  } else if (data.uptime !== undefined) {
-    const uptimeSecs = parseInt(data.uptime) || 0;
-    totalSecs        = data.limit_uptime || PACKAGE_DURATIONS[pkg] || 3600;
-    remainingSecs    = Math.max(0, totalSecs - uptimeSecs);
-    elapsedSecs      = uptimeSecs;
-    const now    = new Date();
-    const start  = new Date(now.getTime() - uptimeSecs * 1000);
-    const expiry = new Date(now.getTime() + remainingSecs * 1000);
-    setText('expiresAt', fmtClock(expiry));
-    setText('startedAt', fmtClock(start));
-
-  // ── LAST RESORT: if API gave nothing useful, do not start expiry ──
-  } else {
-    console.warn('[STATUS] No timing data in API response — holding current state');
-    return;
-  }
+  // ── Data usage — N/A until your API returns these fields ──────
+  const down = data.bytes_in  || data.bytes_down  || data.download || null;
+  const up   = data.bytes_out || data.bytes_up    || data.upload   || null;
+  setText('bytesDown', down !== null ? fmtBytes(down) : 'N/A');
+  setText('bytesUp',   up   !== null ? fmtBytes(up)   : 'N/A');
 
   render();
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  EXPIRY
-// ═══════════════════════════════════════
+//  Shows expired screen, then redirects to MikroTik /logout
+//  which terminates the hotspot session and blocks traffic.
+// ═══════════════════════════════════════════════════════
 function doExpire() {
   if (isExpired) return;
   isExpired = true;
@@ -443,18 +394,17 @@ function doExpire() {
     if (notice) notice.textContent = `Logging out in ${t}s...`;
     if (t <= 0) {
       clearInterval(cntd);
-      // Redirect to MikroTik login page (stored by login.html)
-      window.location.href = localStorage.getItem('mikrotik_login_url') || 'http://10.0.0.1/login';
+      // /logout kills the MikroTik hotspot session → cuts off internet
+      const base = localStorage.getItem('mikrotik_login_url') || 'http://10.0.0.1/login';
+      window.location.href = base.replace('/login', '/logout');
     }
   }, 1000);
 }
 
-// ═══════════════════════════════════════
-//  FETCH from YOUR Cloudflare API
-//  (NOT MikroTik — that was the bug)
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  FETCH SESSION from Cloudflare API
+// ═══════════════════════════════════════════════════════
 async function fetchSession(isFirst) {
-  // Read voucher
   const urlVoucher = new URLSearchParams(window.location.search).get('voucher');
   if (urlVoucher) localStorage.setItem('last_voucher', urlVoucher.toUpperCase());
   const code = (urlVoucher || localStorage.getItem('last_voucher') || '').toUpperCase();
@@ -470,10 +420,9 @@ async function fetchSession(isFirst) {
   if (label) label.textContent = 'Syncing...';
 
   try {
-    // ✅ CORRECT: call your own Cloudflare API, not MikroTik
     const res  = await fetch(`${API_URL}/api/voucher/session`, {
       method:  'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ code })
     });
     const data = await res.json();
@@ -483,8 +432,8 @@ async function fetchSession(isFirst) {
 
     if (isFirst) $id('loadingState').style.display = 'none';
 
-    // API explicitly says expired
-    if (!data.success || data.state === 'expired' || data.expired === true) {
+    // Treat any non-active state as expiry
+    if (!data.success || data.state === 'expired' || data.state === 'not_found' || data.state === 'not_activated') {
       doExpire();
       return;
     }
@@ -493,9 +442,9 @@ async function fetchSession(isFirst) {
 
     applyData(data);
 
-    // ✅ Only start the ticker AFTER we have real data — prevents instant-expiry
-    if (isFirst && !sessionLoaded) {
-      sessionLoaded = true;
+    // Start ticker only once, after first real data load
+    if (isFirst && !loaded) {
+      loaded = true;
       startTicker();
     }
 
@@ -505,67 +454,58 @@ async function fetchSession(isFirst) {
     if (label) label.textContent = 'Sync failed — retrying...';
 
     if (isFirst) {
-      // API failed on first load — show active UI but DO NOT start expiry
-      // The ticker will retry in 60s
+      // Network error on first load: show UI, do NOT expire, retry in 60s
       $id('loadingState').style.display = 'none';
       $id('activeState').style.display  = 'block';
-      // Still start ticker so retry happens, but remainingSecs is -1 so render() is a no-op
-      if (!sessionLoaded) {
-        sessionLoaded = true;
-        startTicker();
-      }
+      if (!loaded) { loaded = true; startTicker(); }
     }
   }
 }
 
-// ═══════════════════════════════════════
-//  TICKER — 1 second interval
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  TICKER — fires every second
+// ═══════════════════════════════════════════════════════
 function startTicker() {
   ticker = setInterval(() => {
     if (isExpired) return;
 
-    // Only count down if we actually have data
-    if (remainingSecs >= 0) {
+    if (remainingSecs > 0) {
       remainingSecs--;
       elapsedSecs++;
       refreshIn--;
 
-      if (remainingSecs <= 0) {
-        doExpire();
-        return;
-      }
+      if (remainingSecs <= 0) { doExpire(); return; }
 
       if (refreshIn <= 0) {
         refreshIn = REFRESH_SECS;
-        fetchSession(false); // re-sync from API
+        fetchSession(false); // re-sync with server to correct any drift
       }
 
       render();
+
+    } else if (remainingSecs === 0) {
+      doExpire();
+
     } else {
-      // No data yet — just count down refresh timer and retry
+      // remainingSecs is -1: data not yet loaded, just tick the retry counter
       refreshIn--;
-      if (refreshIn <= 0) {
-        refreshIn = REFRESH_SECS;
-        fetchSession(false);
-      }
+      if (refreshIn <= 0) { refreshIn = REFRESH_SECS; fetchSession(false); }
     }
   }, 1000);
 }
 
-// ═══════════════════════════════════════
-//  INIT — fetch first, THEN start ticker
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  INIT — fetch data first, ticker starts inside callback
+// ═══════════════════════════════════════════════════════
 window.onload = function() {
-  fetchSession(true); // startTicker() called inside after data arrives
+  fetchSession(true);
 };
 
-// ═══════════════════════════════════════
-//  GALAXY CANVAS
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  GALAXY CANVAS — stars, nebula, shooting stars
+// ═══════════════════════════════════════════════════════
 (function() {
-  const cv  = document.getElementById('galaxy');
-  const ctx = cv.getContext('2d');
+  const cv = document.getElementById('galaxy'), ctx = cv.getContext('2d');
   let W, H, stars = [], shooters = [], frame = 0;
 
   function resize() { W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; }
@@ -573,20 +513,18 @@ window.onload = function() {
   function mkStars() {
     stars = [];
     const n = Math.min(Math.floor(W * H / 7500), 250);
-    for (let i = 0; i < n; i++) {
-      stars.push({
-        x: Math.random()*W, y: Math.random()*H,
-        r: Math.random()*1.4+0.2, v: Math.random()*0.2+0.04,
-        o: Math.random()*0.55+0.2, tw: Math.random()*300
-      });
-    }
+    for (let i = 0; i < n; i++) stars.push({
+      x: Math.random()*W, y: Math.random()*H,
+      r: Math.random()*1.4+0.2, v: Math.random()*0.2+0.04,
+      o: Math.random()*0.55+0.2, tw: Math.random()*300
+    });
   }
 
   setInterval(() => {
     if (Math.random() < 0.45) shooters.push({
       x: Math.random()*W*0.65, y: Math.random()*H*0.35,
       len: Math.random()*130+55, spd: Math.random()*7+4,
-      op: 1, ang: Math.PI/5 + (Math.random()-0.5)*0.3
+      op: 1, ang: Math.PI/5+(Math.random()-.5)*.3
     });
   }, 2800);
 
@@ -601,12 +539,12 @@ window.onload = function() {
     });
     shooters = shooters.filter(ss => ss.op > 0.02);
     shooters.forEach(ss => {
-      const ex = ss.x + Math.cos(ss.ang)*ss.len, ey = ss.y + Math.sin(ss.ang)*ss.len;
+      const ex = ss.x+Math.cos(ss.ang)*ss.len, ey = ss.y+Math.sin(ss.ang)*ss.len;
       const g = ctx.createLinearGradient(ss.x, ss.y, ex, ey);
-      g.addColorStop(0,'rgba(255,255,255,0)');
-      g.addColorStop(1,`rgba(210,225,255,${ss.op.toFixed(2)})`);
+      g.addColorStop(0, 'rgba(255,255,255,0)');
+      g.addColorStop(1, `rgba(210,225,255,${ss.op.toFixed(2)})`);
       ctx.beginPath(); ctx.moveTo(ss.x, ss.y); ctx.lineTo(ex, ey);
-      ctx.strokeStyle=g; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.strokeStyle = g; ctx.lineWidth = 1.5; ctx.stroke();
       ss.x += ss.spd*Math.cos(ss.ang); ss.y += ss.spd*Math.sin(ss.ang); ss.op -= 0.017;
     });
     requestAnimationFrame(draw);
