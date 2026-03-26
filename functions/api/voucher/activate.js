@@ -3,9 +3,10 @@
 // This is the moment the expiry clock starts — not at payment, not at validation.
 
 const PLAN_DURATIONS = {
-  p1: 5 * 60 * 1000,  // 5 minutes
-  p2: 8  * 60 * 60 * 1000,  // 8 hours
-  p3: 24 * 60 * 60 * 1000,  // 24 hours
+  p1: 3 * 60 * 60 * 1000,  // 3 hours
+  p2: 24  * 60 * 60 * 1000,  // 24 hours
+  p3: 24 * 7 * 60 * 60 * 1000,  // 7 days
+  p4: 24 * 30 * 60 * 60 * 1000, // 30 days
 };
 
 const jsonHeaders = {
