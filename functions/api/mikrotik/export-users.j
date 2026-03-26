@@ -15,10 +15,10 @@ export async function onRequestGet({ request, env }) {
       'p2': 'p2',
       'p3': 'p3',
       'p4': 'p4',
-      '250ugx-35min': 'p1',
-      '500ugx-2hrs': 'p2',
-      '1000ugx-24hrs': 'p3',
-      '1500ugx-24hrs': 'p4'
+      '500ugx-3hrs': 'p1',
+      '1000ugx-24hrs': 'p2',
+      '6000ugx-7days': 'p3',
+      '2500ugx-30days': 'p4'
     };
 
     let script = [];
