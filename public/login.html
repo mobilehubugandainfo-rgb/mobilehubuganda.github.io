@@ -15,12 +15,12 @@
             width:100%; min-height:100%; background:#020008;
             font-family:'Rajdhani',sans-serif; color:var(--white);
             display:flex; align-items:center; justify-content:center; padding:20px;
-            overflow-x: hidden;
+            overflow-x:hidden;
         }
         #galaxy { position:fixed; inset:0; z-index:0; }
         .nebula {
             position:fixed; inset:0; z-index:1; pointer-events:none;
-            background: radial-gradient(ellipse 70% 55% at 18% 28%, rgba(124,58,237,.25) 0%,transparent 65%);
+            background:radial-gradient(ellipse 70% 55% at 18% 28%, rgba(124,58,237,.25) 0%,transparent 65%);
             animation:nebDrift 20s ease-in-out infinite alternate;
         }
         @keyframes nebDrift{from{opacity:.85}to{opacity:1;transform:scale(1.05)}}
@@ -36,7 +36,6 @@
         .status-pod { display:inline-flex; align-items:center; gap:6px; background:rgba(6,182,212,.1); border:1px solid rgba(6,182,212,.3); border-radius:30px; padding:4px 12px; font-family:'Orbitron',sans-serif; font-size:.55rem; color:#67e8f9; text-transform:uppercase; margin-bottom:25px; }
         .form-group { margin-bottom:20px; text-align:left; }
         .field-label { font-size:.6rem; letter-spacing:2px; text-transform:uppercase; color:#a78bfa; font-weight:700; font-family:'Orbitron',sans-serif; display:block; margin-bottom:8px; }
-
         .restore-hint {
             font-size:0.55rem; color:#67e8f9; letter-spacing:1px;
             margin-bottom:8px; display:none; cursor:pointer;
@@ -45,23 +44,14 @@
             border-radius:8px; padding:6px 10px;
         }
         .restore-hint:hover { background:rgba(6,182,212,0.18); }
-
-        input[type="text"] { width:100%; padding:15px; background:rgba(255,255,255,.05); border:1.5px solid rgba(124,58,237,.4); border-radius:12px; color:#fff; font-family:'Orbitron',sans-serif; font-size:1.2rem; text-align:center; letter-spacing:3px; text-transform:uppercase; transition: 0.3s; }
-        input[type="text"]:focus { border-color:var(--cyan); outline:none; box-shadow: 0 0 15px rgba(6,182,212,0.3); }
-        .connect-btn { width:100%; padding:16px; border:none; border-radius:12px; cursor:pointer; font-family:'Orbitron',sans-serif; font-size:.9rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#fff; background:linear-gradient(115deg,#7c3aed, #06b6d4); box-shadow:0 4px 20px rgba(124,58,237,0.4); transition: opacity 0.2s; }
+        input[type="text"] { width:100%; padding:15px; background:rgba(255,255,255,.05); border:1.5px solid rgba(124,58,237,.4); border-radius:12px; color:#fff; font-family:'Orbitron',sans-serif; font-size:1.2rem; text-align:center; letter-spacing:3px; text-transform:uppercase; transition:0.3s; }
+        input[type="text"]:focus { border-color:var(--cyan); outline:none; box-shadow:0 0 15px rgba(6,182,212,0.3); }
+        .connect-btn { width:100%; padding:16px; border:none; border-radius:12px; cursor:pointer; font-family:'Orbitron',sans-serif; font-size:.9rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#fff; background:linear-gradient(115deg,#7c3aed,#06b6d4); box-shadow:0 4px 20px rgba(124,58,237,0.4); transition:opacity 0.2s; }
         .connect-btn:disabled { opacity:0.5; cursor:not-allowed; }
-        .status-msg { margin-top:15px; padding:12px; border-radius:10px; font-size:.85rem; display:none; animation: fadeIn 0.4s; }
-        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-
-        .buy-link {
-            display:block; margin-top:18px;
-            font-size:0.6rem; letter-spacing:1.5px; text-transform:uppercase;
-            color:#a78bfa; font-family:'Orbitron',sans-serif;
-            text-decoration:none; opacity:0.75;
-        }
+        .status-msg { margin-top:15px; padding:12px; border-radius:10px; font-size:.85rem; display:none; animation:fadeIn 0.4s; }
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        .buy-link { display:block; margin-top:18px; font-size:0.6rem; letter-spacing:1.5px; text-transform:uppercase; color:#a78bfa; font-family:'Orbitron',sans-serif; text-decoration:none; opacity:0.75; }
         .buy-link:hover { opacity:1; color:#67e8f9; }
-
-        /* Countdown indicator */
         .countdown { font-family:'Orbitron',sans-serif; font-size:0.65rem; color:#67e8f9; margin-top:8px; display:none; letter-spacing:1px; }
     </style>
 </head>
@@ -73,20 +63,17 @@
 <div class="login-card">
     <div class="logo">MOBILE HUB</div>
     <div class="status-pod">Secure Access Portal</div>
-    
+
     <div class="form-group">
         <label class="field-label">Your Active Voucher</label>
-
         <div class="restore-hint" id="restoreHint" onclick="restoreVoucher()">
             ↩ Tap to restore last voucher: <span id="hintCode"></span>
         </div>
-
         <input type="text" id="voucherCode" placeholder="ENTER CODE..." autocomplete="off"
                oninput="this.value=this.value.toUpperCase()">
     </div>
-    
+
     <button onclick="connectWiFi()" class="connect-btn" id="loginBtn">⚡ ACTIVATE INTERNET</button>
-    
     <div id="status" class="status-msg"></div>
     <div class="countdown" id="countdown"></div>
 
@@ -94,30 +81,30 @@
 </div>
 
 <script>
-    var _mac = 'unknown';
+    // ── MikroTik session params (injected into URL by MikroTik) ──
+    var _mac      = 'unknown';
     var _loginUrl = 'http://10.0.0.1/login';
 
     window.onload = function() {
         const params = new URLSearchParams(window.location.search);
-        
-        // 1. Capture MikroTik session data
-        _mac = params.get('mac') || localStorage.getItem('client_mac') || 'unknown';
-        _loginUrl = params.get('link-login-only') || params.get('link-login') || 'http://10.0.0.1/login';
-        
-        // Persist MAC and login URL for this session
-        if (_mac !== 'unknown') localStorage.setItem('client_mac', _mac);
-        if (_loginUrl) localStorage.setItem('mikrotik_login_url', _loginUrl);
 
-        // 2. AUTO-FILL from URL param (e.g. after Pesapal redirect: ?voucher=MH-XXXX)
+        // Capture MikroTik params from the URL it appends when redirecting here
+        _mac      = params.get('mac')            || localStorage.getItem('client_mac')       || 'unknown';
+        _loginUrl = params.get('link-login-only') || params.get('link-login')                || 'http://10.0.0.1/login';
+
+        // Persist for reconnections
+        if (_mac !== 'unknown') localStorage.setItem('client_mac', _mac);
+        if (_loginUrl)          localStorage.setItem('mikrotik_login_url', _loginUrl);
+
+        // Auto-fill voucher from URL param (e.g. after Pesapal: ?voucher=MH-XXXX)
         const urlVoucher = params.get('voucher');
         if (urlVoucher) {
-            const clean = urlVoucher.toUpperCase();
-            document.getElementById('voucherCode').value = clean;
+            document.getElementById('voucherCode').value = urlVoucher.toUpperCase();
             showStatus('🚀 Voucher received! Click Activate.', '#67e8f9');
             return;
         }
 
-        // 3. RESTORE HINT — show previously used voucher for easy re-entry
+        // Restore last used voucher
         const lastVoucher = localStorage.getItem('last_voucher');
         if (lastVoucher) {
             document.getElementById('hintCode').textContent = lastVoucher.toUpperCase();
@@ -128,115 +115,108 @@
     };
 
     function restoreVoucher() {
-        const lastVoucher = localStorage.getItem('last_voucher');
-        if (lastVoucher) {
-            document.getElementById('voucherCode').value = lastVoucher.toUpperCase();
+        const last = localStorage.getItem('last_voucher');
+        if (last) {
+            document.getElementById('voucherCode').value = last.toUpperCase();
             showStatus('✅ Voucher loaded. Tap Activate!', '#67e8f9');
         }
     }
 
     async function connectWiFi() {
         const code = document.getElementById('voucherCode').value.trim().toUpperCase();
-        const btn = document.getElementById('loginBtn');
+        const btn  = document.getElementById('loginBtn');
 
-        if (!code) {
-            showStatus('⚠️ No voucher code entered.', '#ffa502');
-            return;
-        }
+        if (!code) { showStatus('⚠️ No voucher code entered.', '#ffa502'); return; }
 
-        btn.disabled = true;
+        btn.disabled    = true;
         btn.textContent = 'AUTHORIZING...';
-        showStatus('⏳ Handshaking with Router...', '#67e8f9');
+        showStatus('⏳ Verifying voucher...', '#67e8f9');
 
         try {
-            // Step 1: Activate voucher on Cloudflare backend
-            const actRes = await fetch('https://mobilehubuganda-github-io.pages.dev/api/voucher/activate', {
-                method: 'POST',
+            // ── Step 1: Activate/validate voucher on Cloudflare ──────────
+            const actRes  = await fetch('https://mobilehubuganda-github-io.pages.dev/api/voucher/activate', {
+                method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: code, mac: _mac })
+                body:    JSON.stringify({ code, mac: _mac })
             });
             const actData = await actRes.json();
-            if (!actData.success) throw new Error(actData.error || 'Activation Failed');
+            if (!actData.success) throw new Error(actData.error || 'Activation failed');
 
-            // Save voucher BEFORE submitting to MikroTik
+            // Save voucher so status.html can read it
             localStorage.setItem('last_voucher', code);
 
-            // Step 2: Create hidden iframe — submit login to MikroTik silently
-            // This keeps YOUR page in control so you can redirect yourself
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.name = 'mikrotik_frame';
-            document.body.appendChild(iframe);
+            showStatus('✅ Voucher verified! Connecting...', '#4ecdc4');
 
-            const loginForm = document.createElement('form');
-            loginForm.method = 'POST';
-            loginForm.action = _loginUrl;
-            loginForm.target = 'mikrotik_frame'; // POST inside hidden iframe, not main window
+            // ── Step 2: Submit to MikroTik IN THE MAIN WINDOW ────────────
+            //
+            // WHY MAIN WINDOW (not iframe):
+            // MikroTik grants internet access by setting a session cookie
+            // tied to the client's IP/MAC. This only works when the login
+            // form is submitted from the main browser window — an iframe
+            // submission is treated as a sub-request and MikroTik does NOT
+            // open the firewall for the client.
+            //
+            // HOW WE GET BACK TO OUR STATUS PAGE:
+            // MikroTik reads the "dst" param and redirects there after
+            // successful authentication. We pass our GitHub status.html
+            // as the dst so MikroTik bounces the client to us.
+            // Note: dst MUST be set on the form, not via an intermediate
+            // redirect — MikroTik only honours dst when posted directly.
+            //
+            const statusUrl = 'https://mobilehubuganda-github-io.pages.dev/status.html?voucher=' + encodeURIComponent(code);
 
-            const fields = { 'username': code, 'password': '' };
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = _loginUrl;
+            // No target — submits in the main window so MikroTik grants access
+
+            const fields = {
+                username: code,
+                password: '',
+                dst:      statusUrl   // MikroTik redirects here after auth
+            };
+
             for (const key in fields) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = fields[key];
-                loginForm.appendChild(input);
+                const inp = document.createElement('input');
+                inp.type  = 'hidden';
+                inp.name  = key;
+                inp.value = fields[key];
+                form.appendChild(inp);
             }
 
-            document.body.appendChild(loginForm);
-            loginForm.submit();
+            document.body.appendChild(form);
 
-            // Step 3: Show countdown, then redirect to YOUR status page
-            showStatus('✅ Authenticated! Preparing your session...', '#4ecdc4');
-            startCountdown(3, function() {
-                window.location.href = 'https://mobilehubuganda-github-io.pages.dev/status.html?voucher=' + encodeURIComponent(code);
-            });
+            // Short delay so the user sees the "Connecting..." message
+            setTimeout(() => form.submit(), 600);
 
         } catch (err) {
             showStatus('⛔ ' + err.message, '#f87171');
-            btn.disabled = false;
+            btn.disabled    = false;
             btn.textContent = '⚡ ACTIVATE INTERNET';
         }
     }
 
-    // Counts down N seconds then calls callback
-    function startCountdown(seconds, callback) {
-        const el = document.getElementById('countdown');
-        el.style.display = 'block';
-        let remaining = seconds;
-        el.textContent = `Redirecting in ${remaining}s...`;
-        const timer = setInterval(function() {
-            remaining--;
-            if (remaining <= 0) {
-                clearInterval(timer);
-                el.textContent = 'Launching...';
-                callback();
-            } else {
-                el.textContent = `Redirecting in ${remaining}s...`;
-            }
-        }, 1000);
-    }
-
     function showStatus(txt, col) {
         const el = document.getElementById('status');
-        el.innerHTML = txt;
-        el.style.display = 'block';
-        el.style.color = col;
-        el.style.border = `1px solid ${col}44`;
+        el.innerHTML   = txt;
+        el.style.display    = 'block';
+        el.style.color      = col;
+        el.style.border     = `1px solid ${col}44`;
         el.style.background = `${col}15`;
     }
 
-    // Background star animation
+    // ── Galaxy background ─────────────────────────────────────────
     (function(){
         const cv=document.getElementById('galaxy'), ctx=cv.getContext('2d');
-        let W, H, stars=[];
+        let W,H,stars=[];
         function resize(){ W=cv.width=window.innerWidth; H=cv.height=window.innerHeight; }
-        function mkStars(){ stars=[]; for(let i=0; i<70; i++) stars.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.2, v:Math.random()*0.4}); }
+        function mkStars(){ stars=[]; for(let i=0;i<70;i++) stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2,v:Math.random()*0.4}); }
         function draw(){
-            ctx.clearRect(0,0,W,H); ctx.fillStyle="rgba(255,255,255,0.7)";
-            stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill(); s.y -= s.v; if(s.y < 0) s.y = H; });
+            ctx.clearRect(0,0,W,H); ctx.fillStyle='rgba(255,255,255,0.7)';
+            stars.forEach(s=>{ ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill(); s.y-=s.v; if(s.y<0)s.y=H; });
             requestAnimationFrame(draw);
         }
-        window.addEventListener('resize', resize); resize(); mkStars(); draw();
+        window.addEventListener('resize',resize); resize(); mkStars(); draw();
     })();
 </script>
 </body>
