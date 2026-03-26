@@ -5,8 +5,9 @@
 
 const PLAN_DURATIONS = {
   p1: 3  * 60 * 60,  // seconds
-  p2: 8  * 60 * 60,
-  p3: 24 * 60 * 60,
+  p2: 24  * 60 * 60,
+  p3: 24 * 7 * 60 * 60,
+  p4: 24 * 7 * 30 * 60 * 60,
 };
 
 const jsonHeaders = {
