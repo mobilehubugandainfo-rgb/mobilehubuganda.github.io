@@ -23,7 +23,7 @@ export async function onRequestPost({ request, env }) {
     let expiryDate = new Date(now.getTime());
     const pkg = package_type.toLowerCase();
 
-    if (pkg === 'p1') expiryDate.setMinutes(now.getMinutes() + 5);
+    if (pkg === 'p1') expiryDate.setHours(now.getHours() + 3);
     else if (pkg === 'p2') expiryDate.setHours(now.getHours() + 24);
     else if (pkg === 'p3') expiryDate.setDate(now.getDate() + 7);
     else if (pkg === 'p4') expiryDate.setDate(now.getDate() + 30);
