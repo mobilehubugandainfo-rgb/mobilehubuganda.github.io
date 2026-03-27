@@ -52,7 +52,30 @@
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
         .buy-link { display:block; margin-top:18px; font-size:0.6rem; letter-spacing:1.5px; text-transform:uppercase; color:#a78bfa; font-family:'Orbitron',sans-serif; text-decoration:none; opacity:0.75; }
         .buy-link:hover { opacity:1; color:#67e8f9; }
-        .countdown { font-family:'Orbitron',sans-serif; font-size:0.65rem; color:#67e8f9; margin-top:8px; display:none; letter-spacing:1px; }
+        .countdown { font-family:'Orbitron',sans-serif; font-size:0.65rem; color:#67e8f9; margin-top:8px; display:none; letter-spacing:1px;}
+                   /* --- New Restore Tab Styling --- */
+.restore-tab-btn {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(124, 58, 237, 0.12);
+    border: 1.5px solid rgba(124, 58, 237, 0.45);
+    border-radius: 12px;
+    color: #c084fc;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.restore-tab-btn:hover {
+    background: rgba(124, 58, 237, 0.28);
+    border-color: #a78bfa;
+    color: #e9d5ff;
+}
     </style>
 </head>
 <body>
@@ -66,9 +89,12 @@
 
     <div class="form-group">
         <label class="field-label">Your Active Voucher</label>
-        <div class="restore-hint" id="restoreHint" onclick="restoreVoucher()">
-            ↩ Tap to restore last voucher: <span id="hintCode"></span>
-        </div>
+       <div id="restoreHint" style="display:none;">
+    <button type="button" class="restore-tab-btn" onclick="restoreVoucher()">
+        ↩ Restore Previous Voucher
+        <span id="hintCode" style="display:block; font-size:0.7rem; color:#67e8f9; margin-top:3px; letter-spacing:2px;"></span>
+    </button>
+</div>
         <input type="text" id="voucherCode" placeholder="ENTER CODE..." autocomplete="off"
                oninput="this.value=this.value.toUpperCase()">
     </div>
