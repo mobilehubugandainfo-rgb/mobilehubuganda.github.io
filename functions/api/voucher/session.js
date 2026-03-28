@@ -101,7 +101,9 @@ export async function onRequestPost({ request, env }) {
       activated_at:   voucher.used_at || null,
       remaining_secs: remainingSecs,
       total_secs:     totalSecs,
-      used_secs:      usedSecs
+      used_secs:      usedSecs,
+      bytes_in:       voucher.bytes_in  || null,
+      bytes_out:      voucher.bytes_out || null
     }), { status: 200, headers: jsonHeaders });
 
   } catch (error) {
