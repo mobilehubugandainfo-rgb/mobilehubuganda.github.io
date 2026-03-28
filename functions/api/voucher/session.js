@@ -30,10 +30,10 @@ export async function onRequestPost({ request, env }) {
     }
 
     const voucher = await env.DB.prepare(`
-      SELECT code, package_type, status, expires_at, used_at, mac_address
+      SELECT code, package_type, status, expires_at, used_at, mac_address,
+             bytes_in, bytes_out
       FROM vouchers WHERE code = ?
     `).bind(code).first();
-
     // ── Not found ─────────────────────────────────────────────
     if (!voucher) {
       return new Response(JSON.stringify({
@@ -77,16 +77,18 @@ export async function onRequestPost({ request, env }) {
         ).bind(code).run();
       }
       return new Response(JSON.stringify({
-        success:  true,
-        state:    'expired',
-        code:     code,
-        package:  pkg,
-        expires_at:   voucher.expires_at,
-        activated_at: voucher.used_at || null,
-        remaining_secs: 0,
-        total_secs:     totalSecs,
-        used_secs:      totalSecs
-      }), { status: 200, headers: jsonHeaders });
+      success:  true,
+      state:    'active',
+      code:     code,
+      package:  pkg,
+      expires_at:     voucher.expires_at,
+      activated_at:   voucher.used_at || null,
+      remaining_secs: remainingSecs,
+      total_secs:     totalSecs,
+      used_secs:      usedSecs,
+      bytes_in:       voucher.bytes_in  || null,
+      bytes_out:      voucher.bytes_out || null
+    }), { status: 200, headers: jsonHeaders });
     }
 
     // ── Active ────────────────────────────────────────────────
