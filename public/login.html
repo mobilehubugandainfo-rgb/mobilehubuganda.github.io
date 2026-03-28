@@ -144,7 +144,8 @@
         const last = localStorage.getItem('last_voucher');
         if (last) {
             document.getElementById('voucherCode').value = last.toUpperCase();
-            showStatus('✅ Voucher loaded. Tap Activate!', '#67e8f9');
+            showStatus('✅ Voucher loaded. Connecting...', '#67e8f9');
+            connectWiFi(); // This triggers the login immediately
         }
     }
 
