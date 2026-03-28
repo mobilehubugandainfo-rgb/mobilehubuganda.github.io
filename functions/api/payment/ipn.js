@@ -163,6 +163,25 @@ export async function onRequestPost({ request, env }) {
 
     console.log(`[IPN SUCCESS] Voucher ${voucher.code} → ${OrderMerchantReference}`);
 
+    // ── Upsert customer record ─────────────────────────────────
+    if (tx.phone_number) {
+      try {
+        await env.DB.prepare(`
+          INSERT INTO customers (phone, vouchers_used, first_seen, updated_at)
+          VALUES (?, json_array(?), datetime('now'), datetime('now'))
+          ON CONFLICT(phone) DO UPDATE SET
+            vouchers_used = json_insert(
+              CASE WHEN json_valid(vouchers_used) THEN vouchers_used ELSE '[]' END,
+              '$[#]', ?
+            ),
+            updated_at = datetime('now')
+        `).bind(tx.phone_number, voucher.code, voucher.code).run();
+        console.log(`[CUSTOMER] Upserted customer for phone: ${tx.phone_number}`);
+      } catch (custErr) {
+        console.error('[CUSTOMER] Upsert failed (non-fatal):', custErr.message);
+      }
+    }
+
     const notifyPayload = {
       email: tx.email,
       phone: tx.phone_number,
