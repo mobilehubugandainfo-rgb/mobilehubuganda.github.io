@@ -70,6 +70,30 @@ export async function onRequestPost({ request, env }) {
 
       // Still live — idempotent, return existing expiry (don't reset the clock)
       console.log('[ACTIVATE] ✅ Already active, reconnecting — expires:', voucher.expires_at);
+
+      // ── Update last seen + connect count on reconnect ────────────
+      try {
+        const txRow = await env.DB.prepare(`
+          SELECT t.phone_number FROM transactions t
+          JOIN vouchers v ON v.transaction_id = t.tracking_id
+          WHERE v.code = ?
+          LIMIT 1
+        `).bind(code).first();
+
+        if (txRow?.phone_number) {
+          await env.DB.prepare(`
+            UPDATE customers SET
+              connect_count = connect_count + 1,
+              last_seen     = datetime('now'),
+              updated_at    = datetime('now')
+            WHERE phone = ?
+          `).bind(txRow.phone_number).run();
+          console.log('[CUSTOMER] Reconnect recorded for:', txRow.phone_number);
+        }
+      } catch (custErr) {
+        console.error('[CUSTOMER] Reconnect update failed (non-fatal):', custErr.message);
+      }
+
       return new Response(JSON.stringify({
         success:      true,
         expires_at:   voucher.expires_at,
@@ -100,6 +124,30 @@ export async function onRequestPost({ request, env }) {
     `).bind(expiresAt, activatedAt, mac, voucher.id).run();
 
     console.log('[ACTIVATE] ✅ First activation — code:', code, '| expires:', expiresAt, '| mac:', mac);
+
+    // ── Update customer: MAC address, connect count, last seen ────
+    try {
+      const txRow = await env.DB.prepare(`
+        SELECT t.phone_number FROM transactions t
+        JOIN vouchers v ON v.transaction_id = t.tracking_id
+        WHERE v.code = ?
+        LIMIT 1
+      `).bind(code).first();
+
+      if (txRow?.phone_number) {
+        await env.DB.prepare(`
+          UPDATE customers SET
+            mac_address   = COALESCE(NULLIF(mac_address, 'unknown'), NULLIF(?, 'unknown'), mac_address),
+            connect_count = connect_count + 1,
+            last_seen     = datetime('now'),
+            updated_at    = datetime('now')
+          WHERE phone = ?
+        `).bind(mac, txRow.phone_number).run();
+        console.log('[CUSTOMER] First activation recorded for:', txRow.phone_number, '| mac:', mac);
+      }
+    } catch (custErr) {
+      console.error('[CUSTOMER] First activation update failed (non-fatal):', custErr.message);
+    }
 
     return new Response(JSON.stringify({
       success:      true,
