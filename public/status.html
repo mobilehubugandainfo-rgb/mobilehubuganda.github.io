@@ -294,7 +294,9 @@ function fmtDbTime(str) {
   if (!str) return '--:--';
   const d = new Date(str.replace(' ', 'T') + 'Z');
   if (isNaN(d)) return '--:--';
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const date = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  return `${date} ${time}`;
 }
 
 function $id(id) { return document.getElementById(id); }
