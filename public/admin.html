@@ -3,185 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hotspot Central | Admin Dashboard</title>
+    <title>MobileHub | Network Command</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            /* Using your original gradient colors */
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            color: #e0e0e0;
-            padding: 20px;
-        }
-
-        .container { max-width: 1000px; margin: 0 auto; animation: fadeIn 0.8s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .header {
-            text-align: center;
-            padding: 40px 20px;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 30px;
-        }
-
-        .logo {
-            font-size: 2.5rem;
-            background: linear-gradient(135deg, #4ecdc4, #44a08d);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 800;
-            letter-spacing: 1px;
-        }
-
-        /* Card Style - Matching your Index page */
-        .admin-card {
-            background: rgba(30, 30, 46, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 30px;
-            border: 2px solid rgba(78, 205, 196, 0.3);
-            margin-bottom: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-
-        .stat-box {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .stat-value { font-size: 2.2rem; font-weight: 800; margin: 10px 0; }
-        .cyan-text { color: #4ecdc4; }
-        .pink-text { color: #f093fb; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { text-align: left; color: #4ecdc4; padding: 12px; border-bottom: 2px solid rgba(78, 205, 196, 0.2); font-size: 0.8rem; text-transform: uppercase; }
-        td { padding: 15px 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.9rem; }
-
-        input[type="date"] {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid #4ecdc4;
-            color: white;
-            padding: 8px;
-            border-radius: 8px;
-            outline: none;
-        }
-
-        .badge {
-            background: rgba(240, 147, 251, 0.2);
-            color: #f093fb;
-            padding: 3px 8px;
-            border-radius: 5px;
-            font-size: 0.75rem;
-            border: 1px solid #f093fb;
-        }
+        :root { --bg: #030712; --card: #111827; --accent: #0ea5e9; }
+        body { background: var(--bg); color: #f3f4f6; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .bento-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease; }
+        .bento-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 10px 30px -10px rgba(14, 165, 233, 0.3); }
+        .stat-value { background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hide { display: none !important; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
     </style>
 </head>
-<body>
+<body class="antialiased min-h-screen p-4 lg:p-10">
 
-<div class="container">
-    <div class="header">
-        <h1 class="logo">HOTSPOT CENTRAL</h1>
-        <p style="color: #b8b8b8;">Management & Real-time Analytics</p>
-    </div>
-
-    <div class="admin-card" style="border-color: #f093fb;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h2 class="pink-text">💰 Financial Status</h2>
-            <input type="date" id="reportDate" onchange="loadFinancials()">
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div class="stat-box">
-                <p style="font-size: 0.75rem; color: #b8b8b8;">TOTAL SALES</p>
-                <div id="statTotalSales" class="stat-value cyan-text">0</div>
+    <div id="lock-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950">
+        <div class="bento-card p-10 rounded-[2rem] w-full max-w-md text-center">
+            <div class="w-16 h-16 bg-sky-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg class="w-8 h-8 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             </div>
-            <div class="stat-box">
-                <p style="font-size: 0.75rem; color: #b8b8b8;">REVENUE (UGX)</p>
-                <div id="statTotalRevenue" class="stat-value pink-text">0</div>
+            <h1 class="text-2xl font-bold mb-2">System Locked</h1>
+            <p class="text-slate-500 text-sm mb-8">MobileHub Uganda Administrative Gateway</p>
+            <input type="password" id="pin" placeholder="••••" class="w-full bg-slate-900 border border-slate-800 p-4 rounded-2xl mb-4 text-center text-3xl tracking-[1em] focus:ring-2 focus:ring-sky-500 outline-none">
+            <button onclick="checkAuth()" class="w-full bg-sky-600 hover:bg-sky-500 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-sky-900/20">Access Dashboard</button>
+        </div>
+    </div>
+
+    <div id="dashboard" class="hide space-y-8 max-w-[1600px] mx-auto">
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-4xl font-extrabold tracking-tight">Network <span class="text-sky-500 italic">Pulse</span></h1>
+                <p id="last-updated" class="text-slate-500 text-sm">Syncing with MobileHub Cloud...</p>
+            </div>
+            <div class="flex gap-3">
+                <div class="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-2">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
+                    <span class="text-emerald-500 text-xs font-bold uppercase tracking-wider">Live</span>
+                </div>
+                <button onclick="loadData()" class="bg-slate-800 hover:bg-slate-700 p-2 px-4 rounded-xl text-sm transition">Refresh</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bento-card p-8 rounded-[2rem]">
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">Active Nodes</p>
+                <h2 id="sessions" class="text-5xl font-black stat-value">0</h2>
+                <p class="text-emerald-400 text-xs mt-2">● Online Now</p>
+            </div>
+            <div class="bento-card p-8 rounded-[2rem]">
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">Today's Revenue</p>
+                <h2 id="revenue" class="text-4xl font-black stat-value">0</h2>
+                <p class="text-slate-400 text-xs mt-2 uppercase">UGX (Completed)</p>
+            </div>
+            <div class="bento-card p-8 rounded-[2rem]">
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">Bandwidth</p>
+                <h2 id="bandwidth" class="text-4xl font-black stat-value">0</h2>
+                <p class="text-purple-400 text-xs mt-2 italic">Total Throughput</p>
+            </div>
+            <div class="bento-card p-8 rounded-[2rem]">
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">Inventory</p>
+                <h2 id="unused" class="text-4xl font-black stat-value">0</h2>
+                <p class="text-amber-400 text-xs mt-2 uppercase">Ready Vouchers</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <div class="xl:col-span-2 bento-card p-8 rounded-[2rem]">
+                <h3 class="text-xl font-bold mb-8">Revenue & Data Trends</h3>
+                <div class="h-[350px]">
+                    <canvas id="mainChart"></canvas>
+                </div>
+            </div>
+            <div class="bento-card p-8 rounded-[2rem]">
+                <h3 class="text-xl font-bold mb-6 italic">Voucher Stock</h3>
+                <div id="stock-list" class="space-y-6">
+                    </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bento-card rounded-[2rem] overflow-hidden">
+                <div class="p-8 border-b border-slate-800 flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-sky-400">Heavy Consumers</h3>
+                    <span class="text-[10px] bg-sky-500/10 text-sky-500 px-2 py-1 rounded uppercase font-bold">Top 100</span>
+                </div>
+                <div class="overflow-x-auto h-[400px]">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-900/50 text-slate-500 text-[10px] uppercase font-bold tracking-widest">
+                            <tr>
+                                <th class="p-6">Client Identity</th>
+                                <th class="p-6">Data Used</th>
+                                <th class="p-6">Last Seen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table" class="divide-y divide-slate-800 text-sm">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bento-card p-8 rounded-[2rem]">
+                <h3 class="text-xl font-bold mb-8">Package Market Share</h3>
+                <div class="h-[300px] flex items-center justify-center">
+                    <canvas id="pkgChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="admin-card">
-        <h2 class="cyan-text" style="margin-bottom: 20px;">📡 Live Active Sessions</h2>
-        <div style="overflow-x: auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Device details</th>
-                        <th>Voucher</th>
-                        <th>Traffic (Dn / Up)</th>
-                        <th>Uptime</th>
-                    </tr>
-                </thead>
-                <tbody id="deviceTable">
-                    <tr><td colspan="4" style="text-align:center; padding:40px; opacity:0.5;">Awaiting router data...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+    <script>
+        const API = '/api/admin/stats';
+        let charts = {};
 
-<script>
-    const API_URL = 'https://voucher-api.mobilehubugandainfo.workers.dev';
-    document.getElementById('reportDate').valueAsDate = new Date();
+        function formatBytes(b) {
+            const i = b === 0 ? 0 : Math.floor(Math.log(b) / Math.log(1024));
+            return (b / Math.pow(1024, i)).toFixed(2) * 1 + ' ' + ['B', 'KB', 'MB', 'GB', 'TB'][i];
+        }
 
-    async function loadFinancials() {
-        const date = document.getElementById('reportDate').value;
-        try {
-            const res = await fetch(`${API_URL}/api/admin/sales-stats?date=${date}`);
-            const data = await res.json();
-            document.getElementById('statTotalSales').innerText = data.totalCount || 0;
-            document.getElementById('statTotalRevenue').innerText = (data.totalRevenue || 0).toLocaleString();
-        } catch (e) { console.error("Sales fetch failed"); }
-    }
+        async function loadData() {
+            try {
+                const res = await fetch(API);
+                const d = await res.json();
+                renderUI(d);
+                document.getElementById('last-updated').innerText = 'Last sync: ' + new Date().toLocaleTimeString();
+            } catch (e) { console.error("Sync Failed", e); }
+        }
 
-    async function updateLiveMetrics() {
-        try {
-            const res = await fetch(`${API_URL}/api/admin/mikrotik-stats`);
-            const devices = await res.json();
-            const table = document.getElementById('deviceTable');
-            
-            if (!devices || devices.length === 0) {
-                table.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:30px;">No active devices.</td></tr>';
-                return;
-            }
+        function renderUI(d) {
+            // Stats
+            document.getElementById('sessions').innerText = d.active_sessions;
+            document.getElementById('revenue').innerText = d.rev_today.toLocaleString();
+            document.getElementById('bandwidth').innerText = formatBytes(d.total_bytes_in);
+            document.getElementById('unused').innerText = d.v_unused;
 
-            table.innerHTML = devices.map(dev => `
-                <tr>
-                    <td>
-                        <div style="font-weight:bold;">${dev.address}</div>
-                        <div style="font-size:0.7rem; color:#4ecdc4;">${dev['mac-address']}</div>
-                    </td>
-                    <td><span class="badge">${dev.user}</span></td>
-                    <td>
-                        <div style="color:#4ecdc4;">↓ ${formatBytes(dev['bytes-out'])}</div>
-                        <div style="color:#f093fb; font-size:0.8rem;">↑ ${formatBytes(dev['bytes-in'])}</div>
-                    </td>
-                    <td style="font-family: monospace; font-size:0.8rem;">${dev.uptime}</td>
+            // Stock Bars
+            const stockBox = document.getElementById('stock-list');
+            stockBox.innerHTML = '';
+            ['p1', 'p2', 'p3', 'p4', 'ft'].forEach(pkg => {
+                const count = d.stock[pkg] || 0;
+                const statusColor = count < 10 ? 'bg-red-500' : 'bg-sky-500';
+                stockBox.innerHTML += `
+                    <div>
+                        <div class="flex justify-between text-[10px] uppercase font-black mb-2 tracking-tighter">
+                            <span>Pkg ${pkg}</span><span class="${count < 10 ? 'text-red-500' : 'text-slate-400'}">${count} Available</span>
+                        </div>
+                        <div class="w-full bg-slate-900 h-2 rounded-full"><div class="${statusColor} h-full rounded-full transition-all duration-1000" style="width: ${Math.min(count * 2, 100)}%"></div></div>
+                    </div>
+                `;
+            });
+
+            // Consumer Table
+            const tbody = document.getElementById('user-table');
+            tbody.innerHTML = d.top_customers.map(u => `
+                <tr class="hover:bg-slate-800/30 transition">
+                    <td class="p-6 font-bold text-slate-300">${u.phone || 'GUEST'}<br><span class="text-[10px] text-slate-600 font-mono">${u.mac_address}</span></td>
+                    <td class="p-6 font-mono text-sky-400 font-bold">${formatBytes(u.total_bytes_in)}</td>
+                    <td class="p-6 text-slate-500 text-xs">${u.last_seen || 'Active Now'}</td>
                 </tr>
             `).join('');
-        } catch (e) { console.error("Router offline or API error"); }
-    }
 
-    function formatBytes(b) {
-        if (!b || b === 0) return '0 B';
-        const i = Math.floor(Math.log(b) / Math.log(1024));
-        return (b / Math.pow(1024, i)).toFixed(1) + ' ' + ['B', 'KB', 'MB', 'GB'][i];
-    }
+            // Main Performance Chart
+            updateMainChart(d.revenue.day);
+            updatePkgChart([d.pkg_p1, d.pkg_p2, d.pkg_p3, d.pkg_p4, d.pkg_ft]);
+        }
 
-    // Refresh cycles
-    loadFinancials();
-    updateLiveMetrics();
-    setInterval(updateLiveMetrics, 10000); // 10 seconds
-</script>
+        function updateMainChart(data) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if(charts.main) charts.main.destroy();
+            charts.main = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(i => i.date),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: data.map(i => i.amount),
+                        borderColor: '#0ea5e9',
+                        backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 4,
+                        pointRadius: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, 
+                scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } } }
+            });
+        }
 
+        function updatePkgChart(data) {
+            const ctx = document.getElementById('pkgChart').getContext('2d');
+            if(charts.pkg) charts.pkg.destroy();
+            charts.pkg = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['P1', 'P2', 'P3', 'P4', 'Trial'],
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#0ea5e9', '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b'],
+                        borderWidth: 0,
+                        hoverOffset: 20
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '75%' }
+            });
+        }
+
+        function checkAuth() {
+            if(document.getElementById('pin').value === '1998') {
+                localStorage.setItem('auth', '1');
+                init();
+            } else { alert("Access Denied"); }
+        }
+
+        function init() {
+            document.getElementById('lock-screen').classList.add('hide');
+            document.getElementById('dashboard').classList.remove('hide');
+            loadData();
+        }
+
+        window.onload = () => { if(localStorage.getItem('auth')) init(); }
+    </script>
 </body>
 </html>
