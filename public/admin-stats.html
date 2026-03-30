@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>NetAdmin — Analytics Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0a0c10;
+    --surface:#111318;
+    --surface2:#181b22;
+    --border:#232630;
+    --accent:#00e5a0;
+    --accent2:#3b82f6;
+    --accent3:#f59e0b;
+    --accent4:#ef4444;
+    --text:#eef0f4;
+    --muted:#6b7280;
+    --font-head:'Syne',sans-serif;
+    --font-mono:'Space Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{font-size:15px;scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-mono);min-height:100vh;overflow-x:hidden}
+
+  /* ── LOGIN ── */
+  #login-screen{
+    position:fixed;inset:0;background:var(--bg);z-index:9999;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1.5rem;
+  }
+  #login-screen .logo{font-family:var(--font-head);font-size:2.2rem;font-weight:800;letter-spacing:-1px;color:var(--accent)}
+  #login-screen .sub{color:var(--muted);font-size:.75rem;letter-spacing:.2em;text-transform:uppercase}
+  #login-screen input{
+    background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+    padding:.75rem 1.2rem;color:var(--text);font-family:var(--font-mono);font-size:.9rem;
+    width:280px;outline:none;transition:border .2s;
+  }
+  #login-screen input:focus{border-color:var(--accent)}
+  #login-screen button{
+    background:var(--accent);color:#000;font-family:var(--font-head);font-weight:700;
+    font-size:.9rem;border:none;border-radius:6px;padding:.75rem 2.5rem;cursor:pointer;
+    letter-spacing:.05em;transition:opacity .2s;
+  }
+  #login-screen button:hover{opacity:.85}
+  #login-error{color:var(--accent4);font-size:.78rem;display:none}
+
+  /* ── MAIN ── */
+  #app{display:none;flex-direction:column;min-height:100vh}
+  
+  header{
+    position:sticky;top:0;z-index:100;background:rgba(10,12,16,.9);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);padding:.9rem 1.8rem;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  header .brand{font-family:var(--font-head);font-weight:800;font-size:1.25rem;color:var(--accent);letter-spacing:-0.5px}
+  header .brand span{color:var(--text)}
+  header .status{display:flex;align-items:center;gap:.5rem;font-size:.72rem;color:var(--muted)}
+  header .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  header .last-updated{font-size:.68rem;color:var(--muted)}
+  header .refresh-btn{
+    background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);
+    font-size:.7rem;padding:.35rem .7rem;cursor:pointer;font-family:var(--font-mono);
+    transition:all .2s;
+  }
+  header .refresh-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+  main{padding:1.5rem 1.8rem;display:flex;flex-direction:column;gap:1.8rem}
+
+  /* ── CARDS ── */
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:.9rem}
+  .stat-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    padding:1.1rem 1.2rem;position:relative;overflow:hidden;transition:border-color .2s;
+  }
+  .stat-card:hover{border-color:var(--accent)}
+  .stat-card::before{
+    content:'';position:absolute;top:0;left:0;width:3px;height:100%;
+    background:var(--card-accent,var(--accent));border-radius:10px 0 0 10px;
+  }
+  .stat-card .label{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+  .stat-card .value{font-family:var(--font-head);font-size:1.6rem;font-weight:800;color:var(--text);line-height:1}
+  .stat-card .sub-val{font-size:.7rem;color:var(--muted);margin-top:.3rem}
+
+  /* ── SECTION ── */
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem}
+  .section-title{font-family:var(--font-head);font-weight:700;font-size:1rem;letter-spacing:-.02em}
+  .section-title span{color:var(--accent)}
+  .section-desc{font-size:.68rem;color:var(--muted);margin-top:.15rem}
+
+  /* ── TAB SWITCHER ── */
+  .tab-row{display:flex;gap:.4rem;margin-bottom:1rem}
+  .tab{
+    background:none;border:1px solid var(--border);border-radius:5px;
+    color:var(--muted);font-size:.72rem;padding:.35rem .8rem;cursor:pointer;
+    font-family:var(--font-mono);transition:all .2s;
+  }
+  .tab.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
+  .tab:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+
+  /* ── CHART PANELS ── */
+  .chart-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem}
+  .chart-wrap{position:relative;height:230px}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+  .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.9rem}
+  @media(max-width:900px){.two-col,.three-col{grid-template-columns:1fr}}
+
+  /* ── TABLE ── */
+  .table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+  table{width:100%;border-collapse:collapse;background:var(--surface);font-size:.72rem}
+  th{background:var(--surface2);color:var(--muted);text-align:left;padding:.65rem .9rem;
+     font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+  td{padding:.6rem .9rem;border-bottom:1px solid var(--border);color:var(--text)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:var(--surface2)}
+  .badge{
+    display:inline-block;padding:.15rem .55rem;border-radius:20px;font-size:.6rem;
+    font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  }
+  .badge-p1{background:#1a2e1a;color:#4ade80}
+  .badge-p2{background:#1a1f35;color:#60a5fa}
+  .badge-p3{background:#2e1a10;color:#fb923c}
+  .badge-p4{background:#2e1a1a;color:#f87171}
+  .badge-ft{background:#1a1a2e;color:#a78bfa}
+
+  /* ── VOUCHER STOCK ── */
+  .stock-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.7rem}
+  @media(max-width:700px){.stock-grid{grid-template-columns:repeat(2,1fr)}}
+  .stock-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    padding:1rem;text-align:center;transition:border-color .2s;
+  }
+  .stock-card:hover{border-color:var(--accent)}
+  .stock-card .pkg-name{font-family:var(--font-head);font-weight:700;font-size:.85rem;color:var(--accent);margin-bottom:.4rem}
+  .stock-card .pkg-count{font-family:var(--font-head);font-weight:800;font-size:2rem;line-height:1}
+  .stock-card .pkg-label{font-size:.62rem;color:var(--muted);margin-top:.2rem;letter-spacing:.08em;text-transform:uppercase}
+  .stock-bar{background:var(--border);border-radius:99px;height:5px;margin-top:.6rem;overflow:hidden}
+  .stock-fill{height:100%;border-radius:99px;background:var(--accent);transition:width .5s}
+
+  /* ── ACTIVE SESSIONS ── */
+  .sessions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.8rem}
+  .session-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;
+    display:flex;flex-direction:column;gap:.4rem;transition:border-color .2s;
+  }
+  .session-card:hover{border-color:var(--accent)}
+  .session-card .sc-code{font-size:.75rem;color:var(--accent);font-weight:700;letter-spacing:.05em}
+  .session-card .sc-row{display:flex;justify-content:space-between;align-items:center;font-size:.68rem}
+  .session-card .sc-label{color:var(--muted)}
+  .session-card .sc-val{color:var(--text)}
+  .session-card .progress-bar{background:var(--border);border-radius:99px;height:4px;overflow:hidden;margin-top:.3rem}
+  .session-card .progress-fill{height:100%;border-radius:99px;background:var(--accent2)}
+
+  /* ── SEARCH ── */
+  .search-wrap{position:relative;margin-bottom:1rem}
+  .search-wrap input{
+    width:100%;background:var(--surface);border:1px solid var(--border);border-radius:7px;
+    padding:.6rem 1rem .6rem 2.2rem;color:var(--text);font-family:var(--font-mono);font-size:.78rem;outline:none;
+    transition:border .2s;
+  }
+  .search-wrap input:focus{border-color:var(--accent)}
+  .search-wrap .icon{position:absolute;left:.75rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem}
+
+  /* ── FOOTER ── */
+  footer{text-align:center;padding:1.5rem;color:var(--muted);font-size:.65rem;border-top:1px solid var(--border)}
+
+  /* ── LOADING ── */
+  .loading{display:flex;align-items:center;justify-content:center;height:200px;color:var(--muted);font-size:.8rem;gap:.5rem}
+  .spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar{width:5px;height:5px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+
+  .period-rev{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;margin-bottom:1.2rem}
+  .period-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem 1.2rem}
+  .period-card .p-label{font-size:.63rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem}
+  .period-card .p-val{font-family:var(--font-head);font-weight:800;font-size:1.5rem;color:var(--accent)}
+  @media(max-width:600px){.period-rev,.stat-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="login-screen">
+  <div class="logo">Net<span style="color:var(--text)">Admin</span></div>
+  <div class="sub">Analytics Dashboard</div>
+  <input type="password" id="pw-input" placeholder="Enter dashboard password" onkeydown="if(event.key==='Enter')tryLogin()"/>
+  <div id="login-error">⚠ Incorrect password. Try again.</div>
+  <button onclick="tryLogin()">UNLOCK</button>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app">
+  <header>
+    <div>
+      <div class="brand">Net<span>Admin</span> <span style="color:var(--muted);font-weight:400;font-size:.85rem">/ Analytics</span></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem">
+      <div class="status"><div class="dot"></div><span>LIVE</span></div>
+      <span class="last-updated" id="last-updated">—</span>
+      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <div class="loading"><div class="spinner"></div> Loading analytics data…</div>
+  </main>
+
+  <footer>NetAdmin Dashboard · Data refreshes on demand · All times local</footer>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// CONFIG — change these
+// ══════════════════════════════════════════════
+const DASHBOARD_PASSWORD = 'admin123'; // ← Change this!
+const API_URL = '/api/admin/stats'; // ← Your Cloudflare Worker URL
+
+// ══════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════
+function tryLogin(){
+  const v = document.getElementById('pw-input').value;
+  if(v === DASHBOARD_PASSWORD){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    loadData();
+  } else {
+    document.getElementById('login-error').style.display='block';
+    document.getElementById('pw-input').value='';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function fmtBytes(b){
+  b=Number(b)||0;
+  if(b<1024)return b+'B';
+  if(b<1048576)return(b/1024).toFixed(1)+'KB';
+  if(b<1073741824)return(b/1048576).toFixed(1)+'MB';
+  return(b/1073741824).toFixed(2)+'GB';
+}
+function fmtUGX(n){return'UGX '+Number(n||0).toLocaleString()}
+function fmtDate(d){return d||'—'}
+function pkgLabel(p){return{p1:'P1',p2:'P2',p3:'P3',p4:'P4','free-trial':'Free Trial',ft:'Free Trial'}[p]||p}
+function pkgBadge(p){
+  const map={p1:'badge-p1',p2:'badge-p2',p3:'badge-p3',p4:'badge-p4','free-trial':'badge-ft',ft:'badge-ft'};
+  return`<span class="badge ${map[p]||'badge-p1'}">${pkgLabel(p)}</span>`;
+}
+
+let charts={};
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+function makeChart(id,config){
+  destroyChart(id);
+  const ctx=document.getElementById(id);
+  if(!ctx)return;
+  charts[id]=new Chart(ctx,config);
+}
+
+const chartDefaults={
+  color:'#6b7280',
+  plugins:{legend:{labels:{color:'#9ca3af',font:{family:'Space Mono',size:10}}}},
+};
+Chart.defaults.color='#6b7280';
+
+// ══════════════════════════════════════════════
+// DEMO DATA (used when API_URL is placeholder)
+// ══════════════════════════════════════════════
+function demoData(){
+  const days=['2025-03-13','2025-03-14','2025-03-15','2025-03-16','2025-03-17','2025-03-18','2025-03-19','2025-03-20','2025-03-21','2025-03-22','2025-03-23','2025-03-24','2025-03-25','2025-03-26'];
+  const weeks=['2025-W10','2025-W11','2025-W12','2025-W13'];
+  const months=['2024-12','2025-01','2025-02','2025-03'];
+  return{
+    success:true,
+    total_customers:842,total_revenue:4850000,active_sessions:37,vouchers_sold:1620,
+    total_bytes_in:98*1073741824,total_bytes_out:42*1073741824,heavy_users:89,
+    rev_today:125000,rev_week:780000,rev_month:2340000,
+    v_unused:318,v_used:1204,v_expired:98,v_reserved:12,
+    pkg_p1:420,pkg_p2:380,pkg_p3:290,pkg_p4:180,pkg_ft:350,
+    stock:{p1:80,p2:110,p3:70,p4:38,ft:20},
+    revenue:{
+      day:days.map((d,i)=>({date:d,amount:40000+Math.random()*120000})),
+      week:weeks.map(d=>({date:d,amount:400000+Math.random()*500000})),
+      month:months.map(d=>({date:d,amount:1500000+Math.random()*2000000})),
+    },
+    dataUsage:{
+      day:days.map((d,i)=>({date:d,bytes_in:(2+Math.random()*8)*1073741824,bytes_out:(1+Math.random()*4)*1073741824})),
+      week:weeks.map(d=>({date:d,bytes_in:(15+Math.random()*30)*1073741824,bytes_out:(8+Math.random()*15)*1073741824})),
+      month:months.map(d=>({date:d,bytes_in:(60+Math.random()*100)*1073741824,bytes_out:(30+Math.random()*60)*1073741824})),
+    },
+    active_vouchers:[
+      {code:'VCH-A1B2',package_type:'p2',expires_at:'2025-03-27 18:00',bytes_in:1.2*1073741824,bytes_out:0.5*1073741824,mac_address:'AA:BB:CC:11:22:33',phone:'0700123456'},
+      {code:'VCH-X9Y8',package_type:'p1',expires_at:'2025-03-27 20:00',bytes_in:200*1048576,bytes_out:80*1048576,mac_address:'DD:EE:FF:44:55:66',phone:'0752987654'},
+      {code:'VCH-M3N4',package_type:'p3',expires_at:'2025-03-28 10:00',bytes_in:3.1*1073741824,bytes_out:1.2*1073741824,mac_address:'11:22:33:AA:BB:CC',phone:'0781456789'},
+      {code:'VCH-ZZQ1',package_type:'ft',expires_at:'2025-03-27 16:30',bytes_in:50*1048576,bytes_out:20*1048576,mac_address:'55:66:77:88:99:AA',phone:'0701000000'},
+      {code:'VCH-P4R5',package_type:'p4',expires_at:'2025-03-29 08:00',bytes_in:5.8*1073741824,bytes_out:2.3*1073741824,mac_address:'12:34:56:78:9A:BC',phone:'0772334455'},
+    ],
+    top_customers:[
+      {phone:'0700123456',mac_address:'AA:BB:CC:11:22:33',total_bytes_in:12*1073741824,total_bytes_out:5*1073741824,connect_count:34,vouchers_used:18,last_seen:'2025-03-26 14:22'},
+      {phone:'0752987654',mac_address:'DD:EE:FF:44:55:66',total_bytes_in:9.4*1073741824,total_bytes_out:3.8*1073741824,connect_count:22,vouchers_used:12,last_seen:'2025-03-26 09:10'},
+      {phone:'0781456789',mac_address:'11:22:33:AA:BB:CC',total_bytes_in:7.1*1073741824,total_bytes_out:2.9*1073741824,connect_count:19,vouchers_used:9,last_seen:'2025-03-25 21:45'},
+      {phone:'0701000000',mac_address:'55:66:77:88:99:AA',total_bytes_in:5.9*1073741824,total_bytes_out:2.2*1073741824,connect_count:15,vouchers_used:7,last_seen:'2025-03-26 12:00'},
+      {phone:'0772334455',mac_address:'12:34:56:78:9A:BC',total_bytes_in:4.3*1073741824,total_bytes_out:1.7*1073741824,connect_count:12,vouchers_used:5,last_seen:'2025-03-24 18:30'},
+      {phone:'0703112233',mac_address:'AB:CD:EF:01:23:45',total_bytes_in:3.1*1073741824,total_bytes_out:1.1*1073741824,connect_count:8,vouchers_used:4,last_seen:'2025-03-23 07:15'},
+      {phone:'0754889900',mac_address:'98:76:54:32:10:FE',total_bytes_in:2.8*1073741824,total_bytes_out:0.9*1073741824,connect_count:7,vouchers_used:3,last_seen:'2025-03-22 20:00'},
+    ],
+  };
+}
+
+// ══════════════════════════════════════════════
+// LOAD DATA
+// ══════════════════════════════════════════════
+async function loadData(){
+  document.getElementById('main-content').innerHTML='<div class="loading"><div class="spinner"></div> Loading analytics data…</div>';
+  let data;
+  try{
+    if(API_URL.includes('YOUR_WORKER_URL')) throw new Error('demo');
+    const res=await fetch(API_URL);
+    data=await res.json();
+  }catch(e){
+    data=demoData();
+    console.warn('Using demo data. Set API_URL to your worker endpoint.');
+  }
+  document.getElementById('last-updated').textContent='Updated: '+new Date().toLocaleTimeString();
+  renderDashboard(data);
+}
+
+// ══════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════
+function renderDashboard(d){
+  const main=document.getElementById('main-content');
+
+  const totalData=(Number(d.total_bytes_in||0)+Number(d.total_bytes_out||0));
+
+  main.innerHTML=`
+  <!-- ── KPI ROW ── -->
+  <div class="stat-grid">
+    <div class="stat-card" style="--card-accent:var(--accent)">
+      <div class="label">Total Revenue</div>
+      <div class="value">${fmtUGX(d.total_revenue)}</div>
+      <div class="sub-val">All completed transactions</div>
+    </div>
+    <div class="stat-card" style="--card-accent:var(--accent2)">
+      <div class="label">Total Customers</div>
+      <div class="value">${Number(d.total_customers||0).toLocaleString()}</div>
+      <div class="sub-val">${d.heavy_users||0} heavy users (&gt;100MB)</div>
+    </div>
+    <div class="stat-card" style="--card-accent:var(--accent)">
+      <div class="label">Active Sessions</div>
+      <div class="value">${d.active_sessions||0}</div>
+      <div class="sub-val">Vouchers live right now</div>
+    </div>
+    <div class="stat-card" style="--card-accent:var(--accent3)">
+      <div class="label">Vouchers Sold</div>
+      <div class="value">${Number(d.vouchers_sold||0).toLocaleString()}</div>
+      <div class="sub-val">${d.v_unused||0} unused · ${d.v_expired||0} expired</div>
+    </div>
+    <div class="stat-card" style="--card-accent:var(--accent2)">
+      <div class="label">Total Data Used</div>
+      <div class="value">${fmtBytes(totalData)}</div>
+      <div class="sub-val">↓ ${fmtBytes(d.total_bytes_in)} · ↑ ${fmtBytes(d.total_bytes_out)}</div>
+    </div>
+    <div class="stat-card" style="--card-accent:var(--accent4)">
+      <div class="label">Rev Today</div>
+      <div class="value">${fmtUGX(d.rev_today)}</div>
+      <div class="sub-val">Today's earnings</div>
+    </div>
+    <div class="stat-card" style="--card-accent:var(--accent3)">
+      <div class="label">Rev This Week</div>
+      <div class="value">${fmtUGX(d.rev_week)}</div>
+      <div class="sub-val">Current week</div>
+    </div>
+    <div class="stat-card" style="--card-accent:var(--accent)">
+      <div class="label">Rev This Month</div>
+      <div class="value">${fmtUGX(d.rev_month)}</div>
+      <div class="sub-val">Current month</div>
+    </div>
+  </div>
+
+  <!-- ── REVENUE CHARTS ── -->
+  <div class="chart-panel">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Revenue Over Time <span>/ UGX</span></div>
+        <div class="section-desc">Switch between daily, weekly, monthly views</div>
+      </div>
+    </div>
+    <div class="tab-row" id="rev-tabs">
+      <button class="tab active" onclick="switchRevTab('day',this)">Daily (14d)</button>
+      <button class="tab" onclick="switchRevTab('week',this)">Weekly (8w)</button>
+      <button class="tab" onclick="switchRevTab('month',this)">Monthly (6mo)</button>
+    </div>
+    <div class="chart-wrap"><canvas id="revChart"></canvas></div>
+  </div>
+
+  <!-- ── DATA USAGE CHARTS ── -->
+  <div class="chart-panel">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Data Consumed <span>/ Download + Upload</span></div>
+        <div class="section-desc">Total network throughput by period</div>
+      </div>
+    </div>
+    <div class="tab-row" id="data-tabs">
+      <button class="tab active" onclick="switchDataTab('day',this)">Daily (14d)</button>
+      <button class="tab" onclick="switchDataTab('week',this)">Weekly (8w)</button>
+      <button class="tab" onclick="switchDataTab('month',this)">Monthly (6mo)</button>
+    </div>
+    <div class="chart-wrap"><canvas id="dataChart"></canvas></div>
+  </div>
+
+  <!-- ── VOUCHER DISTRIBUTION + STOCK ── -->
+  <div class="two-col">
+    <div class="chart-panel">
+      <div class="section-header"><div>
+        <div class="section-title">Vouchers Sold <span>/ by Package</span></div>
+        <div class="section-desc">Distribution of completed sales</div>
+      </div></div>
+      <div class="chart-wrap" style="height:200px"><canvas id="pkgChart"></canvas></div>
+    </div>
+    <div class="chart-panel">
+      <div class="section-header"><div>
+        <div class="section-title">Voucher Status <span>/ Overview</span></div>
+        <div class="section-desc">Unused · Used · Expired · Reserved</div>
+      </div></div>
+      <div class="chart-wrap" style="height:200px"><canvas id="statusChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── STOCK ── -->
+  <div>
+    <div class="section-header">
+      <div>
+        <div class="section-title">Voucher Stock <span>/ Available Units</span></div>
+        <div class="section-desc">Unused vouchers ready to sell per package</div>
+      </div>
+    </div>
+    <div class="stock-grid" id="stock-grid"></div>
+  </div>
+
+  <!-- ── LIVE SESSIONS ── -->
+  <div>
+    <div class="section-header">
+      <div>
+        <div class="section-title">Live Active Sessions <span>/ ${d.active_sessions||0} online</span></div>
+        <div class="section-desc">Vouchers currently in use with remaining time</div>
+      </div>
+    </div>
+    <div class="sessions-grid" id="sessions-grid"></div>
+  </div>
+
+  <!-- ── TOP CUSTOMERS ── -->
+  <div>
+    <div class="section-header">
+      <div>
+        <div class="section-title">Customer Analytics <span>/ Top by Data Used</span></div>
+        <div class="section-desc">Phone · MAC · Data consumed · Vouchers bought · Activity</div>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <span class="icon">🔍</span>
+      <input type="text" id="cust-search" placeholder="Search by phone or MAC…" oninput="filterCustomers()"/>
+    </div>
+    <div class="table-wrap">
+      <table id="customers-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Phone</th>
+            <th>MAC Address</th>
+            <th>Total Download</th>
+            <th>Total Upload</th>
+            <th>Total Data</th>
+            <th>Vouchers Used</th>
+            <th>Connects</th>
+            <th>Last Seen</th>
+          </tr>
+        </thead>
+        <tbody id="customers-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── ACTIVE VOUCHER TABLE ── -->
+  <div>
+    <div class="section-header">
+      <div>
+        <div class="section-title">Active Voucher Details <span>/ Full List</span></div>
+        <div class="section-desc">All vouchers currently active with session data</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Code</th><th>Package</th><th>Phone</th><th>MAC</th>
+          <th>Download</th><th>Upload</th><th>Expires</th>
+        </tr></thead>
+        <tbody id="sessions-body"></tbody>
+      </table>
+    </div>
+  </div>
+  `;
+
+  // Store data globally for chart switching
+  window._dashData = d;
+
+  // Render charts
+  renderRevChart(d.revenue.day, 'day');
+  renderDataChart(d.dataUsage.day, 'day');
+  renderPkgChart(d);
+  renderStatusChart(d);
+  renderStock(d.stock, d);
+  renderSessions(d.active_vouchers||[]);
+  renderCustomers(d.top_customers||[]);
+}
+
+// ── REVENUE CHART ──
+function renderRevChart(rows, period){
+  const labels=(rows||[]).map(r=>r.date);
+  const vals=(rows||[]).map(r=>Number(r.amount||0));
+  makeChart('revChart',{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        label:'Revenue (UGX)',
+        data:vals,
+        backgroundColor:'rgba(0,229,160,.25)',
+        borderColor:'#00e5a0',
+        borderWidth:2,
+        borderRadius:4,
+        hoverBackgroundColor:'rgba(0,229,160,.5)',
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'UGX '+ctx.raw.toLocaleString()}}},
+      scales:{
+        x:{ticks:{color:'#6b7280',font:{family:'Space Mono',size:9}},grid:{color:'#1c2028'}},
+        y:{ticks:{color:'#6b7280',font:{family:'Space Mono',size:9},callback:v=>'UGX '+(v>=1000?Math.round(v/1000)+'K':v)},grid:{color:'#1c2028'}},
+      }
+    }
+  });
+}
+
+// ── DATA CHART ──
+function renderDataChart(rows, period){
+  const labels=(rows||[]).map(r=>r.date);
+  const down=(rows||[]).map(r=>Number(r.bytes_in||0)/1073741824);
+  const up=(rows||[]).map(r=>Number(r.bytes_out||0)/1073741824);
+  makeChart('dataChart',{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'Download (GB)',data:down,backgroundColor:'rgba(59,130,246,.3)',borderColor:'#3b82f6',borderWidth:2,borderRadius:3,hoverBackgroundColor:'rgba(59,130,246,.5)'},
+        {label:'Upload (GB)',data:up,backgroundColor:'rgba(245,158,11,.2)',borderColor:'#f59e0b',borderWidth:2,borderRadius:3,hoverBackgroundColor:'rgba(245,158,11,.45)'},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#9ca3af',font:{family:'Space Mono',size:10}}}},
+      scales:{
+        x:{ticks:{color:'#6b7280',font:{family:'Space Mono',size:9}},grid:{color:'#1c2028'}},
+        y:{ticks:{color:'#6b7280',font:{family:'Space Mono',size:9},callback:v=>v.toFixed(1)+'GB'},grid:{color:'#1c2028'}},
+      }
+    }
+  });
+}
+
+// ── PACKAGE PIE ──
+function renderPkgChart(d){
+  makeChart('pkgChart',{
+    type:'doughnut',
+    data:{
+      labels:['P1','P2','P3','P4','Free Trial'],
+      datasets:[{
+        data:[d.pkg_p1||0,d.pkg_p2||0,d.pkg_p3||0,d.pkg_p4||0,d.pkg_ft||0],
+        backgroundColor:['#4ade8044','#60a5fa44','#fb923c44','#f8717144','#a78bfa44'],
+        borderColor:['#4ade80','#60a5fa','#fb923c','#f87171','#a78bfa'],
+        borderWidth:2,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'65%',
+      plugins:{legend:{position:'right',labels:{color:'#9ca3af',font:{family:'Space Mono',size:10},padding:10}},
+        tooltip:{callbacks:{label:ctx=>ctx.label+': '+ctx.raw.toLocaleString()+' sold'}}}
+    }
+  });
+}
+
+// ── STATUS PIE ──
+function renderStatusChart(d){
+  makeChart('statusChart',{
+    type:'doughnut',
+    data:{
+      labels:['Unused','Used/Active','Expired','Reserved'],
+      datasets:[{
+        data:[d.v_unused||0,d.v_used||0,d.v_expired||0,d.v_reserved||0],
+        backgroundColor:['#00e5a044','#3b82f644','#ef444444','#f59e0b44'],
+        borderColor:['#00e5a0','#3b82f6','#ef4444','#f59e0b'],
+        borderWidth:2,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'65%',
+      plugins:{legend:{position:'right',labels:{color:'#9ca3af',font:{family:'Space Mono',size:10},padding:10}}}
+    }
+  });
+}
+
+// ── STOCK CARDS ──
+function renderStock(stock, d){
+  const total=Object.values(stock||{}).reduce((a,b)=>a+b,0)||1;
+  const pkgs=[
+    {key:'p1',label:'Package 1',color:'#4ade80'},
+    {key:'p2',label:'Package 2',color:'#60a5fa'},
+    {key:'p3',label:'Package 3',color:'#fb923c'},
+    {key:'p4',label:'Package 4',color:'#f87171'},
+    {key:'ft',label:'Free Trial',color:'#a78bfa'},
+  ];
+  document.getElementById('stock-grid').innerHTML=pkgs.map(p=>{
+    const cnt=stock[p.key]||0;
+    const pct=Math.round(cnt/total*100);
+    return`<div class="stock-card">
+      <div class="pkg-name" style="color:${p.color}">${p.label}</div>
+      <div class="pkg-count" style="color:${p.color}">${cnt}</div>
+      <div class="pkg-label">available</div>
+      <div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:${p.color}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── SESSIONS ──
+function renderSessions(sessions){
+  const grid=document.getElementById('sessions-grid');
+  const body=document.getElementById('sessions-body');
+  if(!sessions||!sessions.length){
+    grid.innerHTML='<div style="color:var(--muted);font-size:.78rem;padding:1rem">No active sessions found.</div>';
+    body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1.5rem">No active sessions</td></tr>';
+    return;
+  }
+  const now=Date.now();
+  grid.innerHTML=sessions.slice(0,12).map(s=>{
+    const exp=new Date(s.expires_at).getTime();
+    const diffMs=exp-now;
+    const diffH=Math.max(0,diffMs/3600000);
+    const pct=Math.min(100,Math.round((1-diffMs/86400000)*100));
+    const timeLeft=diffMs<0?'Expired':(diffH<1?Math.round(diffMs/60000)+'m':diffH.toFixed(1)+'h')+' left';
+    return`<div class="session-card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="sc-code">${s.code}</span>${pkgBadge(s.package_type)}
+      </div>
+      <div class="sc-row"><span class="sc-label">Phone</span><span class="sc-val">${s.phone||'—'}</span></div>
+      <div class="sc-row"><span class="sc-label">MAC</span><span class="sc-val" style="font-size:.62rem">${s.mac_address||'—'}</span></div>
+      <div class="sc-row"><span class="sc-label">↓ Down</span><span class="sc-val">${fmtBytes(s.bytes_in)}</span></div>
+      <div class="sc-row"><span class="sc-label">↑ Up</span><span class="sc-val">${fmtBytes(s.bytes_out)}</span></div>
+      <div class="sc-row"><span class="sc-label">Expires</span><span class="sc-val" style="color:${diffMs<3600000?'var(--accent4)':'var(--accent)'}">${timeLeft}</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+
+  body.innerHTML=sessions.map(s=>`
+    <tr>
+      <td><code style="color:var(--accent);font-size:.7rem">${s.code}</code></td>
+      <td>${pkgBadge(s.package_type)}</td>
+      <td>${s.phone||'—'}</td>
+      <td style="font-size:.65rem">${s.mac_address||'—'}</td>
+      <td>${fmtBytes(s.bytes_in)}</td>
+      <td>${fmtBytes(s.bytes_out)}</td>
+      <td style="font-size:.68rem">${fmtDate(s.expires_at)}</td>
+    </tr>`).join('');
+}
+
+// ── CUSTOMERS ──
+let allCustomers=[];
+function renderCustomers(customers){
+  allCustomers=customers||[];
+  buildCustomerTable(allCustomers);
+}
+function buildCustomerTable(list){
+  const body=document.getElementById('customers-body');
+  if(!body)return;
+  if(!list.length){
+    body.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:1.5rem">No customer data found</td></tr>';
+    return;
+  }
+  body.innerHTML=list.map((c,i)=>{
+    const total=Number(c.total_bytes_in||0)+Number(c.total_bytes_out||0);
+    const isHeavy=Number(c.total_bytes_in||0)>1073741824;
+    return`<tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td style="font-weight:700;color:var(--text)">${c.phone||'—'}</td>
+      <td style="font-size:.65rem;color:var(--muted)">${c.mac_address||'—'}</td>
+      <td style="color:var(--accent2)">${fmtBytes(c.total_bytes_in)}</td>
+      <td style="color:var(--accent3)">${fmtBytes(c.total_bytes_out)}</td>
+      <td style="color:var(--accent);font-weight:700">${fmtBytes(total)} ${isHeavy?'<span style="color:var(--accent4);font-size:.6rem">● HEAVY</span>':''}</td>
+      <td>${c.vouchers_used||0}</td>
+      <td>${c.connect_count||0}</td>
+      <td style="font-size:.65rem;color:var(--muted)">${fmtDate(c.last_seen)}</td>
+    </tr>`;
+  }).join('');
+}
+function filterCustomers(){
+  const q=document.getElementById('cust-search').value.toLowerCase();
+  if(!q){buildCustomerTable(allCustomers);return;}
+  buildCustomerTable(allCustomers.filter(c=>(c.phone||'').toLowerCase().includes(q)||(c.mac_address||'').toLowerCase().includes(q)));
+}
+
+// ── TAB SWITCHING ──
+function switchRevTab(period,btn){
+  document.querySelectorAll('#rev-tabs .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderRevChart(window._dashData.revenue[period],period);
+}
+function switchDataTab(period,btn){
+  document.querySelectorAll('#data-tabs .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderDataChart(window._dashData.dataUsage[period],period);
+}
+</script>
+</body>
+</html>
