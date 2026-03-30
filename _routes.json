@@ -1,10 +1,17 @@
 {
   "version": 1,
-  "include": [
-    "/*"
-  ],
-  "exclude": [
-    "/api/*",
-    "/*.html"
+  "routes": [
+    {
+      "src": "/api/admin/stats",
+      "dest": "/functions/api/admin/stats.js"
+    },
+    {
+      "src": "/admin-stats.html",
+      "dest": "/admin-stats.html"
+    },
+    {
+      "src": "/api/voucher/validate",
+      "dest": "/functions/api/voucher/validate.js"
+    }
   ]
 }
