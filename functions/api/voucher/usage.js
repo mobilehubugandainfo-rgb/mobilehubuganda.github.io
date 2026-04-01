@@ -144,27 +144,3 @@ export function onRequestOptions() {
     }
   });
 }
-```
-
----
-
-## 📋 What This Does End To End
-```
-MikroTik (every 60s)
-    │  POST { code, bytes_in, bytes_out, mac, ip, uptime, secret }
-    ▼
-usage.js Worker
-    │
-    ├── 1. Auth check (secret must = 'admin123')
-    ├── 2. Read PREVIOUS bytes from voucher (before update)
-    ├── 3. Update voucher → new bytes + fill MAC if empty
-    ├── 4. Calculate delta (new - prev) → always positive
-    ├── 5. Add delta to customer total_bytes_in/out
-    └── 6. Fill customer MAC if empty
-    │
-    ▼
-D1 Database
-    ├── vouchers.bytes_in/out → live session usage ✅
-    ├── vouchers.mac_address  → device identity ✅
-    ├── customers.total_bytes_in/out → lifetime usage ✅
-    └── customers.mac_address → device identity ✅
