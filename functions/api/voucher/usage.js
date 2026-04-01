@@ -2,7 +2,7 @@
 // Called by MikroTik scheduler every 60s to push live bandwidth data.
 // Updates bytes_in / bytes_out for the matching voucher in D1.
 
-const USAGE_SECRET = 'YOUR_SECRET_KEY'; // ← change this to anything secret
+const USAGE_SECRET = 'admin123'; // ← change this to anything secret
 
 const jsonHeaders = {
   'Content-Type': 'application/json',
