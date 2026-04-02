@@ -22,12 +22,14 @@ export async function onRequestPost({ request, env }) {
        p2:  1000 UGX → 24 Hours (1 Day)
        p3:  6000 UGX → 7 Days   (1 Week)
        p4:  25000 UGX → 30 Days  (1 Month)
+       free-trial: 0 UGX → 5 Minutes
        ============================================ */
     const packages = {
       'p1':  500,
       'p2':  1000,
       'p3':  6000,
-      'p4':  25000
+      'p4':  25000,
+      'free-trial': 0
     };
 
     const amount = packages[package_id];
