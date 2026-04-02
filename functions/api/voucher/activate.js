@@ -7,6 +7,7 @@ const PLAN_DURATIONS = {
   p2: 24 * 60 * 60 * 1000,  // 24 hours
   p3: 24 * 7 * 60 * 60 * 1000,  // 7 days
   p4: 24 * 30 * 60 * 60 * 1000, // 30 days
+  free-trial: 5 * 60 * 1000, // 5 minutes
 };
 
 const jsonHeaders = {
