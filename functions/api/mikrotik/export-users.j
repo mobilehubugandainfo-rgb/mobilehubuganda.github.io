@@ -18,7 +18,8 @@ export async function onRequestGet({ request, env }) {
       '500ugx-3hrs': 'p1',
       '1000ugx-24hrs': 'p2',
       '6000ugx-7days': 'p3',
-      '2500ugx-30days': 'p4'
+      '2500ugx-30days': 'p4',
+      '0ugx-5minutes': 'free-trial'
     };
 
     let script = [];
