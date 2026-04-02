@@ -27,6 +27,7 @@ export async function onRequestPost({ request, env }) {
     else if (pkg === 'p2') expiryDate.setHours(now.getHours() + 24);
     else if (pkg === 'p3') expiryDate.setDate(now.getDate() + 7);
     else if (pkg === 'p4') expiryDate.setDate(now.getDate() + 30);
+    else if (pkg === 'free-trial') expiryDate.setHours(now.getMinutes() + 5);
     else expiryDate.setHours(now.getHours() + 1);
 
     // Format for SQLite: YYYY-MM-DD HH:MM:SS
