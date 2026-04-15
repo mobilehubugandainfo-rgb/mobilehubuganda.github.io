@@ -15,7 +15,7 @@ export async function onRequestPost({ request, env }) {
       return new Response(JSON.stringify({ success: false, error: 'Missing fields' }), { status: 400, headers: jsonHeaders });
     }
 
-    const profileMap = { 'p1': 'p1', 'p2': 'p2', 'p3': 'p3', 'p4': 'p4' 'free-trial' : 'free-trial'};
+    const profileMap = { 'p1': 'p1', 'p2': 'p2', 'p3': 'p3', 'p4': 'p4', 'free-trial' : 'free-trial'};
     const profile = profileMap[package_type.toLowerCase()] || 'p2';
 
     // 🕒 Precise Expiry Calculation
