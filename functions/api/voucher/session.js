@@ -4,11 +4,11 @@
 // This is READ-ONLY — it never modifies the voucher.
 
 const PLAN_DURATIONS = {
-  p1: 3  * 60 * 60,  // seconds
-  p2: 24  * 60 * 60,
-  p3: 24 * 7 * 60 * 60,
-  p4: 24 * 30 * 60 * 60,
-  free-trial: 5 * 60,
+  p1: 3 * 60 * 60,  // seconds
+  p2: 24 * 60 * 60,
+  p3: 7 * 24 * 60 * 60,
+  p4: 30 * 24 * 60 * 60,
+  "free-trial": 5 * 60,
 };
 
 const jsonHeaders = {
