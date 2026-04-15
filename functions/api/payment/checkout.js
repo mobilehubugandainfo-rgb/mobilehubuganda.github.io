@@ -12,7 +12,7 @@ export async function onRequestOptions() {
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type"
+      "Access-Control-Allow-Headers": "Content-Type",
       "Access-Control-Max-Age": "86400"
     }
   });
@@ -22,10 +22,12 @@ export async function onRequestOptions() {
    MAIN CHECKOUT HANDLER (POST)
 ============================================ */
 export async function onRequestPost({ request, env }) {
-  const jsonHeader = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*'
-  };
+ const jsonHeader = {
+  "Content-Type": "application/json",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type, Accept",
+  "Access-Control-Allow-Methods": "POST, OPTIONS"
+};
 
   try {
     const { package_id, phone, email } = await request.json();
