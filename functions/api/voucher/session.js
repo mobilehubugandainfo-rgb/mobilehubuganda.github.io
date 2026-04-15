@@ -8,7 +8,7 @@ const PLAN_DURATIONS = {
   p2: 24 * 60 * 60,
   p3: 7 * 24 * 60 * 60,
   p4: 30 * 24 * 60 * 60,
-  "free-trial": 5 * 60,
+  "free-trial": 5 * 60
 };
 
 const jsonHeaders = {
