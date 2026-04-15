@@ -8,7 +8,7 @@
 
 export async function onRequestOptions() {
   return new Response(null, {
-    status: 204,
+    status: 200,
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -25,8 +25,8 @@ export async function onRequestPost({ request, env }) {
  const jsonHeader = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, Accept",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type"
 };
 
   try {
