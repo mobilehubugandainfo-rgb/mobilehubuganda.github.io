@@ -6,6 +6,21 @@
 // ✅ KV write is non-fatal — never crashes checkout
 // ✅ Auto-refreshes expired token on 401 — no manual KV deletion ever needed
 
+export async function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
+      "Access-Control-Max-Age": "86400"
+    }
+  });
+}
+
+/* ============================================
+   MAIN CHECKOUT HANDLER (POST)
+============================================ */
 export async function onRequestPost({ request, env }) {
   const jsonHeader = {
     'Content-Type': 'application/json',
