@@ -186,7 +186,7 @@ _loginUrl = params.get('link-login-only') || params.get('link-login') || localSt
 
         const fields = {
             username: code,
-            password: '',
+            password: code,
             dst:      statusUrl
         };
 
