@@ -190,19 +190,21 @@ var _loginUrl = urlParams.get('link-login-only') || urlParams.get('link-login')
 function isSafeLoginUrl(url) {
   try {
     const parsed = new URL(url);
+    const host = parsed.hostname;
 
     return parsed.protocol === 'http:' && (
       // private networks
-      /^10\./.test(parsed.hostname) ||
-      /^192\.168\./.test(parsed.hostname) ||
-      /^172\.(1[6-9]|2\d|3[01])\./.test(parsed.hostname) ||
+      /^10\./.test(host) ||
+      /^192\.168\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
 
-      // captive portals
-      parsed.hostname === 'captive.apple.com' ||
-      parsed.hostname === '10.0.0.1' ||
+      // common hotspot gateways
+      host === '10.0.0.1' ||
+      host === 'captive.apple.com' ||
+      host === 'router.login' ||
 
-      // 🔥 MikroTik DDNS support (THIS FIXES YOUR ISSUE)
-      parsed.hostname.endsWith('.mynetname.net')
+      // MikroTik DDNS support
+      host.endsWith('.mynetname.net')
     );
   } catch {
     return false;
@@ -220,7 +222,9 @@ if (_loginUrl && isSafeLoginUrl(_loginUrl)) {
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 let attempts    = 0;
+let requestVersion = 0;
 let polling     = false; // single-flight lock — prevents overlapping calls
+let GLOBAL_TIMEOUT;
 const schedule  = [3000,3000,3000,5000,5000,5000,8000,8000,8000,8000,8000,8000];
 let progInterval;
 let abortController = null;
@@ -363,7 +367,7 @@ async function activateInternet(voucherCode, voucherPass, packageType, loginUrl)
   const dst  = `${STATUS_PAGE}?voucher=${encodeURIComponent(voucherCode)}`;
   const form = document.createElement('form');
   form.method = 'POST';
- form.action = loginUrl;
+  form.action = loginUrl;
 
   const pass = voucherPass || voucherCode;
 
@@ -376,8 +380,15 @@ async function activateInternet(voucherCode, voucherPass, packageType, loginUrl)
     form.appendChild(i);
   });
 
-  document.body.appendChild(form);
-  form.submit();
+ document.body.appendChild(form);
+
+setTimeout(() => {
+  try {
+    form.submit();
+  } catch (e) {
+    window.location.href = loginUrl;
+  }
+}, 80);
 }
 
 // ─── POLL ─────────────────────────────────────────────────────────────────────
@@ -392,6 +403,7 @@ async function checkPayment() {
     return;
   }
 
+  const requestId = ++requestVersion;
   const currentAttempt = attempts;
   attempts++;
 
@@ -402,6 +414,11 @@ async function checkPayment() {
 
   setRing(Math.min(88, (attempts / schedule.length) * 100));
   if (attempts === 1) startProgress();
+  if (attempts === 1) {
+  GLOBAL_TIMEOUT = setTimeout(() => {
+    showError(ERROR_TYPES.TIMEOUT, 'GLOBAL_TIMEOUT');
+  }, 90000); // 90 seconds hard stop
+}
 
   let errorType   = ERROR_TYPES.NETWORK;
   let errorDetail = null;
@@ -426,6 +443,7 @@ async function checkPayment() {
     let data;
     try {
       data = await res.json();
+      if (requestId !== requestVersion) return;
     } catch {
       errorType   = ERROR_TYPES.SERVER;
       errorDetail = 'JSON_PARSE_ERR';
@@ -433,7 +451,8 @@ async function checkPayment() {
     }
 
     if ((data.status === 'COMPLETED' || data.status === 'SUCCESS') && data.voucherCode) { 
-     const loginUrl = `http://hka0apw4nbj.sn.mynetname.net/login?username=${encodeURIComponent(data.voucherCode)}&password=${encodeURIComponent(data.voucherCode)}`;
+     if (GLOBAL_TIMEOUT) clearTimeout(GLOBAL_TIMEOUT);
+     const loginUrl = `http://hka0apw4nbj.sn.mynetname.net/login`;
 
       // Advance step indicators before switching screen
       const s2el = document.getElementById('s2');
@@ -488,6 +507,7 @@ async function checkPayment() {
     return;
 
   } catch(err) {
+    if (requestId !== requestVersion) return;
     if (err.name === 'AbortError') {
       polling = false;
       return; // page unloading, stop gracefully
@@ -498,12 +518,14 @@ async function checkPayment() {
       polling = false;
       setTimeout(checkPayment, schedule[currentAttempt] || 5000);
     } else {
-      polling = false;
-      showError(errorType, errorDetail || trackingId);
-    }
+  polling = false;
+
+  if (GLOBAL_TIMEOUT) clearTimeout(GLOBAL_TIMEOUT);
+
+  showError(ERROR_TYPES.TIMEOUT, trackingId);
+   }
   }
 }
-
 // Cancel in-flight requests when user navigates away
 window.addEventListener('beforeunload', () => {
   if (abortController) abortController.abort();
