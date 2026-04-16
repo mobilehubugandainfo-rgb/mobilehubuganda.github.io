@@ -33,15 +33,26 @@ export async function onRequestPost({ request, env }) {
 
     // ── Fetch voucher ─────────────────────────────────────────────
     const voucher = await env.DB.prepare(`
-      SELECT id, code, package_type, status, expires_at, mac_address
-      FROM vouchers WHERE code = ?
-    `).bind(code).first();
-
+  SELECT id, code, package_type, status, expires_at, mac_address, transaction_id
+  FROM vouchers WHERE code = ?
+`).bind(code).first();
+  
     if (!voucher) {
       return new Response(JSON.stringify({
         success: false, error: 'Voucher not found'
       }), { status: 200, headers: jsonHeaders });
     }
+    // ─── SIMPLE SAFETY CHECK ─────────────────────────────
+
+// If voucher belongs to a paid transaction, require tracking_id
+if (voucher.transaction_id) {
+  if (!body.tracking_id) {
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'This voucher requires payment verification'
+    }), { status: 403, headers: jsonHeaders });
+  }
+}
 
     // ── MAC mismatch — locked to a different device ───────────────
     if (voucher.mac_address && voucher.mac_address !== 'unknown' && mac !== 'unknown') {
