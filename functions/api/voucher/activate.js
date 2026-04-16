@@ -50,7 +50,7 @@ if (voucher.transaction_id) {
     return new Response(JSON.stringify({
       success: false,
       error: 'This voucher requires payment verification'
-    }), { status: 403, headers: jsonHeaders });
+    }), { status: 200, headers: jsonHeaders });
   }
 }
 
