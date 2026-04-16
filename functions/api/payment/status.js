@@ -42,18 +42,21 @@ export async function onRequestGet({ request, env }) {
       }), { status: 404, headers: jsonHeaders });
     }
 
-    // ─── 2. Already done — return immediately ──────────────────
-    if (data.status === 'COMPLETED' && data.voucherCode) {
-      console.log('[STATUS] Already completed:', data.voucherCode);
-      return new Response(JSON.stringify({
-        status: 'COMPLETED',
-        voucherCode: data.voucherCode,
-        tracking_id: data.tracking_id,
-        package_type: data.package_type,
-        amount: data.amount
-      }), { status: 200, headers: jsonHeaders });
-    }
+   // ─── 2. Already done — return immediately ──────────────────
+if (data.status === 'COMPLETED' && data.voucherCode) {
 
+  const loginUrl = `http://hka0apw4nbj.sn.mynetname.net/login?username=${data.voucherCode}&password=${data.voucherCode}`;
+
+  return new Response(JSON.stringify({
+    status: 'COMPLETED',
+    voucherCode: data.voucherCode,
+    login_url: loginUrl,
+    tracking_id: data.tracking_id,
+    package_type: data.package_type,
+    amount: data.amount
+  }), { status: 200, headers: jsonHeaders });
+
+}
     // ─── 3. Still PENDING — get Pesapal transaction ID ─────────
     const pesapalTxId = data.pesapal_transaction_id || url.searchParams.get('OrderTrackingId');
 
