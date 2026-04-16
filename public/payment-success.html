@@ -223,47 +223,19 @@ async function activateInternet(voucherCode, packageType, loginUrl) {
 
   // ✅ CRITICAL: Submit to MikroTik
   const dst = `${STATUS_PAGE}?voucher=${encodeURIComponent(voucherCode)}`;
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = loginUrl;
-
-  // ✅ CRITICAL FIX: MikroTik password = voucher code itself
-  const password = voucherCode;
-
-  [
-    ['username', voucherCode],
-    ['password', password],  // ✅ Always use voucher code as password
-    ['dst', dst]
-  ].forEach(([name, value]) => {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = name;
-    input.value = value;
-    form.appendChild(input);
-  });
-
-  document.body.appendChild(form);
-
-  console.log('[ACTIVATE] Form created:', {
-    action: loginUrl,
-    username: voucherCode,
-    password: password,
-    dst: dst
-  });
-
+  
   // ✅ INCREASED DELAY: Give DOM time
   setTimeout(() => {
-    try {
-      console.log('[ACTIVATE] Submitting form to MikroTik...');
-      form.submit();
-    } catch (e) {
-      console.error('[ACTIVATE] Form submit failed:', e);
-      // Fallback: Try GET request
-      const fallbackUrl = `${loginUrl}?username=${encodeURIComponent(voucherCode)}&password=${encodeURIComponent(password)}&dst=${encodeURIComponent(dst)}`;
-      console.log('[ACTIVATE] Trying fallback URL:', fallbackUrl);
-      window.location.href = fallbackUrl;
-    }
-  }, 600); // ✅ Increased from 80ms to 600ms
+  const password = voucherCode; // always same as voucher
+
+  const loginUrlWithParams =
+    `${loginUrl}?username=${encodeURIComponent(voucherCode)}&password=${encodeURIComponent(password)}&dst=${encodeURIComponent(dst)}`;
+
+  console.log('[ACTIVATE] Redirecting to MikroTik:', loginUrlWithParams);
+
+  window.location.href = loginUrlWithParams;
+
+}, 600);
 }
 
 // POLL FOR PAYMENT STATUS
