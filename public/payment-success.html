@@ -3,295 +3,168 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Hotspot Central | Payment Success</title>
+<title>Connecting You | Mobile Hub Uganda</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
 :root {
   --cyan:#06b6d4; --violet:#7c3aed; --green:#22c55e; --red:#f43f5e; --white:#f0f4ff;
-  --muted:rgba(200,210,255,0.55);
-  --glass:rgba(8,4,24,0.82);
-  --border:rgba(124,58,237,0.38);
+  --muted:rgba(200,210,255,0.55); --glass:rgba(8,4,24,0.85);
 }
-
 html, body {
-  width:100%; min-height:100%;
-  background:#020008;
+  width:100%; min-height:100%; background:#020008;
   font-family:'Rajdhani',sans-serif; color:var(--white);
-  display:flex; align-items:center; justify-content:center;
-  padding:20px;
-  -webkit-user-select:text; user-select:text;
+  display:flex; align-items:center; justify-content:center; padding:20px;
 }
-
 #galaxy { position:fixed; inset:0; z-index:0; }
 .nebula {
   position:fixed; inset:0; z-index:1; pointer-events:none;
   background:
-    radial-gradient(ellipse 70% 55% at 18% 28%, rgba(124,58,237,.25) 0%,transparent 65%),
-    radial-gradient(ellipse 55% 45% at 82% 68%, rgba(6,182,212,.18)  0%,transparent 60%),
-    radial-gradient(ellipse 50% 40% at 55%  8%, rgba(236,72,153,.13) 0%,transparent 55%),
-    radial-gradient(ellipse 45% 38% at  8% 82%, rgba(79,70,229,.20)  0%,transparent 60%);
-  animation:nebDrift 20s ease-in-out infinite alternate;
+    radial-gradient(ellipse 65% 50% at 20% 25%, rgba(124,58,237,.3) 0%,transparent 60%),
+    radial-gradient(ellipse 55% 45% at 80% 70%, rgba(6,182,212,.2)  0%,transparent 58%),
+    radial-gradient(ellipse 45% 40% at 55%  5%, rgba(34,197,94,.1)  0%,transparent 55%),
+    radial-gradient(ellipse 40% 35% at  5% 85%, rgba(79,70,229,.22) 0%,transparent 58%);
+  animation:nebDrift 22s ease-in-out infinite alternate;
 }
-@keyframes nebDrift{from{opacity:.85}to{opacity:1;transform:scale(1.06)}}
-.ss{position:fixed;z-index:2;pointer-events:none;width:2px;border-radius:2px;opacity:0;background:linear-gradient(to bottom,transparent,rgba(255,255,255,.88));}
-.ss1{height:90px;top:-90px;left:15%;animation:shoot 3.5s 0s linear infinite;}
-.ss2{height:70px;top:-70px;left:55%;animation:shoot 2.8s 1.8s linear infinite;}
-.ss3{height:110px;top:-110px;left:80%;animation:shoot 4.0s 3.2s linear infinite;}
-.ss4{height:65px;top:-65px;left:6%;animation:shoot 3.2s 5.1s linear infinite;}
-.ss5{height:80px;top:-80px;left:40%;animation:shoot 2.6s 6.5s linear infinite;}
-@keyframes shoot{0%{transform:translateY(0) rotate(14deg);opacity:0}6%{opacity:.8}85%{opacity:.2}100%{transform:translateY(115vh) rotate(14deg);opacity:0}}
+@keyframes nebDrift { from{opacity:.8} to{opacity:1;transform:scale(1.05)} }
+.ss{position:fixed;z-index:2;pointer-events:none;width:1.5px;border-radius:2px;opacity:0;background:linear-gradient(to bottom,transparent,rgba(255,255,255,.9));}
+.ss1{height:80px;top:-80px;left:12%;animation:shoot 4.2s 0.0s linear infinite;}
+.ss2{height:60px;top:-60px;left:52%;animation:shoot 3.1s 1.6s linear infinite;}
+.ss3{height:100px;top:-100px;left:78%;animation:shoot 4.8s 3.5s linear infinite;}
+.ss4{height:55px;top:-55px;left:7%;animation:shoot 3.6s 5.8s linear infinite;}
+.ss5{height:70px;top:-70px;left:38%;animation:shoot 2.9s 7.2s linear infinite;}
+@keyframes shoot{0%{transform:translateY(0) rotate(14deg);opacity:0}5%{opacity:.75}88%{opacity:.15}100%{transform:translateY(115vh) rotate(14deg);opacity:0}}
+.grid-overlay{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.035;background-image:linear-gradient(rgba(6,182,212,1) 1px,transparent 1px),linear-gradient(90deg,rgba(6,182,212,1) 1px,transparent 1px);background-size:60px 60px;}
+.card{position:relative;z-index:10;width:100%;max-width:480px;background:var(--glass);border:1.5px solid rgba(124,58,237,.5);border-radius:24px;padding:clamp(32px,6vw,48px) clamp(24px,6vw,42px);text-align:center;backdrop-filter:blur(28px);box-shadow:0 0 0 1px rgba(124,58,237,.08),0 0 70px rgba(124,58,237,.18),0 32px 90px rgba(0,0,0,.75);animation:cardIn .65s cubic-bezier(.22,.68,0,1.2) both;}
+@keyframes cardIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+.hud{position:absolute;width:22px;height:22px;pointer-events:none;}
+.hud::before,.hud::after{content:'';position:absolute;background:var(--cyan);opacity:.5;}
+.hud::before{width:2px;height:14px;top:0;left:0}.hud::after{width:14px;height:2px;top:0;left:0}
+.hud.tl{top:14px;left:14px}.hud.tr{top:14px;right:14px;transform:scaleX(-1)}.hud.bl{bottom:14px;left:14px;transform:scaleY(-1)}.hud.br{bottom:14px;right:14px;transform:scale(-1)}
+.card::before{content:'';position:absolute;inset:0;border-radius:24px;pointer-events:none;z-index:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(124,58,237,.015) 3px,rgba(124,58,237,.015) 4px);}
+.card>*{position:relative;z-index:1;}
+.site-label{font-family:'Orbitron',sans-serif;font-size:clamp(.58rem,1.8vw,.7rem);font-weight:700;letter-spacing:4px;text-transform:uppercase;background:linear-gradient(90deg,#c084fc,#a78bfa,#67e8f9,#f0abfc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 10px rgba(167,139,250,.5));margin-bottom:26px;display:block;}
+.ring-wrap{width:90px;height:90px;margin:0 auto 20px;position:relative;display:flex;align-items:center;justify-content:center;}
+.ring-wrap svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);}
+.ring-wrap svg circle{fill:none;stroke-width:3.5;}
+.ring-bg{stroke:rgba(124,58,237,.2);stroke-dashoffset:0;}
+.ring-fg{stroke-dasharray:255;stroke-dashoffset:255;stroke-linecap:round;transition:stroke-dashoffset 1.2s ease;}
+.ring-icon{font-size:2.3rem;z-index:1;animation:iconPulse 2.2s ease-in-out infinite;}
+@keyframes iconPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.state-title{font-family:'Orbitron',sans-serif;font-size:clamp(.95rem,3.8vw,1.35rem);font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.cyan{color:#67e8f9;text-shadow:0 0 22px rgba(6,182,212,.55);}
+.amber{color:#fbbf24;text-shadow:0 0 22px rgba(251,191,36,.5);}
+.red{color:#f87171;text-shadow:0 0 22px rgba(244,63,94,.5);}
+.status-text{font-size:clamp(.78rem,2.6vw,.9rem);color:var(--muted);letter-spacing:.4px;margin-bottom:6px;line-height:1.5;}
+.divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.45),rgba(6,182,212,.35),transparent);margin:20px 0;}
+.steps{list-style:none;text-align:left;margin:0;padding:0;}
+.steps li{display:flex;align-items:center;gap:12px;padding:11px 15px;border-radius:12px;margin-bottom:8px;font-size:clamp(.78rem,2.4vw,.88rem);font-weight:600;letter-spacing:.4px;border:1px solid rgba(124,58,237,.18);background:rgba(255,255,255,.03);transition:all .45s ease;}
+.steps li.done{border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.06);color:#86efac;}
+.steps li.active{border-color:rgba(6,182,212,.45);background:rgba(6,182,212,.07);color:#67e8f9;}
+.steps li.wait{color:rgba(200,210,255,.32);}
+.steps li .si{font-size:1.1rem;flex-shrink:0;width:22px;text-align:center;}
+.spin{display:inline-block;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.prog-wrap{width:100%;background:rgba(255,255,255,.06);height:5px;border-radius:10px;overflow:hidden;margin-top:18px;}
+.prog-bar{width:0%;height:100%;background:linear-gradient(90deg,#7c3aed,#06b6d4);transition:width .6s ease;}
 
-.card {
-  position:relative; z-index:10;
-  width:100%; max-width:520px;
-  background:var(--glass);
-  border:1.5px solid rgba(124,58,237,.5);
-  border-radius:24px;
-  padding:clamp(28px,6vw,44px) clamp(22px,6vw,40px);
-  text-align:center;
-  backdrop-filter:blur(24px);
-  box-shadow:0 0 0 1px rgba(124,58,237,.1),0 0 60px rgba(124,58,237,.2),0 30px 80px rgba(0,0,0,.7);
-  animation:cardIn .6s cubic-bezier(.22,.68,0,1.2) both;
-}
-@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+/* ── Error types ── */
+.error-box{border-radius:14px;padding:18px 20px;margin:16px 0;text-align:left;}
+.error-box.soft{background:rgba(244,63,94,.06);border:1.5px solid rgba(244,63,94,.28);}
+.error-box.network{background:rgba(251,191,36,.05);border:1.5px solid rgba(251,191,36,.25);}
+.error-box.timeout{background:rgba(124,58,237,.06);border:1.5px solid rgba(124,58,237,.28);}
+.error-box p{font-size:.82rem;color:rgba(255,190,190,.8);margin-bottom:10px;line-height:1.6;}
+.error-box.network p,.error-box.timeout p{color:rgba(255,220,160,.8);}
+.error-id{font-family:'Orbitron',sans-serif;font-size:.62rem;color:#fca5a5;letter-spacing:1px;}
+.error-box.network .error-id,.error-box.timeout .error-id{color:#fcd34d;}
 
-.hud{position:absolute;width:20px;height:20px;pointer-events:none;}
-.hud::before,.hud::after{content:'';position:absolute;background:var(--cyan);opacity:.55;}
-.hud::before{width:2px;height:12px;top:0;left:0} .hud::after{width:12px;height:2px;top:0;left:0}
-.hud.tl{top:12px;left:12px} .hud.tr{top:12px;right:12px;transform:scaleX(-1)}
-.hud.bl{bottom:12px;left:12px;transform:scaleY(-1)} .hud.br{bottom:12px;right:12px;transform:scale(-1)}
+.error-detail{font-family:'Orbitron',sans-serif;font-size:.58rem;letter-spacing:.8px;margin-top:8px;opacity:.5;}
 
-.card::before{content:'';position:absolute;inset:0;border-radius:24px;pointer-events:none;z-index:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(124,58,237,.018) 3px,rgba(124,58,237,.018) 4px);}
-.card > * { position:relative; z-index:1; }
-
-.site-label {
-  font-family:'Orbitron',sans-serif; font-size:clamp(.65rem,2vw,.75rem);
-  font-weight:700; letter-spacing:4px; text-transform:uppercase;
-  background:linear-gradient(90deg,#c084fc,#a78bfa,#67e8f9,#f0abfc);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  filter:drop-shadow(0 0 12px rgba(167,139,250,.6));
-  margin-bottom:20px; display:block;
-}
-
-.check-container {
-  width:80px; height:80px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  margin:0 auto 18px; font-size:2.2rem;
-  animation:iconPulse 2s ease-in-out infinite;
-}
-.check-container.success { background:rgba(6,182,212,.1); border:2px solid rgba(6,182,212,.6); box-shadow:0 0 30px rgba(6,182,212,.2); }
-.check-container.error   { background:rgba(244,63,94,.1);  border:2px solid rgba(244,63,94,.6);  box-shadow:0 0 30px rgba(244,63,94,.2); }
-@keyframes iconPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-
-.state-title {
-  font-family:'Orbitron',sans-serif; font-size:clamp(1rem,4vw,1.45rem);
-  font-weight:900; letter-spacing:2px; text-transform:uppercase; margin-bottom:8px;
-}
-.state-title.success { color:#67e8f9; text-shadow:0 0 20px rgba(6,182,212,.6); }
-.state-title.error   { color:#f43f5e; text-shadow:0 0 20px rgba(244,63,94,.5); }
-.state-title.warning { color:#fbbf24; text-shadow:0 0 20px rgba(251,191,36,.5); }
-
-.status-text { font-size:clamp(.75rem,2.5vw,.88rem); color:var(--muted); letter-spacing:.4px; margin-bottom:8px; }
-
-.divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.4),rgba(6,182,212,.4),transparent);margin:18px 0;}
-
-.progress-container {
-  width:100%; background:rgba(255,255,255,.05);
-  height:6px; border-radius:10px; overflow:hidden; margin-top:18px;
-}
-.progress-bar {
-  width:0%; height:100%;
-  background:linear-gradient(90deg,#7c3aed,#06b6d4);
-  transition:width .5s ease;
-  animation:shimmer 2s infinite;
-}
-@keyframes shimmer{0%{opacity:.6}50%{opacity:1}100%{opacity:.6}}
-
-.attempt-info { font-size:.62rem; color:rgba(167,139,250,.5); margin-top:10px; letter-spacing:.5px; font-family:'Orbitron',sans-serif; }
-
-.voucher-display { display:none; }
-.voucher-display.show { display:block; }
-
-.voucher-code {
-  background:rgba(6,182,212,.08);
-  border:1.5px dashed rgba(6,182,212,.5);
-  padding:20px; border-radius:16px; margin:18px 0;
-  font-family:'Orbitron',sans-serif;
-  font-size:clamp(1.2rem,5vw,1.65rem); font-weight:900;
-  color:#67e8f9; letter-spacing:4px; word-break:break-all;
-  text-shadow:0 0 20px rgba(6,182,212,.7);
-  box-shadow:0 0 30px rgba(6,182,212,.12);
-  -webkit-user-select:text; user-select:text;
-  animation:voucherGlow 2.5s ease-in-out infinite;
-}
-@keyframes voucherGlow{0%,100%{box-shadow:0 0 20px rgba(6,182,212,.1)}50%{box-shadow:0 0 40px rgba(6,182,212,.3),0 0 80px rgba(6,182,212,.1)}}
-
-/* ── MAC badge — shows the device this voucher is being locked to ── */
-.mac-badge {
-  display:none;
-  align-items:center; justify-content:center; gap:7px;
-  background:rgba(124,58,237,.1); border:1px solid rgba(124,58,237,.3);
-  border-radius:10px; padding:8px 14px; margin:10px 0;
-  font-family:'Orbitron',sans-serif; font-size:.55rem;
-  letter-spacing:1.5px; color:#a78bfa; text-transform:uppercase;
-}
-.mac-badge.show { display:flex; }
-.mac-dot { width:6px; height:6px; border-radius:50%; background:#a78bfa; box-shadow:0 0 6px #a78bfa; flex-shrink:0; animation:oPulse 1.7s ease-in-out infinite; }
-@keyframes oPulse{0%,100%{box-shadow:0 0 4px #a78bfa}50%{box-shadow:0 0 10px #a78bfa;transform:scale(1.3)}}
-
-.package-info {
-  background:rgba(255,255,255,.04); border:1px solid rgba(124,58,237,.25);
-  padding:14px 18px; border-radius:13px; margin:16px 0;
-  font-size:.8rem; line-height:2.2; text-align:left;
-}
-.package-info .pi-row { display:flex; justify-content:space-between; align-items:center; }
-.package-info .pi-label { color:#a78bfa; font-size:.6rem; letter-spacing:2px; text-transform:uppercase; font-family:'Orbitron',sans-serif; }
-.package-info .pi-val   { color:#fff; font-weight:700; letter-spacing:.5px; }
-
-.copy-btn {
-  display:inline-flex; align-items:center; justify-content:center; gap:8px;
-  padding:12px 26px; border-radius:12px; border:none; cursor:pointer;
-  font-family:'Orbitron',sans-serif; font-size:clamp(.62rem,2vw,.75rem);
-  font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
-  background:var(--glass); border:1.5px solid rgba(6,182,212,.45); color:#67e8f9;
-  backdrop-filter:blur(16px); transition:all .22s ease; margin:6px 4px;
-}
-.copy-btn:hover{border-color:rgba(6,182,212,.8);box-shadow:0 0 20px rgba(6,182,212,.25);transform:translateY(-2px);}
-.copy-btn.copied{border-color:rgba(34,197,94,.7);color:#86efac;background:rgba(34,197,94,.1);}
-
-/* Auto-connect countdown button */
-.redirect-btn {
-  display:inline-flex; align-items:center; justify-content:center; gap:8px;
-  width:100%; margin-top:8px; padding:14px; border-radius:13px; border:none; cursor:pointer;
-  font-family:'Orbitron',sans-serif; font-size:clamp(.7rem,2.5vw,.82rem);
-  font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#fff;
-  background:linear-gradient(118deg,#6d28d9,#7c3aed 38%,#4f46e5 68%,#06b6d4);
-  box-shadow:0 4px 28px rgba(124,58,237,.52);
-  transition:all .22s ease; animation:heroAura 3s ease-in-out infinite;
-  position:relative; overflow:hidden;
-}
-@keyframes heroAura{0%,100%{box-shadow:0 4px 28px rgba(124,58,237,.5)}50%{box-shadow:0 6px 44px rgba(124,58,237,.75),0 0 70px rgba(124,58,237,.2)}}
-.redirect-btn:hover{transform:translateY(-2px);box-shadow:0 8px 44px rgba(124,58,237,.72);}
-.redirect-btn:disabled{opacity:.7;cursor:default;animation:none;}
-
-/* Countdown fill that sweeps across the button */
-.btn-fill {
-  position:absolute; inset:0; left:0; top:0;
-  background:rgba(255,255,255,.12);
-  width:0%; transition:width 1s linear;
-  pointer-events:none;
-}
-
-.support-btn {
-  display:inline-flex; align-items:center; justify-content:center; gap:9px;
-  width:100%; margin-top:10px; padding:14px;
-  background:rgba(34,197,94,.1); border:1.5px solid rgba(34,197,94,.4);
-  color:#86efac; text-decoration:none; border-radius:13px;
-  font-weight:700; font-size:.85rem; letter-spacing:.4px;
-  backdrop-filter:blur(10px); transition:all .22s;
-}
-.support-btn:hover{background:rgba(34,197,94,.2);border-color:rgba(34,197,94,.65);box-shadow:0 0 20px rgba(34,197,94,.2);transform:translateY(-2px);}
-
-.error-container { display:none; }
-.error-container.show { display:block; }
-
-.footer-note { font-size:.65rem; color:rgba(167,139,250,.4); margin-top:16px; letter-spacing:.4px; }
-.card-footer { margin-top:18px; padding-top:14px; border-top:1px solid rgba(124,58,237,.18); }
-.card-footer span { font-size:.56rem; color:rgba(167,139,250,.38); letter-spacing:.5px; font-family:'Orbitron',sans-serif; }
-
+.support-btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:12px;padding:14px;background:rgba(34,197,94,.1);border:1.5px solid rgba(34,197,94,.4);color:#86efac;text-decoration:none;border-radius:13px;font-weight:700;font-size:.85rem;letter-spacing:.4px;backdrop-filter:blur(10px);transition:all .22s;}
+.support-btn:hover{background:rgba(34,197,94,.2);box-shadow:0 0 22px rgba(34,197,94,.2);transform:translateY(-2px);}
+.footer-note{font-size:.62rem;color:rgba(167,139,250,.32);margin-top:18px;letter-spacing:.4px;line-height:1.6;}
+.card-footer{margin-top:18px;padding-top:14px;border-top:1px solid rgba(124,58,237,.18);}
+.card-footer span{font-size:.55rem;color:rgba(167,139,250,.35);letter-spacing:.5px;font-family:'Orbitron',sans-serif;}
 .loading-dots{display:inline-block;}
 .loading-dots span{animation:blink 1.4s infinite both;display:inline-block;}
 .loading-dots span:nth-child(2){animation-delay:.2s;}
 .loading-dots span:nth-child(3){animation-delay:.4s;}
 @keyframes blink{0%,80%,100%{opacity:0}40%{opacity:1}}
+.hidden{display:none!important;}
 </style>
 </head>
 <body>
-
 <canvas id="galaxy"></canvas>
 <div class="nebula"></div>
+<div class="grid-overlay"></div>
 <div class="ss ss1"></div><div class="ss ss2"></div><div class="ss ss3"></div>
 <div class="ss ss4"></div><div class="ss ss5"></div>
 
 <div class="card">
   <div class="hud tl"></div><div class="hud tr"></div>
   <div class="hud bl"></div><div class="hud br"></div>
+  <span class="site-label">✦ Mobile Hub Uganda · Hotspot Central ✦</span>
 
-  <span class="site-label">✦ Hotspot Central · Mobile Hub Uganda ✦</span>
-
-  <!-- PROCESSING STATE -->
-  <div id="processingUI">
-    <div class="check-container success">⏳</div>
-    <div class="state-title success">Payment Successful!</div>
-    <p class="status-text">
-      Preparing your voucher code<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>
-    </p>
-    <div class="divider"></div>
-    <div class="progress-container">
-      <div class="progress-bar" id="bar"></div>
+  <!-- STATE 1: POLLING -->
+  <div id="statePolling">
+    <div class="ring-wrap">
+      <svg viewBox="0 0 90 90">
+        <defs>
+          <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#7c3aed"/>
+            <stop offset="100%" stop-color="#06b6d4"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg" cx="45" cy="45" r="40"/>
+        <circle class="ring-fg" id="ringFg" cx="45" cy="45" r="40" stroke="url(#rg)"/>
+      </svg>
+      <span class="ring-icon">💳</span>
     </div>
-    <p class="attempt-info" id="attemptInfo">Connecting to payment system...</p>
+    <div class="state-title cyan">Payment Confirmed!</div>
+    <p class="status-text">Setting up your internet access<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span></p>
+    <div class="divider"></div>
+    <ul class="steps">
+      <li class="done"  id="s1"><span class="si">✅</span> Payment verified</li>
+      <li class="active" id="s2"><span class="si"><span class="spin">⟳</span></span> <span id="s2text">Allocating your session</span><span class="loading-dots"><span>.</span><span>.</span><span>.</span></span></li>
+      <li class="wait"  id="s3"><span class="si">📡</span> Opening network access</li>
+    </ul>
+    <div class="prog-wrap"><div class="prog-bar" id="bar"></div></div>
+    <p class="footer-note">Please stay on this page — this takes under 30 seconds.</p>
   </div>
 
-  <!-- SUCCESS STATE -->
-  <div id="voucherUI" class="voucher-display">
-    <div class="check-container success">✓</div>
-    <div class="state-title success">Voucher Ready!</div>
-    <p class="status-text">Use this code to connect to the internet</p>
-
+  <!-- STATE 2: CONNECTING TO MIKROTIK -->
+  <div id="stateConnecting" class="hidden">
+    <div class="ring-wrap">
+      <svg viewBox="0 0 90 90">
+        <circle class="ring-bg" cx="45" cy="45" r="40" fill="none" stroke="rgba(6,182,212,.15)" stroke-width="3.5"/>
+        <circle cx="45" cy="45" r="40" fill="none" stroke="#06b6d4" stroke-width="3.5"
+          stroke-dasharray="255" stroke-dashoffset="0" stroke-linecap="round"
+          style="transform-origin:center;transform:rotate(-90deg);"/>
+      </svg>
+      <span class="ring-icon">🔌</span>
+    </div>
+    <div class="state-title cyan">Opening Access</div>
+    <p class="status-text">Connecting you to the network — do not close this page</p>
     <div class="divider"></div>
-
-    <div class="voucher-code" id="voucherCode">LOADING...</div>
-
-    <!-- MAC lock indicator — shows when MAC is known -->
-    <div class="mac-badge" id="macBadge">
-      <div class="mac-dot"></div>
-      <span id="macBadgeText">Locked to this device</span>
-    </div>
-
-    <div class="package-info">
-      <div class="pi-row">
-        <span class="pi-label">Package</span>
-        <span class="pi-val" id="packageName">-</span>
-      </div>
-      <div class="pi-row">
-        <span class="pi-label">Duration</span>
-        <span class="pi-val" id="packageDuration">-</span>
-      </div>
-      <div class="pi-row">
-        <span class="pi-label">Order ID</span>
-        <span class="pi-val" id="orderId" style="font-size:.72rem;color:#a78bfa;">-</span>
-      </div>
-    </div>
-
-    <div>
-      <button class="copy-btn" id="copyBtn" onclick="copyVoucher()">📋 Copy Voucher Code</button>
-    </div>
-
-    <button class="redirect-btn" id="connectBtn" onclick="redirectToLogin()">
-      <div class="btn-fill" id="btnFill"></div>
-      <span id="connectBtnText">⚡ Connect to Internet Now</span>
-    </button>
-
-    <p class="footer-note">This code has been saved. You can also find it in your SMS/email.</p>
+    <ul class="steps">
+      <li class="done"><span class="si">✅</span> Payment verified</li>
+      <li class="done"><span class="si">✅</span> Session allocated</li>
+      <li class="active"><span class="si"><span class="spin">⟳</span></span> Opening network access<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span></li>
+    </ul>
   </div>
 
-  <!-- ERROR STATE -->
-  <div id="errorUI" class="error-container">
-    <div class="check-container error">⚠</div>
-    <div class="state-title warning">Voucher Delayed</div>
-    <p class="status-text">Your payment was successful! However, there's a slight delay generating your voucher.</p>
-    <div class="divider"></div>
-    <div class="package-info" style="border-color:rgba(251,191,36,.25);">
-      <div class="pi-row">
-        <span class="pi-label">Order ID</span>
-        <span class="pi-val" id="displayOrderId" style="font-size:.72rem;color:#fbbf24;">-</span>
-      </div>
+  <!-- STATE 3: ERROR (dynamic content injected by JS) -->
+  <div id="stateError" class="hidden">
+    <div style="font-size:3rem;margin-bottom:14px;" id="errorIcon">⚠️</div>
+    <div class="state-title amber" id="errorTitle">Payment Received</div>
+    <p class="status-text" id="errorSubtitle">Your payment went through — there's a short delay activating your session.</p>
+    <div class="error-box soft" id="errorBox">
+      <p id="errorBody">Your internet access will activate within <strong style="color:#fbbf24">5 minutes</strong>. If it doesn't, contact us with your Order ID and we'll sort it immediately.</p>
+      <div class="error-id">ORDER: <span id="displayOrderId">—</span></div>
+      <div class="error-detail" id="errorDetail"></div>
     </div>
-    <p class="status-text" style="font-size:.75rem;">Your code will be sent via SMS within 5 minutes. If you don't receive it, contact support with your Order ID above.</p>
     <a href="https://wa.me/256771999302" class="support-btn">💬 Contact Support on WhatsApp</a>
+    <p class="footer-note">Send your Order ID in your message for fastest resolution.</p>
   </div>
 
   <div class="card-footer">
@@ -300,256 +173,391 @@ html, body {
 </div>
 
 <script>
-    const packageInfo = {
-        'p1': { name: 'Quick Surf',   duration: '3 Hours'  },
-        'p2': { name: 'Day Pass',     duration: '24 Hours' },
-        'p3': { name: 'Weekly Pass',  duration: '7 Days'   },
-        'p4': { name: 'Monthly Pass', duration: '30 Days'  }
-    };
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const CF_API      = 'https://mobilehubuganda-github-io.pages.dev';
+const STATUS_PAGE = 'https://mobilehubuganda-github-io.pages.dev/status.html';
 
-    const urlParams       = new URLSearchParams(window.location.search);
-    const trackingId      = urlParams.get('id') || urlParams.get('tracking_id') || urlParams.get('OrderMerchantReference');
-    const orderTrackingId = urlParams.get('OrderTrackingId');
-    const API_URL         = window.location.origin;
+// ─── PARAMS ───────────────────────────────────────────────────────────────────
+const urlParams       = new URLSearchParams(window.location.search);
+const trackingId      = urlParams.get('id') || urlParams.get('tracking_id') || urlParams.get('OrderMerchantReference');
+const orderTrackingId = urlParams.get('OrderTrackingId');
 
-    // ── FIX: Read MAC from URL params first, then fall back to localStorage ──
-    // The buy page (?mac=XX:XX:XX) stores it in localStorage when the user
-    // first arrives. By the time we reach payment-success, it's available here.
-    var _mac = urlParams.get('mac') || localStorage.getItem('client_mac') || 'unknown';
-    if (_mac && _mac !== 'unknown') {
-        localStorage.setItem('client_mac', _mac); // keep it fresh
-    }
+var _mac      = urlParams.get('mac')             || sessionStorage.getItem('client_mac') || localStorage.getItem('client_mac') || 'unknown';
+var _loginUrl = urlParams.get('link-login-only') || urlParams.get('link-login')
+              || sessionStorage.getItem('mikrotik_login_url') || localStorage.getItem('mikrotik_login_url') || 'http://10.0.0.1/login';
 
-    console.log('[Payment Success] trackingId:', trackingId);
-    console.log('[Payment Success] orderTrackingId:', orderTrackingId);
-    console.log('[Payment Success] MAC for login redirect:', _mac);
+// Validate loginUrl to prevent open redirect manipulation
+function isSafeLoginUrl(url) {
+  try {
+    const parsed = new URL(url);
+    // Must be http (captive portals are always plain http on LAN)
+    // and must be a private/LAN address or the stored fallback
+    return parsed.protocol === 'http:' && (
+      /^10\./.test(parsed.hostname) ||
+      /^192\.168\./.test(parsed.hostname) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(parsed.hostname) ||
+      parsed.hostname === 'captive.apple.com' ||
+      parsed.hostname === '10.0.0.1'
+    );
+  } catch { return false; }
+}
 
-    let attempts = 0;
-    const schedule = [3000,3000,3000,5000,5000,5000,8000,8000,8000,8000,8000,8000];
-    let progressInterval;
-    let currentVoucherCode = '';
-    let autoConnectTimer = null;
-    let autoConnectSeconds = 10;
+if (_mac !== 'unknown') {
+  sessionStorage.setItem('client_mac', _mac);
+  localStorage.setItem('client_mac', _mac);
+}
+if (_loginUrl) {
+  sessionStorage.setItem('mikrotik_login_url', _loginUrl);
+  localStorage.setItem('mikrotik_login_url', _loginUrl);
+}
 
-    function startProgressBar() {
-        let width = 0;
-        progressInterval = setInterval(() => {
-            if (width >= 92) clearInterval(progressInterval);
-            else { width += 1; document.getElementById('bar').style.width = width + '%'; }
-        }, 400);
-    }
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let attempts    = 0;
+let polling     = false; // single-flight lock — prevents overlapping calls
+const schedule  = [3000,3000,3000,5000,5000,5000,8000,8000,8000,8000,8000,8000];
+let progInterval;
+let abortController = null;
 
-    function completeProgress() {
-        clearInterval(progressInterval);
-        document.getElementById('bar').style.width = '100%';
-    }
+// Error type categories for granular UX
+const ERROR_TYPES = {
+  NETWORK:  'network',   // fetch failed / offline
+  SERVER:   'server',    // HTTP 5xx
+  INVALID:  'invalid',   // HTTP 4xx / bad payload
+  TIMEOUT:  'timeout',   // max retries exhausted
+  REDIRECT: 'redirect',  // loginUrl safety check failed
+};
 
-    function startAutoConnect() {
-        // Sweep the button fill over 10 seconds then auto-navigate
-        const fill = document.getElementById('btnFill');
-        const btnText = document.getElementById('connectBtnText');
-        let secs = autoConnectSeconds;
+function showState(id) {
+  ['statePolling','stateConnecting','stateError'].forEach(s =>
+    document.getElementById(s).classList.toggle('hidden', s !== id));
+}
 
-        // Start the CSS fill sweep
-        requestAnimationFrame(() => {
-            fill.style.transition = `width ${secs}s linear`;
-            fill.style.width = '100%';
-        });
+function startProgress() {
+  let w = 0;
+  progInterval = setInterval(() => {
+    if (w >= 90) clearInterval(progInterval);
+    else { w += 0.7; document.getElementById('bar').style.width = w + '%'; }
+  }, 300);
+}
+function finishProgress() {
+  clearInterval(progInterval);
+  document.getElementById('bar').style.width = '100%';
+}
 
-        function tick() {
-            secs--;
-            if (secs <= 0) {
-                redirectToLogin();
-            } else {
-                btnText.textContent = `⚡ Connecting in ${secs}s — tap to connect now`;
-                autoConnectTimer = setTimeout(tick, 1000);
-            }
-        }
-        btnText.textContent = `⚡ Connecting in ${secs}s — tap to connect now`;
-        autoConnectTimer = setTimeout(tick, 1000);
-    }
+function setRing(pct) {
+  const el = document.getElementById('ringFg');
+  if (el) el.style.strokeDashoffset = 255 - (255 * Math.min(pct, 100) / 100);
+}
 
-    function showVoucher(voucherCode, packageType, wasHealed) {
-        currentVoucherCode = voucherCode;
-        const info = packageInfo[packageType] || { name: packageType || 'Standard', duration: '-' };
+// ─── ERROR DISPLAY ────────────────────────────────────────────────────────────
+// Distinguish between error types so users get actionable guidance, not a generic wall.
+function showError(type, detail) {
+  showState('stateError');
+  const orderId   = trackingId || 'N/A';
+  const orderEl   = document.getElementById('displayOrderId');
+  const iconEl    = document.getElementById('errorIcon');
+  const titleEl   = document.getElementById('errorTitle');
+  const subtitleEl= document.getElementById('errorSubtitle');
+  const bodyEl    = document.getElementById('errorBody');
+  const boxEl     = document.getElementById('errorBox');
+  const detailEl  = document.getElementById('errorDetail');
 
-        document.getElementById('voucherCode').textContent = voucherCode;
-        document.getElementById('packageName').textContent = info.name;
-        document.getElementById('packageDuration').textContent = info.duration;
-        document.getElementById('orderId').textContent = trackingId || 'N/A';
+  if (orderEl) orderEl.textContent = orderId;
 
-        // Show MAC badge if we have a real MAC
-        if (_mac && _mac !== 'unknown') {
-            const badge = document.getElementById('macBadge');
-            badge.classList.add('show');
-            document.getElementById('macBadgeText').textContent = 'Locked to this device · ' + _mac;
-        }
+  // Remove previous type classes
+  boxEl.classList.remove('soft','network','timeout');
 
-        try {
-            localStorage.setItem('last_voucher', voucherCode);
-            localStorage.setItem('voucher_date', new Date().toLocaleString());
-            localStorage.setItem('package_type', packageType || 'Unknown');
-            localStorage.setItem('tracking_id', trackingId);
-        } catch(e) {}
-
-        completeProgress();
-        document.getElementById('processingUI').style.display = 'none';
-        document.getElementById('voucherUI').classList.add('show');
-
-        console.log('[Payment Success] Voucher displayed:', voucherCode, wasHealed ? '(self-healed)' : '(normal)');
-        console.log('[Payment Success] Will redirect to login with mac:', _mac);
-
-        // Start 10-second auto-connect countdown
-        startAutoConnect();
-    }
-
-    function copyVoucher() {
-        const btn = document.getElementById('copyBtn');
-        navigator.clipboard.writeText(currentVoucherCode).then(() => {
-            btn.textContent = '✓ Copied!';
-            btn.classList.add('copied');
-            setTimeout(() => {
-                btn.textContent = '📋 Copy Voucher Code';
-                btn.classList.remove('copied');
-            }, 2000);
-        }).catch(() => {
-            const el = document.getElementById('voucherCode');
-            const range = document.createRange();
-            range.selectNode(el);
-            window.getSelection().removeAllRanges();
-            window.getSelection().addRange(range);
-        });
-    }
-
-    function redirectToLogin() {
-        // Cancel auto-connect timer if user tapped manually
-        if (autoConnectTimer) clearTimeout(autoConnectTimer);
-
-        // ── FIX: Forward MAC so validate.js can lock the voucher to this device ──
-        var url = currentVoucherCode
-            ? 'login.html?voucher=' + encodeURIComponent(currentVoucherCode)
-            : 'login.html';
-
-        if (_mac && _mac !== 'unknown') {
-            url += '&mac=' + encodeURIComponent(_mac);
-        }
-
-        console.log('[Payment Success] Redirecting to:', url);
-        window.location.href = url;
-    }
-
-    function showError() {
-        completeProgress();
-        document.getElementById('processingUI').style.display = 'none';
-        document.getElementById('errorUI').classList.add('show');
-        document.getElementById('displayOrderId').textContent = trackingId || 'N/A';
-    }
-
-    async function checkVoucherStatus() {
-        if (!trackingId) {
-            console.error('[Payment Success] No tracking ID in URL');
-            showError();
-            return;
-        }
-
-        attempts++;
-        const maxAttempts = schedule.length;
-        console.log(`[Payment Success] Attempt ${attempts}/${maxAttempts}`);
-
-        document.getElementById('attemptInfo').textContent =
-            attempts <= 3 ? 'Waiting for payment confirmation...' :
-            attempts <= 6 ? 'Verifying with payment gateway...' :
-            'Still checking, almost there...';
-
-        if (attempts === 1) startProgressBar();
-
-        try {
-            let statusUrl = `${API_URL}/api/payment/status?tracking_id=${trackingId}`;
-            if (orderTrackingId) statusUrl += `&OrderTrackingId=${orderTrackingId}`;
-
-            const response = await fetch(statusUrl, {
-                method: 'GET',
-                headers: { 'Accept': 'application/json' }
-            });
-
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-            const data = await response.json();
-            console.log(`[Payment Success] Response:`, data);
-
-            if ((data.status === 'COMPLETED' || data.status === 'SUCCESS') && data.voucherCode) {
-                showVoucher(data.voucherCode, data.package_type, data.healed);
-                return;
-            }
-
-            if (attempts < maxAttempts) {
-                setTimeout(checkVoucherStatus, schedule[attempts]);
-            } else {
-                console.error('[Payment Success] All attempts exhausted');
-                showError();
-            }
-
-        } catch (error) {
-            console.error('[Payment Success] Fetch error:', error.message);
-            if (attempts < schedule.length) {
-                setTimeout(checkVoucherStatus, schedule[attempts] || 5000);
-            } else {
-                showError();
-            }
-        }
-    }
-
-    checkVoucherStatus();
-
-/* ═══ GALAXY CANVAS ═══ */
-(function(){
-  const cv=document.getElementById('galaxy'),ctx=cv.getContext('2d');
-  let W,H,stars=[],dust=[];
-  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
-  function mkStars(){
-    stars=[];const n=Math.floor(W*H/1600);
-    for(let i=0;i<n;i++){
-      const big=Math.random()>.65;
-      stars.push({x:Math.random()*W,y:Math.random()*H,
-        r:big?Math.random()*1.9+.9:Math.random()*.75+.15,
-        a:Math.random(),da:(Math.random()*.005+.001)*(Math.random()<.5?1:-1),
-        vy:big?.012:.038,
-        col:['#ffffff','#c4b5fd','#93c5fd','#67e8f9','#fbcfe8'][Math.floor(Math.random()*5)]});
-    }
+  if (type === ERROR_TYPES.NETWORK) {
+    iconEl.textContent    = '📵';
+    titleEl.textContent   = 'Connection Issue';
+    titleEl.className     = 'state-title amber';
+    subtitleEl.textContent= 'Your payment is safe — we lost contact with our servers.';
+    bodyEl.innerHTML      = 'Please check your connection and <strong style="color:#fbbf24">refresh this page</strong>. If the problem continues, contact support with your Order ID.';
+    boxEl.classList.add('network');
+  } else if (type === ERROR_TYPES.SERVER) {
+    iconEl.textContent    = '🔧';
+    titleEl.textContent   = 'Server Hiccup';
+    titleEl.className     = 'state-title amber';
+    subtitleEl.textContent= 'Your payment went through — our server hit a temporary snag.';
+    bodyEl.innerHTML      = 'Your internet access will activate within <strong style="color:#fbbf24">5 minutes</strong>. If it doesn\'t, contact us with your Order ID.';
+    boxEl.classList.add('soft');
+  } else if (type === ERROR_TYPES.TIMEOUT) {
+    iconEl.textContent    = '⏳';
+    titleEl.textContent   = 'Taking Longer Than Usual';
+    titleEl.className     = 'state-title amber';
+    subtitleEl.textContent= 'Your payment is confirmed — activation is just delayed.';
+    bodyEl.innerHTML      = 'Your access will activate within <strong style="color:#fbbf24">5 minutes</strong>. If not, send us your Order ID on WhatsApp and we\'ll fix it immediately.';
+    boxEl.classList.add('timeout');
+  } else if (type === ERROR_TYPES.REDIRECT) {
+    iconEl.textContent    = '⛔';
+    titleEl.textContent   = 'Router Not Detected';
+    titleEl.className     = 'state-title red';
+    subtitleEl.textContent= 'Payment confirmed — but your hotspot login URL is missing.';
+    bodyEl.innerHTML      = 'Please reconnect to the Mobile Hub WiFi network, then reopen this link. Contact support if the issue persists.';
+    boxEl.classList.add('soft');
+  } else {
+    // Generic / INVALID
+    iconEl.textContent    = '⚠️';
+    titleEl.textContent   = 'Payment Received';
+    titleEl.className     = 'state-title amber';
+    subtitleEl.textContent= 'Your payment went through — there\'s a short delay activating your session.';
+    bodyEl.innerHTML      = 'Your internet access will activate within <strong style="color:#fbbf24">5 minutes</strong>. If it doesn\'t, contact us with your Order ID and we\'ll sort it immediately.';
+    boxEl.classList.add('soft');
   }
-  function mkDust(){
-    dust=[];
-    for(let i=0;i<7;i++)dust.push({
-      x:Math.random()*W,y:Math.random()*H,r:70+Math.random()*130,
-      a:.028+Math.random()*.045,
-      col:['rgba(124,58,237,','rgba(6,182,212,','rgba(236,72,153,','rgba(79,70,229,'][i%4],
-      dx:(Math.random()-.5)*.1,dy:(Math.random()-.5)*.1});
+
+  if (detailEl) {
+    detailEl.textContent = detail ? 'REF: ' + detail : '';
   }
-  function draw(){
-    ctx.clearRect(0,0,W,H);
-    const g=ctx.createRadialGradient(W*.5,H*.38,0,W*.5,H*.38,Math.max(W,H)*.75);
-    g.addColorStop(0,'rgba(18,8,48,.95)');g.addColorStop(1,'rgba(2,0,8,1)');
-    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-    dust.forEach(d=>{
-      d.x+=d.dx;d.y+=d.dy;
-      if(d.x<-d.r)d.x=W+d.r;if(d.x>W+d.r)d.x=-d.r;
-      if(d.y<-d.r)d.y=H+d.r;if(d.y>H+d.r)d.y=-d.r;
-      const ng=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r);
-      ng.addColorStop(0,d.col+d.a+')');ng.addColorStop(1,d.col+'0)');
-      ctx.fillStyle=ng;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fill();
+}
+
+// ─── ACTIVATE ─────────────────────────────────────────────────────────────────
+async function activateInternet(voucherCode, voucherPass, packageType) {
+  // Guard: only store non-sensitive UX data, never passwords long-term
+  try {
+    sessionStorage.setItem('last_voucher', voucherCode.toUpperCase());
+    sessionStorage.setItem('package_type', packageType || 'unknown');
+    sessionStorage.setItem('tracking_id',  trackingId  || '');
+    sessionStorage.setItem('voucher_date', new Date().toISOString());
+    // localStorage as cross-tab status page fallback (voucher code is low-sensitivity)
+    localStorage.setItem('last_voucher',   voucherCode.toUpperCase());
+    localStorage.setItem('package_type',   packageType || 'unknown');
+    // NOTE: voucherPass is intentionally NOT stored in localStorage
+  } catch(e) {}
+
+  finishProgress();
+  showState('stateConnecting');
+
+  // Register activation in Cloudflare D1 (non-fatal)
+  try {
+    abortController = new AbortController();
+    await fetch(`${CF_API}/api/voucher/activate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: abortController.signal,
+      body: JSON.stringify({ code: voucherCode, mac: _mac, tracking_id: trackingId })
     });
-    stars.forEach(s=>{
-      s.a+=s.da;if(s.a>1||s.a<0)s.da*=-1;
-      s.y-=s.vy;if(s.y<-2){s.y=H+2;s.x=Math.random()*W;}
-      ctx.globalAlpha=Math.max(0,Math.min(1,s.a));
-      if(s.r>1.1){ctx.shadowBlur=7;ctx.shadowColor=s.col;}
-      ctx.fillStyle=s.col;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();
+  } catch(err) {
+    if (err.name !== 'AbortError') {
+      console.warn('[activate] CF API error (non-fatal):', err.message);
+    }
+  }
+
+  await new Promise(r => setTimeout(r, 700));
+
+  // Validate loginUrl before submitting — prevents open redirect if URL was tampered
+  if (!isSafeLoginUrl(_loginUrl)) {
+    console.error('[activate] Unsafe or missing loginUrl:', _loginUrl);
+    showError(ERROR_TYPES.REDIRECT, trackingId);
+    return;
+  }
+
+  // Submit login form to MikroTik captive portal
+  // MikroTik requires a real browser navigation POST (not fetch) to grant internet
+  const dst  = `${STATUS_PAGE}?voucher=${encodeURIComponent(voucherCode)}`;
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = _loginUrl;
+
+  const pass = voucherPass || voucherCode;
+
+  // Safe field creation — no innerHTML
+  [['username', voucherCode], ['password', pass], ['dst', dst]].forEach(([n, v]) => {
+    const i  = document.createElement('input');
+    i.type   = 'hidden';
+    i.name   = n;
+    i.value  = v;
+    form.appendChild(i);
+  });
+
+  document.body.appendChild(form);
+  form.submit();
+}
+
+// ─── POLL ─────────────────────────────────────────────────────────────────────
+async function checkPayment() {
+  // Single-flight lock: bail if a request is already in-flight
+  if (polling) return;
+  polling = true;
+
+  if (!trackingId) {
+    showError(ERROR_TYPES.INVALID, 'NO_TRACKING_ID');
+    polling = false;
+    return;
+  }
+
+  const currentAttempt = attempts;
+  attempts++;
+
+  const s2text = document.getElementById('s2text');
+  if (s2text) s2text.textContent =
+    attempts <= 3 ? 'Allocating your session' :
+    attempts <= 7 ? 'Verifying with gateway'  : 'Almost there';
+
+  setRing(Math.min(88, (attempts / schedule.length) * 100));
+  if (attempts === 1) startProgress();
+
+  let errorType   = ERROR_TYPES.NETWORK;
+  let errorDetail = null;
+
+  try {
+    abortController = new AbortController();
+    let url = `${CF_API}/api/payment/status?tracking_id=${encodeURIComponent(trackingId)}`;
+    if (orderTrackingId) url += `&OrderTrackingId=${encodeURIComponent(orderTrackingId)}`;
+
+    const res = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+      signal: abortController.signal
+    });
+
+    // Classify HTTP-level errors
+    if (!res.ok) {
+      errorType   = res.status >= 500 ? ERROR_TYPES.SERVER : ERROR_TYPES.INVALID;
+      errorDetail = 'HTTP_' + res.status;
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      errorType   = ERROR_TYPES.SERVER;
+      errorDetail = 'JSON_PARSE_ERR';
+      throw new Error('Invalid JSON response from server');
+    }
+
+    if ((data.status === 'COMPLETED' || data.status === 'SUCCESS') && data.voucherCode) {
+      // Advance step indicators before switching screen
+      const s2el = document.getElementById('s2');
+      const s3el = document.getElementById('s3');
+
+      if (s2el) {
+        s2el.className = 'done';
+        s2el.textContent = '';
+        const icon = document.createElement('span');
+        icon.className   = 'si';
+        icon.textContent = '✅';
+        const text = document.createTextNode(' Session allocated');
+        s2el.appendChild(icon);
+        s2el.appendChild(text);
+      }
+      if (s3el) {
+        s3el.className = 'active';
+        s3el.textContent = '';
+        const iconWrap = document.createElement('span');
+        iconWrap.className = 'si';
+        const spinner = document.createElement('span');
+        spinner.className   = 'spin';
+        spinner.textContent = '⟳';
+        iconWrap.appendChild(spinner);
+        const text = document.createTextNode(' Opening network access');
+        s3el.appendChild(iconWrap);
+        s3el.appendChild(text);
+      }
+
+      setRing(100);
+      await new Promise(r => setTimeout(r, 500));
+
+      polling = false;
+      activateInternet(data.voucherCode, data.voucherPass || null, data.package_type);
+      return;
+    }
+
+    // Still pending — schedule next poll
+    if (attempts < schedule.length) {
+      polling = false;
+      setTimeout(checkPayment, schedule[currentAttempt] || 5000);
+    } else {
+      polling = false;
+      showError(ERROR_TYPES.TIMEOUT, trackingId);
+    }
+    return;
+
+  } catch(err) {
+    if (err.name === 'AbortError') {
+      polling = false;
+      return; // page unloading, stop gracefully
+    }
+    console.error('[poll]', err.message);
+
+    if (attempts < schedule.length) {
+      polling = false;
+      setTimeout(checkPayment, schedule[currentAttempt] || 5000);
+    } else {
+      polling = false;
+      showError(errorType, errorDetail || trackingId);
+    }
+  }
+}
+
+// Cancel in-flight requests when user navigates away
+window.addEventListener('beforeunload', () => {
+  if (abortController) abortController.abort();
+});
+
+checkPayment();
+
+// ─── GALAXY ───────────────────────────────────────────────────────────────────
+(function() {
+  const cv = document.getElementById('galaxy'), ctx = cv.getContext('2d');
+  let W, H, stars = [], dust = [];
+
+  function resize() { W = cv.width = innerWidth; H = cv.height = innerHeight; mkStars(); mkDust(); }
+
+  function mkStars() {
+    stars = [];
+    const n = Math.min(Math.floor(W * H / 2200), 320);
+    for (let i = 0; i < n; i++) {
+      const big = Math.random() > .7;
+      stars.push({
+        x: Math.random()*W, y: Math.random()*H,
+        r: big ? Math.random()*1.7+.8 : Math.random()*.6+.15,
+        a: Math.random(), da: (Math.random()*.004+.0008) * (Math.random() < .5 ? 1 : -1),
+        vy: big ? .01 : .032,
+        col: ['#ffffff','#c4b5fd','#93c5fd','#67e8f9','#fbcfe8'][Math.floor(Math.random()*5)]
+      });
+    }
+  }
+
+  function mkDust() {
+    dust = [];
+    for (let i = 0; i < 6; i++) dust.push({
+      x: Math.random()*W, y: Math.random()*H,
+      r: 80+Math.random()*120,
+      a: .022+Math.random()*.038,
+      col: ['rgba(124,58,237,','rgba(6,182,212,','rgba(34,197,94,','rgba(79,70,229,'][i%4],
+      dx: (Math.random()-.5)*.08, dy: (Math.random()-.5)*.08
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    const bg = ctx.createRadialGradient(W*.5,H*.35,0,W*.5,H*.35,Math.max(W,H)*.8);
+    bg.addColorStop(0,'rgba(14,6,40,.98)'); bg.addColorStop(1,'rgba(2,0,8,1)');
+    ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+    dust.forEach(d => {
+      d.x+=d.dx; d.y+=d.dy;
+      if(d.x<-d.r)d.x=W+d.r; if(d.x>W+d.r)d.x=-d.r;
+      if(d.y<-d.r)d.y=H+d.r; if(d.y>H+d.r)d.y=-d.r;
+      const g = ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r);
+      g.addColorStop(0,d.col+d.a+')'); g.addColorStop(1,d.col+'0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2); ctx.fill();
+    });
+
+    stars.forEach(s => {
+      s.a += s.da; if(s.a>1||s.a<0) s.da*=-1;
+      s.y -= s.vy; if(s.y<-2){s.y=H+2; s.x=Math.random()*W;}
+      ctx.globalAlpha = Math.max(0,Math.min(1,s.a));
+      if(s.r>1.0){ctx.shadowBlur=6; ctx.shadowColor=s.col;}
+      ctx.fillStyle=s.col; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
       ctx.shadowBlur=0;
     });
-    ctx.globalAlpha=1;requestAnimationFrame(draw);
+    ctx.globalAlpha=1;
+    requestAnimationFrame(draw);
   }
-  window.addEventListener('resize',()=>{resize();mkStars();mkDust();});
-  resize();mkStars();mkDust();draw();
+
+  window.addEventListener('resize', resize);
+  resize(); draw();
 })();
 </script>
 </body>
