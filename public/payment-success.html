@@ -190,16 +190,23 @@ var _loginUrl = urlParams.get('link-login-only') || urlParams.get('link-login')
 function isSafeLoginUrl(url) {
   try {
     const parsed = new URL(url);
-    // Must be http (captive portals are always plain http on LAN)
-    // and must be a private/LAN address or the stored fallback
+
     return parsed.protocol === 'http:' && (
+      // private networks
       /^10\./.test(parsed.hostname) ||
       /^192\.168\./.test(parsed.hostname) ||
       /^172\.(1[6-9]|2\d|3[01])\./.test(parsed.hostname) ||
+
+      // captive portals
       parsed.hostname === 'captive.apple.com' ||
-      parsed.hostname === '10.0.0.1'
+      parsed.hostname === '10.0.0.1' ||
+
+      // 🔥 MikroTik DDNS support (THIS FIXES YOUR ISSUE)
+      parsed.hostname.endsWith('.mynetname.net')
     );
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 if (_mac !== 'unknown') {
