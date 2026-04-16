@@ -10,116 +10,155 @@
   :root {
     --cyan:#06b6d4; --violet:#7c3aed; --green:#10b981; --amber:#f59e0b;
     --red:#f43f5e; --white:#f0f4ff; --muted:rgba(200,210,255,0.5);
-    --glass:rgba(6,3,20,0.82); --card-border:rgba(124,58,237,0.45);
+    --glass:rgba(6,3,20,0.85); --card-border:rgba(124,58,237,0.45);
   }
   html, body { width:100%; min-height:100vh; background:#010007; font-family:'Rajdhani',sans-serif; color:var(--white); overflow-x:hidden; }
+
+  /* ── BACKGROUND ── */
   #galaxy { position:fixed; inset:0; z-index:0; width:100%; height:100%; }
   .nebula-layer {
     position:fixed; inset:0; z-index:1; pointer-events:none;
     background:
-      radial-gradient(ellipse 80% 60% at 15% 20%, rgba(124,58,237,.3) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 85% 75%, rgba(6,182,212,.22) 0%, transparent 55%),
-      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(16,185,129,.08) 0%, transparent 50%);
-    animation:nebDrift 25s ease-in-out infinite alternate;
+      radial-gradient(ellipse 75% 55% at 12% 18%, rgba(124,58,237,.32) 0%,transparent 58%),
+      radial-gradient(ellipse 60% 50% at 88% 78%, rgba(6,182,212,.22)  0%,transparent 55%),
+      radial-gradient(ellipse 50% 40% at 52% 52%, rgba(16,185,129,.09) 0%,transparent 50%);
+    animation:nebDrift 26s ease-in-out infinite alternate;
   }
-  @keyframes nebDrift { 0%{opacity:.8;transform:scale(1)} 50%{opacity:1;transform:scale(1.04)} 100%{opacity:.85;transform:scale(1.02)} }
+  @keyframes nebDrift { 0%{opacity:.78;transform:scale(1)} 50%{opacity:1;transform:scale(1.04)} 100%{opacity:.85;transform:scale(1.02)} }
+  .grid-overlay{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.032;background-image:linear-gradient(rgba(6,182,212,1) 1px,transparent 1px),linear-gradient(90deg,rgba(6,182,212,1) 1px,transparent 1px);background-size:60px 60px;}
 
-  .page { position:relative; z-index:10; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px 16px 32px; }
+  .ss{position:fixed;z-index:2;pointer-events:none;width:1.5px;border-radius:2px;opacity:0;background:linear-gradient(to bottom,transparent,rgba(255,255,255,.88));}
+  .ss1{height:75px;top:-75px;left:10%;animation:shoot 4.5s 0.0s linear infinite;}
+  .ss2{height:55px;top:-55px;left:48%;animation:shoot 3.3s 2.0s linear infinite;}
+  .ss3{height:95px;top:-95px;left:75%;animation:shoot 5.0s 4.0s linear infinite;}
+  .ss4{height:50px;top:-50px;left:5%;animation:shoot 3.8s 6.5s linear infinite;}
+  .ss5{height:65px;top:-65px;left:35%;animation:shoot 3.0s 8.2s linear infinite;}
+  @keyframes shoot{0%{transform:translateY(0) rotate(14deg);opacity:0}5%{opacity:.7}88%{opacity:.12}100%{transform:translateY(115vh) rotate(14deg);opacity:0}}
 
-  .header { text-align:center; margin-bottom:22px; animation:fadeDown .7s cubic-bezier(.22,.68,0,1.2) both; }
+  .page { position:relative; z-index:10; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px 16px 36px; }
+
+  .header { text-align:center; margin-bottom:18px; animation:fadeDown .7s cubic-bezier(.22,.68,0,1.2) both; }
   @keyframes fadeDown { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:none} }
-  .logo { font-family:'Orbitron',sans-serif; font-size:clamp(1.4rem,5vw,2rem); font-weight:900; letter-spacing:4px; background:linear-gradient(90deg,#c084fc,#67e8f9,#34d399); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-size:200%; animation:shimmer 6s linear infinite; }
-  @keyframes shimmer { 0%{background-position:0%} 100%{background-position:200%} }
-  .subtitle { font-family:'Orbitron',sans-serif; font-size:.52rem; letter-spacing:3px; color:#67e8f9; text-transform:uppercase; margin-top:4px; opacity:.8; }
+  .logo { font-family:'Orbitron',sans-serif; font-size:clamp(1.3rem,5vw,1.9rem); font-weight:900; letter-spacing:4px; background:linear-gradient(90deg,#c084fc,#67e8f9,#34d399,#c084fc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-size:250%; animation:shimmer 7s linear infinite; }
+  @keyframes shimmer { 0%{background-position:0%} 100%{background-position:250%} }
+  .subtitle { font-family:'Orbitron',sans-serif; font-size:.5rem; letter-spacing:3px; color:#67e8f9; text-transform:uppercase; margin-top:4px; opacity:.75; }
 
-  .card { width:100%; max-width:520px; background:var(--glass); border:1.5px solid var(--card-border); border-radius:24px; padding:26px 22px; backdrop-filter:blur(28px); box-shadow:0 0 80px rgba(124,58,237,.18),0 40px 100px rgba(0,0,0,.7); animation:cardIn .6s cubic-bezier(.22,.68,0,1.2) .1s both; }
+  .connected-banner {
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    background:rgba(16,185,129,.08); border:1.5px solid rgba(16,185,129,.35);
+    border-radius:16px; padding:13px 18px; margin-bottom:16px;
+    animation:bannerIn .6s cubic-bezier(.22,.68,0,1.3) .15s both;
+  }
+  @keyframes bannerIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:none} }
+  .banner-dot { width:12px; height:12px; border-radius:50%; background:#10b981; box-shadow:0 0 14px #10b981; animation:pulse 1.8s ease-in-out infinite; flex-shrink:0; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(.8)} }
+  .banner-text { font-family:'Orbitron',sans-serif; font-size:clamp(.62rem,2.5vw,.78rem); font-weight:700; letter-spacing:2px; color:#34d399; text-shadow:0 0 14px rgba(52,211,153,.4); }
+
+  .card { width:100%; max-width:520px; background:var(--glass); border:1.5px solid var(--card-border); border-radius:24px; padding:22px 20px; backdrop-filter:blur(28px); box-shadow:0 0 80px rgba(124,58,237,.16),0 40px 100px rgba(0,0,0,.72); animation:cardIn .6s cubic-bezier(.22,.68,0,1.2) .1s both; }
   @keyframes cardIn { from{opacity:0;transform:translateY(18px) scale(.97)} to{opacity:1;transform:none} }
 
-  /* VOUCHER BADGE */
-  .voucher-badge { display:flex; align-items:center; justify-content:space-between; background:rgba(6,182,212,.07); border:1px dashed rgba(6,182,212,.4); border-radius:14px; padding:12px 16px; margin-bottom:20px; gap:10px; flex-wrap:wrap; }
-  .voucher-label { font-size:.52rem; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:3px; }
-  .voucher-code { font-family:'Orbitron',sans-serif; font-size:clamp(.85rem,3.5vw,1.1rem); color:#67e8f9; letter-spacing:3px; font-weight:700; }
-  .plan-name { font-family:'Orbitron',sans-serif; font-size:clamp(.65rem,2.5vw,.8rem); color:#c084fc; font-weight:700; }
-  .status-dot { width:11px; height:11px; border-radius:50%; background:var(--green); box-shadow:0 0 12px var(--green); animation:blink 2s ease-in-out infinite; flex-shrink:0; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+  .hud{position:absolute;width:18px;height:18px;pointer-events:none;}
+  .hud::before,.hud::after{content:'';position:absolute;background:var(--cyan);opacity:.45;}
+  .hud::before{width:2px;height:11px;top:0;left:0}.hud::after{width:11px;height:2px;top:0;left:0}
+  .hud.tl{top:12px;left:12px}.hud.tr{top:12px;right:12px;transform:scaleX(-1)}.hud.bl{bottom:12px;left:12px;transform:scaleY(-1)}.hud.br{bottom:12px;right:12px;transform:scale(-1)}
+  .card-inner{position:relative;}
 
-  /* TIMER RING */
-  .timer-section { display:flex; flex-direction:column; align-items:center; margin-bottom:20px; }
-  .timer-wrap { position:relative; width:clamp(138px,36vw,168px); height:clamp(138px,36vw,168px); }
+  .voucher-badge { display:flex; align-items:center; justify-content:space-between; background:rgba(6,182,212,.06); border:1px dashed rgba(6,182,212,.35); border-radius:13px; padding:11px 15px; margin-bottom:18px; gap:10px; flex-wrap:wrap; }
+  .voucher-label { font-size:.5rem; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:2px; }
+  .voucher-code { font-family:'Orbitron',sans-serif; font-size:clamp(.82rem,3.3vw,1rem); color:#67e8f9; letter-spacing:3px; font-weight:700; }
+  .plan-name { font-family:'Orbitron',sans-serif; font-size:clamp(.62rem,2.4vw,.78rem); color:#c084fc; font-weight:700; }
+  .status-dot-badge { width:10px; height:10px; border-radius:50%; background:var(--green); box-shadow:0 0 10px var(--green); animation:pulse 2s ease-in-out infinite; flex-shrink:0; }
+
+  .timer-section { display:flex; flex-direction:column; align-items:center; margin-bottom:18px; }
+  .timer-wrap { position:relative; width:clamp(130px,34vw,162px); height:clamp(130px,34vw,162px); }
   .timer-svg { width:100%; height:100%; transform:rotate(-90deg); }
-  .timer-track { fill:none; stroke:rgba(124,58,237,.1); stroke-width:10; }
-  .timer-bar { fill:none; stroke-width:10; stroke-linecap:round; transition:stroke-dashoffset .8s ease, stroke .8s ease; }
+  .timer-track { fill:none; stroke:rgba(124,58,237,.1); stroke-width:9; }
+  .timer-bar { fill:none; stroke-width:9; stroke-linecap:round; transition:stroke-dashoffset .85s ease, stroke .85s ease; }
   .timer-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .timer-main { font-family:'Orbitron',sans-serif; font-size:clamp(1.15rem,4vw,1.55rem); font-weight:900; color:#67e8f9; text-shadow:0 0 20px rgba(6,182,212,.6); line-height:1; }
-  .timer-sub { font-size:.5rem; letter-spacing:2px; color:#a78bfa; text-transform:uppercase; margin-top:3px; }
-  .timer-pct { font-size:.58rem; color:var(--muted); margin-top:3px; font-family:'Orbitron',sans-serif; }
+  .timer-main { font-family:'Orbitron',sans-serif; font-size:clamp(1.1rem,3.8vw,1.5rem); font-weight:900; color:#67e8f9; text-shadow:0 0 18px rgba(6,182,212,.55); line-height:1; }
+  .timer-sub { font-size:.48rem; letter-spacing:2px; color:#a78bfa; text-transform:uppercase; margin-top:3px; }
+  .timer-pct { font-size:.56rem; color:var(--muted); margin-top:3px; font-family:'Orbitron',sans-serif; }
 
-  /* TIME BAR */
-  .bar-section { margin-bottom:18px; }
-  .bar-labels { display:flex; justify-content:space-between; font-size:.53rem; letter-spacing:1px; color:var(--muted); text-transform:uppercase; margin-bottom:6px; }
-  .bar-track { width:100%; height:6px; background:rgba(255,255,255,.06); border-radius:99px; overflow:hidden; }
-  .bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#7c3aed,#06b6d4); transition:width .8s ease, background .8s ease; width:0%; }
+  .bar-section { margin-bottom:16px; }
+  .bar-labels { display:flex; justify-content:space-between; font-size:.52rem; letter-spacing:1px; color:var(--muted); text-transform:uppercase; margin-bottom:5px; }
+  .bar-track { width:100%; height:5px; background:rgba(255,255,255,.06); border-radius:99px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#7c3aed,#06b6d4); transition:width .85s ease, background .85s ease; width:0%; }
 
-  /* STATS GRID */
-  .stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:9px; margin-bottom:16px; }
-  @media(min-width:460px) { .stats-grid { grid-template-columns:repeat(4,1fr); } }
-  .stat { background:rgba(255,255,255,.03); border:1px solid rgba(124,58,237,.18); border-radius:13px; padding:12px 8px; text-align:center; transition:.3s; }
-  .stat:hover { border-color:rgba(6,182,212,.35); background:rgba(6,182,212,.04); }
-  .stat-icon { font-size:1rem; margin-bottom:4px; display:block; }
-  .stat-val { font-family:'Orbitron',sans-serif; font-size:clamp(.65rem,2.5vw,.82rem); color:#fff; font-weight:700; display:block; }
-  .stat-lbl { font-size:.5rem; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; display:block; margin-top:2px; }
+  .stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:14px; }
+  @media(min-width:460px){ .stats-grid{ grid-template-columns:repeat(4,1fr); } }
+  .stat { background:rgba(255,255,255,.03); border:1px solid rgba(124,58,237,.16); border-radius:12px; padding:11px 7px; text-align:center; transition:.3s; }
+  .stat:hover{ border-color:rgba(6,182,212,.32); background:rgba(6,182,212,.04); }
+  .stat-icon { font-size:.95rem; margin-bottom:3px; display:block; }
+  .stat-val { font-family:'Orbitron',sans-serif; font-size:clamp(.6rem,2.3vw,.78rem); color:#fff; font-weight:700; display:block; }
+  .stat-lbl { font-size:.48rem; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; display:block; margin-top:2px; }
 
-  /* DATA USAGE */
-  .data-row { display:flex; gap:9px; margin-bottom:16px; }
-  .data-card { flex:1; background:rgba(255,255,255,.03); border:1px solid rgba(124,58,237,.18); border-radius:13px; padding:11px 12px; display:flex; align-items:center; gap:9px; }
-  .data-arrow { font-size:1.25rem; flex-shrink:0; }
-  .data-val { font-family:'Orbitron',sans-serif; font-size:clamp(.7rem,2.5vw,.82rem); color:#fff; font-weight:700; }
-  .data-lbl { font-size:.5rem; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; margin-top:2px; }
+  .data-row { display:flex; gap:8px; margin-bottom:14px; }
+  .data-card { flex:1; background:rgba(255,255,255,.03); border:1px solid rgba(124,58,237,.16); border-radius:12px; padding:10px 11px; display:flex; align-items:center; gap:8px; }
+  .data-arrow { font-size:1.2rem; flex-shrink:0; }
+  .data-val { font-family:'Orbitron',sans-serif; font-size:clamp(.65rem,2.3vw,.78rem); color:#fff; font-weight:700; }
+  .data-lbl { font-size:.48rem; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; margin-top:2px; }
 
-  .divider { width:100%; height:1px; background:linear-gradient(90deg,transparent,rgba(124,58,237,.35),transparent); margin:14px 0; }
+  /* SYNC STATUS INDICATOR */
+  .sync-status { display:flex; align-items:center; justify-content:center; gap:6px; padding:6px 12px; border-radius:8px; margin-bottom:12px; font-size:.5rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Orbitron',sans-serif; transition: all .3s; }
+  .sync-status.syncing { background:rgba(6,182,212,.07); border:1px solid rgba(6,182,212,.2); color:#67e8f9; }
+  .sync-status.ok      { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.2); color:#34d399; }
+  .sync-status.fail    { background:rgba(244,63,94,.07);  border:1px solid rgba(244,63,94,.2);  color:#fca5a5; }
+  .sync-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .sync-status.syncing .sync-dot { background:#06b6d4; animation:spin .8s linear infinite; border:1.5px solid rgba(6,182,212,.5); background:transparent; }
+  .sync-status.ok   .sync-dot { background:#10b981; }
+  .sync-status.fail .sync-dot { background:#f43f5e; }
 
-  /* BUTTONS */
-  .btn { display:block; width:100%; padding:14px; border-radius:13px; text-decoration:none; font-family:'Orbitron',sans-serif; font-size:.73rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; text-align:center; margin-top:9px; border:none; cursor:pointer; transition:.25s; }
-  .btn-primary { background:linear-gradient(118deg,#7c3aed,#06b6d4); color:#fff; box-shadow:0 4px 20px rgba(124,58,237,.35); }
-  .btn-primary:hover { box-shadow:0 6px 28px rgba(124,58,237,.55); transform:translateY(-1px); }
-  .btn-outline { border:1px solid rgba(251,191,36,.45); color:#fde68a; background:rgba(251,191,36,.05); }
+  .divider { width:100%; height:1px; background:linear-gradient(90deg,transparent,rgba(124,58,237,.35),transparent); margin:12px 0; }
+
+  .btn { display:block; width:100%; padding:13px; border-radius:13px; text-decoration:none; font-family:'Orbitron',sans-serif; font-size:.72rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; text-align:center; margin-top:8px; border:none; cursor:pointer; transition:.25s; }
+  .btn-primary { background:linear-gradient(118deg,#7c3aed,#06b6d4); color:#fff; box-shadow:0 4px 20px rgba(124,58,237,.32); }
+  .btn-primary:hover { box-shadow:0 6px 28px rgba(124,58,237,.52); transform:translateY(-1px); }
+  .btn-outline { border:1px solid rgba(251,191,36,.4); color:#fde68a; background:rgba(251,191,36,.05); }
   .btn-outline:hover { background:rgba(251,191,36,.12); }
 
-  /* REFRESH ROW */
-  .refresh-row { display:flex; align-items:center; justify-content:center; gap:7px; margin-top:13px; font-size:.5rem; letter-spacing:1.5px; color:rgba(255,255,255,.2); text-transform:uppercase; }
-  .refresh-dot { width:6px; height:6px; border-radius:50%; background:rgba(6,182,212,.4); flex-shrink:0; }
-  .refresh-dot.spinning { animation:spin .8s linear infinite; border:1.5px solid rgba(6,182,212,.5); border-top-color:#06b6d4; background:transparent; }
   @keyframes spin { to{transform:rotate(360deg)} }
 
-  /* LOADING */
   #loadingState { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:50px 0; gap:14px; }
-  .loader-ring { width:42px; height:42px; border-radius:50%; border:3px solid rgba(124,58,237,.2); border-top-color:#7c3aed; animation:spin .9s linear infinite; }
-  .loader-txt { font-family:'Orbitron',sans-serif; font-size:.58rem; letter-spacing:2px; color:#a78bfa; animation:pulse 1.5s ease-in-out infinite; }
-  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+  .loader-ring { width:40px; height:40px; border-radius:50%; border:3px solid rgba(124,58,237,.2); border-top-color:#7c3aed; animation:spin .9s linear infinite; }
+  .loader-txt { font-family:'Orbitron',sans-serif; font-size:.56rem; letter-spacing:2px; color:#a78bfa; animation:fadePulse 1.5s ease-in-out infinite; }
+  @keyframes fadePulse { 0%,100%{opacity:.35} 50%{opacity:1} }
 
-  /* EXPIRED */
+  /* FIX: error state for failed initial load (new) */
+  #errorState { display:none; flex-direction:column; align-items:center; padding:28px 0; gap:10px; text-align:center; }
+
   #expiredState { display:none; flex-direction:column; align-items:center; padding:28px 0; gap:10px; text-align:center; }
-  .expired-icon { font-size:2.8rem; animation:pulse 2s ease-in-out infinite; }
-  .expired-title { font-family:'Orbitron',sans-serif; font-size:1.15rem; font-weight:900; color:var(--red); text-shadow:0 0 20px rgba(244,63,94,.4); }
-  .expired-msg { font-size:.82rem; color:var(--muted); max-width:270px; line-height:1.5; }
-  .redirect-notice { font-family:'Orbitron',sans-serif; font-size:.55rem; letter-spacing:2px; color:rgba(244,63,94,.6); animation:pulse 1.2s ease-in-out infinite; }
+  .expired-icon { font-size:2.8rem; animation:fadePulse 2s ease-in-out infinite; }
+  .expired-title { font-family:'Orbitron',sans-serif; font-size:1.1rem; font-weight:900; color:var(--red); text-shadow:0 0 20px rgba(244,63,94,.4); }
+  .expired-msg { font-size:.8rem; color:var(--muted); max-width:270px; line-height:1.55; }
+  .redirect-notice { font-family:'Orbitron',sans-serif; font-size:.54rem; letter-spacing:2px; color:rgba(244,63,94,.6); animation:fadePulse 1.2s ease-in-out infinite; }
 
-  .footer { margin-top:16px; font-size:.46rem; letter-spacing:2px; color:rgba(255,255,255,.14); text-align:center; text-transform:uppercase; }
-  @media(max-width:400px) { .card{padding:18px 14px;} .data-row{flex-direction:column;} }
+  .footer { margin-top:14px; font-size:.45rem; letter-spacing:2px; color:rgba(255,255,255,.12); text-align:center; text-transform:uppercase; }
+  @media(max-width:400px) { .card{padding:16px 13px;} .data-row{flex-direction:column;} }
 </style>
 </head>
 <body>
 
 <canvas id="galaxy"></canvas>
 <div class="nebula-layer"></div>
+<div class="grid-overlay"></div>
+<div class="ss ss1"></div><div class="ss ss2"></div><div class="ss ss3"></div>
+<div class="ss ss4"></div><div class="ss ss5"></div>
 
 <div class="page">
   <div class="header">
     <div class="logo">MOBILE HUB</div>
-    <div class="subtitle">✦ Active Session Dashboard ✦</div>
+    <div class="subtitle">✦ Uganda · Hotspot Central ✦</div>
   </div>
 
-  <div class="card">
+  <div class="connected-banner" id="connectedBanner" style="display:none; width:100%; max-width:520px;">
+    <div class="banner-dot"></div>
+    <div class="banner-text">🌐 YOU'RE CONNECTED — ENJOY THE INTERNET</div>
+    <div class="banner-dot"></div>
+  </div>
+
+  <div class="card" style="position:relative;">
+    <div class="hud tl"></div><div class="hud tr"></div>
+    <div class="hud bl"></div><div class="hud br"></div>
 
     <!-- LOADING -->
     <div id="loadingState">
@@ -138,14 +177,14 @@
           <div class="voucher-label">Plan</div>
           <div class="plan-name" id="planName">--</div>
         </div>
-        <div class="status-dot" id="statusDot"></div>
+        <div class="status-dot-badge" id="statusDot"></div>
       </div>
 
       <div class="timer-section">
         <div class="timer-wrap">
           <svg class="timer-svg" viewBox="0 0 160 160">
             <circle class="timer-track" cx="80" cy="80" r="70"/>
-            <!-- circumference = 2 * π * 70 = 439.82 -->
+            <!-- circumference = 2 × π × 70 ≈ 439.82 -->
             <circle class="timer-bar" id="timerBar" cx="80" cy="80" r="70"
               stroke="#06b6d4" style="stroke-dasharray:439.82; stroke-dashoffset:0;"/>
           </svg>
@@ -207,14 +246,24 @@
         </div>
       </div>
 
+      <!-- FIX: Replaced refresh-row with a richer sync status indicator -->
+      <div class="sync-status ok" id="syncStatus">
+        <div class="sync-dot"></div>
+        <span id="syncLabel">Synced — next update in 60s</span>
+      </div>
+
       <div class="divider"></div>
       <a href="https://mobilehubuganda-github-io.pages.dev/login.html" class="btn btn-primary">⚡ Reconnect / Change Voucher</a>
       <a href="https://mobilehubuganda-github-io.pages.dev/index.html" class="btn btn-outline">💫 Buy New Voucher</a>
+    </div>
 
-      <div class="refresh-row">
-        <div class="refresh-dot" id="refreshDot"></div>
-        <span id="refreshLabel">Auto-sync every 60s</span>
-      </div>
+    <!-- FIX: New error state for failed first load (previously missing) -->
+    <div id="errorState">
+      <div class="expired-icon">⚠️</div>
+      <div class="expired-title" style="color:var(--amber);">Could Not Load Session</div>
+      <div class="expired-msg" style="margin-top:6px;">We couldn't reach the server. Check your connection and try again.</div>
+      <button class="btn btn-primary" style="margin-top:16px;" onclick="window.location.reload()">↩ Retry</button>
+      <a href="https://wa.me/256771999302" class="btn btn-outline" style="margin-top:6px;">💬 Contact Support</a>
     </div>
 
     <!-- EXPIRED -->
@@ -240,44 +289,35 @@ const API_URL      = 'https://mobilehubuganda-github-io.pages.dev';
 const REFRESH_SECS = 60;
 const CIRC         = 439.82; // 2π × 70
 
-// Must match your session.js PLAN_DURATIONS keys exactly
 const PKG_NAMES = {
-  p1: '3 Hours',
-  p2: '24 Hours',
-  p3: '7 Days',
-  p4: '30 Days',
-  'free-trial': '5 Minutes'
+  p1: '3 Hours', p2: '24 Hours', p3: '7 Days', p4: '30 Days', 'free-trial': '5 Minutes'
 };
 
 // ═══════════════════════════════════════════════════════
 //  STATE
-//  All timing values come directly from the API response.
-//  remainingSecs starts at -1 (unloaded) — nothing runs
-//  until the first successful fetch sets a real value.
 // ═══════════════════════════════════════════════════════
-let ticker        = null;
-let refreshIn     = REFRESH_SECS;
-let remainingSecs = -1;
-let totalSecs     = 0;
-let elapsedSecs   = 0;
-let isExpired     = false;
-let loaded        = false;
+let ticker = null;
+let refreshIn = REFRESH_SECS;
+
+// FIX: use real timestamps instead of counting seconds for drift-free timer
+let sessionExpiresAt = null;  // Date object — computed from expires_at
+let sessionStartedAt = null;  // Date object — computed from activated_at
+let totalSecs = 0;
+let isExpired = false;
+let loaded = false;
+let fetchController = null;   // FIX: AbortController for active fetch
+let consecutiveFailures = 0;  // FIX: track API failures separately
 
 // ═══════════════════════════════════════════════════════
 //  HELPERS
 // ═══════════════════════════════════════════════════════
-
-// Format seconds as "Xh MMm" or "MM:SS"
 function fmtTime(s) {
   if (!s || isNaN(s) || s < 0) s = 0;
-  const h   = Math.floor(s / 3600);
-  const m   = Math.floor((s % 3600) / 60);
-  const sec = Math.floor(s % 60);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
   if (h > 0) return `${h}h ${String(m).padStart(2,'0')}m`;
   return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 
-// Format bytes nicely
 function fmtBytes(b) {
   if (!b || isNaN(b) || b === 0) return 'N/A';
   if (b < 1024)       return b + ' B';
@@ -286,109 +326,147 @@ function fmtBytes(b) {
   return (b / 1073741824).toFixed(2) + ' GB';
 }
 
-// Parse UTC DB string "YYYY-MM-DD HH:MM:SS" → local time "HH:MM"
-// The DB stores UTC but without the Z suffix — we must add it
-// so JavaScript's Date constructor interprets it correctly.
-// Without the Z it's parsed as LOCAL time → wrong hour displayed.
 function fmtDbTime(str) {
   if (!str) return '--:--';
-  const d = new Date(str.replace(' ', 'T') + 'Z');
+  // Handle both "2024-01-01 12:00:00" and ISO formats
+  const d = new Date(str.includes('T') ? str : str.replace(' ', 'T') + 'Z');
   if (isNaN(d)) return '--:--';
-  const date = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-  return `${date} ${time}`;
+  return d.toLocaleDateString([], { month:'short', day:'numeric' })
+    + ' ' + d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', hour12:true });
 }
 
 function $id(id) { return document.getElementById(id); }
-function setText(id, v) { const e = $id(id); if (e) e.textContent = v; }
+
+function setText(id, v) {
+  const e = $id(id);
+  if (e) e.textContent = (v !== null && v !== undefined) ? v : '--';
+}
+
+function setSyncStatus(state, label) {
+  const el = $id('syncStatus');
+  if (!el) return;
+  el.className = 'sync-status ' + state;
+  setText('syncLabel', label);
+}
 
 // ═══════════════════════════════════════════════════════
-//  RENDER — updates all visible values, safe to call any time
+//  RENDER — timestamp-based (drift-free)
 // ═══════════════════════════════════════════════════════
 function render() {
-  if (remainingSecs < 0) return; // not loaded yet — do nothing
+  if (!sessionExpiresAt) return;
 
-  const pct     = totalSecs > 0 ? Math.max(0, Math.min(1, remainingSecs / totalSecs)) : 0;
+  const now     = Date.now();
+  const remMs   = sessionExpiresAt - now;
+  const remSecs = Math.max(0, Math.floor(remMs / 1000));
+
+  // FIX: calculate elapsed from real timestamps, not a decrement counter
+  const elapsed = sessionStartedAt
+    ? Math.max(0, Math.floor((now - sessionStartedAt) / 1000))
+    : (totalSecs - remSecs);
+
+  const pct     = totalSecs > 0 ? Math.max(0, Math.min(1, remSecs / totalSecs)) : 0;
   const usedPct = 1 - pct;
 
-  // Ring: cyan when healthy, amber when low, red when critical
-  const colour = pct > 0.5 ? '#06b6d4' : pct > 0.2 ? '#f59e0b' : '#f43f5e';
+  // Ring colour: cyan → amber → red as time depletes
+  const ringColour = pct > 0.5 ? '#06b6d4' : pct > 0.2 ? '#f59e0b' : '#f43f5e';
   const bar = $id('timerBar');
   if (bar) {
     bar.style.strokeDashoffset = (CIRC - pct * CIRC).toFixed(2);
-    bar.setAttribute('stroke', colour);
+    bar.setAttribute('stroke', ringColour);
   }
 
-  setText('timeRemaining', fmtTime(remainingSecs));
-  setText('timePct',       Math.round(pct * 100) + '% left');
-  setText('timeUsedLabel', fmtTime(elapsedSecs));
-  setText('totalTimeLabel',fmtTime(totalSecs));
-  setText('elapsedDisplay',fmtTime(elapsedSecs));
-  setText('nextRefresh',   refreshIn + 's');
+  const tw = $id('timeRemaining');
+  if (tw) tw.style.textShadow = `0 0 18px ${ringColour}88`;
+
+  setText('timeRemaining',  fmtTime(remSecs));
+  setText('timePct',        Math.round(pct * 100) + '% left');
+  setText('timeUsedLabel',  fmtTime(elapsed));
+  setText('totalTimeLabel', fmtTime(totalSecs));
+  setText('elapsedDisplay', fmtTime(elapsed));
+  setText('nextRefresh',    refreshIn + 's');
 
   const fill = $id('timeBarFill');
   if (fill) {
-    fill.style.width = (usedPct * 100).toFixed(1) + '%';
+    fill.style.width      = (usedPct * 100).toFixed(1) + '%';
     fill.style.background = pct > 0.5
       ? 'linear-gradient(90deg,#7c3aed,#06b6d4)'
       : pct > 0.2
       ? 'linear-gradient(90deg,#7c3aed,#f59e0b)'
-      : 'linear-gradient(90deg,#7c3aed,#f43f5e)';
+      : 'linear-gradient(90deg,#f43f5e,#f59e0b)';
   }
+
+  const dot = $id('statusDot');
+  if (dot) {
+    const dc = pct > 0.2 ? '#10b981' : '#f59e0b';
+    dot.style.background = dc;
+    dot.style.boxShadow  = `0 0 10px ${dc}`;
+  }
+
+  // Update countdown to next sync in sync bar
+  setSyncStatus(
+    consecutiveFailures > 0 ? 'fail' : 'ok',
+    consecutiveFailures > 0
+      ? `Sync failed — retrying in ${refreshIn}s`
+      : `Synced — next update in ${refreshIn}s`
+  );
+
+  if (remSecs <= 0) doExpire();
 }
 
 // ═══════════════════════════════════════════════════════
 //  APPLY DATA
-//  Uses EXACT field names from your session.js response:
-//    remaining_secs  — seconds left right now
-//    total_secs      — total seconds for the plan
-//    used_secs       — seconds already consumed
-//    expires_at      — "YYYY-MM-DD HH:MM:SS" UTC string
-//    activated_at    — "YYYY-MM-DD HH:MM:SS" UTC string (= used_at)
-//    code            — voucher code string
-//    package         — plan key e.g. "p1", "p2"
 // ═══════════════════════════════════════════════════════
 function applyData(data) {
-  // ── Core timing — straight from API, no local computation ─────
-  remainingSecs = data.remaining_secs ?? 0;
-  totalSecs     = data.total_secs     ?? 0;
-  elapsedSecs   = data.used_secs      ?? 0;
+  // FIX: use real timestamps for drift-free countdown
+  if (data.expires_at) {
+    const raw = data.expires_at.includes('T') ? data.expires_at : data.expires_at.replace(' ', 'T') + 'Z';
+    sessionExpiresAt = new Date(raw);
+    if (isNaN(sessionExpiresAt)) sessionExpiresAt = null;
+  }
+  if (data.activated_at) {
+    const raw = data.activated_at.includes('T') ? data.activated_at : data.activated_at.replace(' ', 'T') + 'Z';
+    sessionStartedAt = new Date(raw);
+    if (isNaN(sessionStartedAt)) sessionStartedAt = null;
+  }
 
-  // ── Voucher & plan ────────────────────────────────────────────
-  const code = (data.code || localStorage.getItem('last_voucher') || '').toUpperCase();
-  setText('voucherCode', code || '----');
+  // Fallback: if server gives remaining_secs directly, build a synthetic expiry
+  if (!sessionExpiresAt && data.remaining_secs != null) {
+    sessionExpiresAt = new Date(Date.now() + data.remaining_secs * 1000);
+  }
+
+  totalSecs = data.total_secs ?? data.remaining_secs ?? 0;
+
+  // FIX: use textContent, never innerHTML
+  const codeEl = $id('voucherCode');
+  if (codeEl) {
+    const code = (data.code || sessionStorage.getItem('last_voucher') || localStorage.getItem('last_voucher') || '').toUpperCase();
+    codeEl.textContent = code || '----';
+  }
   setText('planName', PKG_NAMES[data.package] || data.package || '--');
-
-  // ── Clock displays — UTC strings parsed with +Z to avoid
-  //    local-timezone misinterpretation ──────────────────────────
   setText('expiresAt', fmtDbTime(data.expires_at));
-  setText('startedAt', fmtDbTime(data.activated_at)); // session.js returns this as used_at alias
+  setText('startedAt', fmtDbTime(data.activated_at));
 
-  // ── Data usage — N/A until your API returns these fields ──────
   const down = data.bytes_in  || data.bytes_down  || data.download || null;
   const up   = data.bytes_out || data.bytes_up    || data.upload   || null;
   setText('bytesDown', down !== null ? fmtBytes(down) : 'N/A');
   setText('bytesUp',   up   !== null ? fmtBytes(up)   : 'N/A');
 
+  consecutiveFailures = 0;
   render();
 }
 
 // ═══════════════════════════════════════════════════════
 //  EXPIRY
-//  Shows expired screen, then redirects to MikroTik /logout
-//  which terminates the hotspot session and blocks traffic.
 // ═══════════════════════════════════════════════════════
 function doExpire() {
   if (isExpired) return;
   isExpired = true;
   clearInterval(ticker);
 
-  $id('loadingState').style.display = 'none';
-  $id('activeState').style.display  = 'none';
-  $id('expiredState').style.display = 'flex';
-
-  const dot = $id('statusDot');
-  if (dot) { dot.style.background='#f43f5e'; dot.style.boxShadow='0 0 12px #f43f5e'; dot.style.animation='none'; }
+  $id('connectedBanner').style.display = 'none';
+  $id('loadingState').style.display    = 'none';
+  $id('activeState').style.display     = 'none';
+  $id('expiredState').style.display    = 'flex';
 
   let t = 5;
   const notice = $id('redirectNotice');
@@ -397,164 +475,216 @@ function doExpire() {
     if (notice) notice.textContent = `Logging out in ${t}s...`;
     if (t <= 0) {
       clearInterval(cntd);
-      // /logout kills the MikroTik hotspot session → cuts off internet
-      const base = localStorage.getItem('mikrotik_login_url') || 'http://10.0.0.1/login';
+      const base = sessionStorage.getItem('mikrotik_login_url')
+                || localStorage.getItem('mikrotik_login_url')
+                || 'http://10.0.0.1/login';
       window.location.href = base.replace('/login', '/logout');
     }
   }, 1000);
 }
 
 // ═══════════════════════════════════════════════════════
-//  FETCH SESSION from Cloudflare API
+//  SHOW STATE HELPER
+// ═══════════════════════════════════════════════════════
+function showState(id) {
+  ['loadingState','activeState','expiredState','errorState'].forEach(s => {
+    const el = $id(s);
+    if (el) el.style.display = (s === id) ? (id === 'activeState' ? 'block' : 'flex') : 'none';
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  FETCH SESSION
 // ═══════════════════════════════════════════════════════
 async function fetchSession(isFirst) {
   const urlVoucher = new URLSearchParams(window.location.search).get('voucher');
-  if (urlVoucher) localStorage.setItem('last_voucher', urlVoucher.toUpperCase());
-  const code = (urlVoucher || localStorage.getItem('last_voucher') || '').toUpperCase();
+  // FIX: only write to sessionStorage (auto-clears), keep localStorage as cross-session fallback
+  if (urlVoucher) {
+    sessionStorage.setItem('last_voucher', urlVoucher.toUpperCase());
+    localStorage.setItem('last_voucher', urlVoucher.toUpperCase());
+  }
+
+  const code = (urlVoucher
+    || sessionStorage.getItem('last_voucher')
+    || localStorage.getItem('last_voucher')
+    || '').toUpperCase();
 
   if (!code) {
     window.location.href = 'https://mobilehubuganda-github-io.pages.dev/login.html';
     return;
   }
 
-  const dot   = $id('refreshDot');
-  const label = $id('refreshLabel');
-  if (dot)   dot.classList.add('spinning');
-  if (label) label.textContent = 'Syncing...';
+  if (!isFirst) setSyncStatus('syncing', 'Syncing...');
+
+  // FIX: cancel any in-flight fetch before making a new one
+  if (fetchController) fetchController.abort();
+  fetchController = new AbortController();
 
   try {
-    const res  = await fetch(`${API_URL}/api/voucher/session`, {
-      method:  'POST',
+    const res = await fetch(`${API_URL}/api/voucher/session`, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ code })
+      signal: fetchController.signal,
+      body: JSON.stringify({ code })
     });
-    const data = await res.json();
 
-    if (dot)   dot.classList.remove('spinning');
-    if (label) label.textContent = 'Auto-sync every 60s';
+    // FIX: safe JSON parsing — check status and parse separately
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error('Invalid JSON from server');
+    }
 
-    if (isFirst) $id('loadingState').style.display = 'none';
+    if (isFirst) showState('loadingState'); // briefly keep loading until state resolved
 
-    // Treat any non-active state as expiry
-    if (!data.success || data.state === 'expired' || data.state === 'not_found' || data.state === 'not_activated') {
+    // Session not found, expired, or not activated → show expired UI
+    if (!data.success || ['expired','not_found','not_activated'].includes(data.state)) {
       doExpire();
       return;
     }
 
-    if (isFirst) $id('activeState').style.display = 'block';
+    // Show connected banner & active state on first successful load
+    if (isFirst) {
+      showState('activeState');
+      $id('connectedBanner').style.display = 'flex';
+    }
 
     applyData(data);
 
-    // Start ticker only once, after first real data load
     if (isFirst && !loaded) {
       loaded = true;
       startTicker();
     }
 
-  } catch (err) {
-    console.error('[STATUS] Fetch error:', err);
-    if (dot)   dot.classList.remove('spinning');
-    if (label) label.textContent = 'Sync failed — retrying...';
+    refreshIn = REFRESH_SECS;
+    setSyncStatus('ok', `Synced — next update in ${REFRESH_SECS}s`);
+
+  } catch(err) {
+    if (err.name === 'AbortError') return; // intentional abort, ignore
+
+    console.error('[STATUS] Fetch error:', err.message);
+    consecutiveFailures++;
 
     if (isFirst) {
-      // Network error on first load: show UI, do NOT expire, retry in 60s
-      $id('loadingState').style.display = 'none';
-      $id('activeState').style.display  = 'block';
+      // FIX: if first load fails AND we have no local state, show a proper error screen
+      // instead of showing "active" with stale/no data
+      if (!sessionExpiresAt) {
+        showState('errorState');
+        return;
+      }
+      // We have prior data — show active state anyway (from localStorage) and warn
+      showState('activeState');
+      $id('connectedBanner').style.display = 'flex';
       if (!loaded) { loaded = true; startTicker(); }
     }
+
+    setSyncStatus('fail', `Sync failed — retrying in ${refreshIn}s`);
   }
 }
 
 // ═══════════════════════════════════════════════════════
-//  TICKER — fires every second
+//  TICKER — 1s interval for countdown + periodic refresh
 // ═══════════════════════════════════════════════════════
 function startTicker() {
   ticker = setInterval(() => {
     if (isExpired) return;
 
-    if (remainingSecs > 0) {
-      remainingSecs--;
-      elapsedSecs++;
-      refreshIn--;
-
-      if (remainingSecs <= 0) { doExpire(); return; }
-
-      if (refreshIn <= 0) {
-        refreshIn = REFRESH_SECS;
-        fetchSession(false); // re-sync with server to correct any drift
-      }
-
-      render();
-
-    } else if (remainingSecs === 0) {
-      doExpire();
-
-    } else {
-      // remainingSecs is -1: data not yet loaded, just tick the retry counter
-      refreshIn--;
-      if (refreshIn <= 0) { refreshIn = REFRESH_SECS; fetchSession(false); }
+    refreshIn = Math.max(0, refreshIn - 1);
+    if (refreshIn <= 0) {
+      refreshIn = REFRESH_SECS;
+      fetchSession(false);
     }
+
+    render(); // render uses real timestamps — no drift
   }, 1000);
 }
 
-// ═══════════════════════════════════════════════════════
-//  INIT — fetch data first, ticker starts inside callback
-// ═══════════════════════════════════════════════════════
-window.onload = function() {
-  fetchSession(true);
-};
+// FIX: cancel fetch on page unload
+window.addEventListener('beforeunload', () => {
+  if (fetchController) fetchController.abort();
+});
+
+window.onload = function() { fetchSession(true); };
 
 // ═══════════════════════════════════════════════════════
-//  GALAXY CANVAS — stars, nebula, shooting stars
+//  GALAXY CANVAS
 // ═══════════════════════════════════════════════════════
 (function() {
   const cv = document.getElementById('galaxy'), ctx = cv.getContext('2d');
-  let W, H, stars = [], shooters = [], frame = 0;
+  let W, H, stars = [], dust = [], shooters = [], frame = 0;
 
-  function resize() { W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; }
+  function resize() { W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; mkStars(); mkDust(); }
 
   function mkStars() {
     stars = [];
-    const n = Math.min(Math.floor(W * H / 7500), 250);
+    const n = Math.min(Math.floor(W * H / 7000), 260);
     for (let i = 0; i < n; i++) stars.push({
       x: Math.random()*W, y: Math.random()*H,
-      r: Math.random()*1.4+0.2, v: Math.random()*0.2+0.04,
-      o: Math.random()*0.55+0.2, tw: Math.random()*300
+      r: Math.random()*1.3+0.2, v: Math.random()*0.18+0.03,
+      o: Math.random()*0.5+0.2, tw: Math.random()*300
+    });
+  }
+
+  function mkDust() {
+    dust = [];
+    for (let i = 0; i < 7; i++) dust.push({
+      x: Math.random()*W, y: Math.random()*H,
+      r: 75+Math.random()*115,
+      a: .02+Math.random()*.035,
+      col: ['rgba(124,58,237,','rgba(6,182,212,','rgba(16,185,129,','rgba(79,70,229,'][i%4],
+      dx: (Math.random()-.5)*.07, dy: (Math.random()-.5)*.07
     });
   }
 
   setInterval(() => {
-    if (Math.random() < 0.45) shooters.push({
-      x: Math.random()*W*0.65, y: Math.random()*H*0.35,
-      len: Math.random()*130+55, spd: Math.random()*7+4,
-      op: 1, ang: Math.PI/5+(Math.random()-.5)*.3
+    if (Math.random() < 0.4) shooters.push({
+      x: Math.random()*W*.65, y: Math.random()*H*.35,
+      len: Math.random()*120+50, spd: Math.random()*6+4,
+      op: 1, ang: Math.PI/5+(Math.random()-.5)*.28
     });
-  }, 2800);
+  }, 3000);
 
   function draw() {
     frame++;
-    ctx.clearRect(0, 0, W, H);
-    stars.forEach(s => {
-      const tw = 0.55 + 0.45 * Math.sin((frame + s.tw) * 0.038);
-      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
-      ctx.fillStyle = `rgba(255,255,255,${(s.o*tw).toFixed(2)})`; ctx.fill();
-      s.y -= s.v; if (s.y < -2) { s.y = H+2; s.x = Math.random()*W; }
+    ctx.clearRect(0,0,W,H);
+    const bg = ctx.createRadialGradient(W*.5,H*.32,0,W*.5,H*.32,Math.max(W,H)*.82);
+    bg.addColorStop(0,'rgba(10,4,32,.98)'); bg.addColorStop(1,'rgba(1,0,7,1)');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+    dust.forEach(d => {
+      d.x+=d.dx; d.y+=d.dy;
+      if(d.x<-d.r)d.x=W+d.r; if(d.x>W+d.r)d.x=-d.r;
+      if(d.y<-d.r)d.y=H+d.r; if(d.y>H+d.r)d.y=-d.r;
+      const g=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r);
+      g.addColorStop(0,d.col+d.a+')'); g.addColorStop(1,d.col+'0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2); ctx.fill();
     });
+
+    stars.forEach(s => {
+      const tw = 0.55+0.45*Math.sin((frame+s.tw)*.036);
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,255,255,${(s.o*tw).toFixed(2)})`; ctx.fill();
+      s.y-=s.v; if(s.y<-2){s.y=H+2; s.x=Math.random()*W;}
+    });
+
     shooters = shooters.filter(ss => ss.op > 0.02);
     shooters.forEach(ss => {
-      const ex = ss.x+Math.cos(ss.ang)*ss.len, ey = ss.y+Math.sin(ss.ang)*ss.len;
-      const g = ctx.createLinearGradient(ss.x, ss.y, ex, ey);
-      g.addColorStop(0, 'rgba(255,255,255,0)');
-      g.addColorStop(1, `rgba(210,225,255,${ss.op.toFixed(2)})`);
-      ctx.beginPath(); ctx.moveTo(ss.x, ss.y); ctx.lineTo(ex, ey);
-      ctx.strokeStyle = g; ctx.lineWidth = 1.5; ctx.stroke();
-      ss.x += ss.spd*Math.cos(ss.ang); ss.y += ss.spd*Math.sin(ss.ang); ss.op -= 0.017;
+      const ex=ss.x+Math.cos(ss.ang)*ss.len, ey=ss.y+Math.sin(ss.ang)*ss.len;
+      const g=ctx.createLinearGradient(ss.x,ss.y,ex,ey);
+      g.addColorStop(0,'rgba(255,255,255,0)');
+      g.addColorStop(1,`rgba(210,225,255,${ss.op.toFixed(2)})`);
+      ctx.beginPath(); ctx.moveTo(ss.x,ss.y); ctx.lineTo(ex,ey);
+      ctx.strokeStyle=g; ctx.lineWidth=1.4; ctx.stroke();
+      ss.x+=ss.spd*Math.cos(ss.ang); ss.y+=ss.spd*Math.sin(ss.ang); ss.op-=0.016;
     });
+
     requestAnimationFrame(draw);
   }
 
-  window.addEventListener('resize', () => { resize(); mkStars(); });
-  resize(); mkStars(); draw();
+  window.addEventListener('resize', resize);
+  resize(); draw();
 })();
 </script>
 </body>
