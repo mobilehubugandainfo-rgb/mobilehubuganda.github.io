@@ -192,20 +192,23 @@ function isSafeLoginUrl(url) {
     const parsed = new URL(url);
     const host = parsed.hostname;
 
-    return parsed.protocol === 'http:' && (
-      // private networks
-      /^10\./.test(host) ||
-      /^192\.168\./.test(host) ||
-      /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+    // Allow HTTP private networks
+    if (parsed.protocol === 'http:') {
+      return (
+        /^10\./.test(host) ||
+        /^192\.168\./.test(host) ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+        host === '10.0.0.1' ||
+        host.endsWith('.mynetname.net')
+      );
+    }
 
-      // common hotspot gateways
-      host === '10.0.0.1' ||
-      host === 'captive.apple.com' ||
-      host === 'router.login' ||
+    // Allow HTTPS on your DDNS domain only
+    if (parsed.protocol === 'https:') {
+      return host.endsWith('.mynetname.net');
+    }
 
-      // MikroTik DDNS support
-      host.endsWith('.mynetname.net')
-    );
+    return false;
   } catch {
     return false;
   }
@@ -452,7 +455,7 @@ async function checkPayment() {
 
     if ((data.status === 'COMPLETED' || data.status === 'SUCCESS') && data.voucherCode) { 
      if (GLOBAL_TIMEOUT) clearTimeout(GLOBAL_TIMEOUT);
-     const loginUrl = `http://hka0apw4nbj.sn.mynetname.net/login`;
+     const loginUrl = _loginUrl || `http://hka0apw4nbj.sn.mynetname.net/login`;
 
       // Advance step indicators before switching screen
       const s2el = document.getElementById('s2');
