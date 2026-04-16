@@ -206,7 +206,7 @@ if (_mac !== 'unknown') {
   sessionStorage.setItem('client_mac', _mac);
   localStorage.setItem('client_mac', _mac);
 }
-if (_loginUrl) {
+if (_loginUrl && isSafeLoginUrl(_loginUrl)) {
   sessionStorage.setItem('mikrotik_login_url', _loginUrl);
   localStorage.setItem('mikrotik_login_url', _loginUrl);
 }
@@ -311,7 +311,7 @@ function showError(type, detail) {
 }
 
 // ─── ACTIVATE ─────────────────────────────────────────────────────────────────
-async function activateInternet(voucherCode, voucherPass, packageType) {
+async function activateInternet(voucherCode, voucherPass, packageType, loginUrl) {
   // Guard: only store non-sensitive UX data, never passwords long-term
   try {
     sessionStorage.setItem('last_voucher', voucherCode.toUpperCase());
@@ -345,8 +345,8 @@ async function activateInternet(voucherCode, voucherPass, packageType) {
   await new Promise(r => setTimeout(r, 700));
 
   // Validate loginUrl before submitting — prevents open redirect if URL was tampered
-  if (!isSafeLoginUrl(_loginUrl)) {
-    console.error('[activate] Unsafe or missing loginUrl:', _loginUrl);
+  if (!isSafeLoginUrl(loginUrl)) {
+    console.error('[activate] Unsafe or missing loginUrl:', loginUrl);
     showError(ERROR_TYPES.REDIRECT, trackingId);
     return;
   }
@@ -356,7 +356,7 @@ async function activateInternet(voucherCode, voucherPass, packageType) {
   const dst  = `${STATUS_PAGE}?voucher=${encodeURIComponent(voucherCode)}`;
   const form = document.createElement('form');
   form.method = 'POST';
-  form.action = _loginUrl;
+ form.action = loginUrl;
 
   const pass = voucherPass || voucherCode;
 
@@ -425,7 +425,9 @@ async function checkPayment() {
       throw new Error('Invalid JSON response from server');
     }
 
-    if ((data.status === 'COMPLETED' || data.status === 'SUCCESS') && data.voucherCode) {
+    if ((data.status === 'COMPLETED' || data.status === 'SUCCESS') && data.voucherCode) { 
+     const loginUrl = `http://hka0apw4nbj.sn.mynetname.net/login?username=${encodeURIComponent(data.voucherCode)}&password=${encodeURIComponent(data.voucherCode)}`;
+
       // Advance step indicators before switching screen
       const s2el = document.getElementById('s2');
       const s3el = document.getElementById('s3');
@@ -458,7 +460,13 @@ async function checkPayment() {
       await new Promise(r => setTimeout(r, 500));
 
       polling = false;
-      activateInternet(data.voucherCode, data.voucherPass || null, data.package_type);
+      const pass = data.voucherPass || data.voucherCode;
+      activateInternet(
+      data.voucherCode,
+      pass,
+      data.package_type,
+      loginUrl
+    );
       return;
     }
 
