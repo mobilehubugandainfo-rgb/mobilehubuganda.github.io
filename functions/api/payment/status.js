@@ -92,41 +92,48 @@ export async function onRequestGet({ request, env }) {
     ).bind(data.tracking_id).first();
 
     if (!voucher) {
-      // ATOMIC UPDATE: This picks and marks the voucher in ONE step
-      // This is the fix for your "Ghost Voucher" problem.
-      const atomicResult = await env.DB.prepare(`
-        UPDATE vouchers 
-        SET status = 'assigned', 
-            transaction_id = ?, 
-            used_at = CURRENT_TIMESTAMP 
-        WHERE id = (
-          SELECT id FROM vouchers 
-          WHERE status = 'unused' AND package_type = ? 
-          ORDER BY id ASC LIMIT 1
-        )
-        RETURNING id, code
-      `).bind(data.tracking_id, data.package_type).first();
+  const atomicResult = await env.DB.prepare(`
+    UPDATE vouchers 
+    SET status = 'assigned', 
+        transaction_id = ?, 
+        used_at = CURRENT_TIMESTAMP 
+    WHERE id = (
+      SELECT id FROM vouchers 
+      WHERE status = 'unused' AND package_type = ? 
+      ORDER BY id ASC LIMIT 1
+    )
+    RETURNING id, code
+  `).bind(data.tracking_id, data.package_type).first();
 
-      if (atomicResult) {
-        voucher = atomicResult;
-      }
-    }
-
+  if (atomicResult) {
+    voucher = atomicResult;
+  } else {
+    // 🔥 CRITICAL FALLBACK — another request already assigned it
+    voucher = await env.DB.prepare(
+      `SELECT id, code FROM vouchers WHERE transaction_id = ? LIMIT 1`
+    ).bind(data.tracking_id).first();
+  }
+}
     if (!voucher) {
-      console.error('[STATUS] No vouchers available for', data.package_type);
-      return new Response(JSON.stringify({ status: 'PENDING', error: 'VOUCHER_DEPLETED' }), { status: 200, headers: jsonHeaders });
-    }
+  console.error('[STATUS] No vouchers available for', data.package_type);
 
+  return new Response(JSON.stringify({ 
+    status: 'ERROR', 
+    error: 'VOUCHER_DEPLETED',
+    message: 'No vouchers available. Please contact support.'
+  }), { status: 200, headers: jsonHeaders });
+}
     // ─── 6. Finalize Transaction ───────────────────────────────
     await env.DB.prepare(`
-      UPDATE transactions 
-      SET status = 'COMPLETED', 
-          pesapal_transaction_id = ?, 
-          voucher_id = ?, 
-          completed_at = CURRENT_TIMESTAMP
-      WHERE tracking_id = ?
-    `).bind(pesapalTxId, voucher.id, data.tracking_id).run();
-
+  UPDATE transactions 
+  SET status = 'COMPLETED', 
+      pesapal_transaction_id = ?, 
+      voucher_id = ?, 
+      completed_at = CURRENT_TIMESTAMP
+  WHERE tracking_id = ?
+    AND status != 'COMPLETED'
+`).bind(pesapalTxId, voucher.id, data.tracking_id).run();
+    
     // Save to KV for MikroTik Enforcer to see
     try {
       const kvTtl = parseInt(env.VOUCHER_KV_TTL_SECONDS || '604800', 10);
