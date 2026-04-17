@@ -81,34 +81,15 @@
 </div>
 
 <script>
-    // ─────────────────────────────────────────────────────────────────
-    //  ROUTER CONFIG
-    //
-    //  Both your real DDNS hostname and the local IP are listed.
-    //  The first reachable one will be used.
-    // ─────────────────────────────────────────────────────────────────
     var MIKROTIK_LOGIN_URLS = [
-    'http://10.0.0.1/login'
-      ];
+        'http://10.0.0.1/login'
+    ];
 
-    // After MikroTik grants internet access it follows the dst param.
-    // We send users straight to status.html so they see their session.
-    // The voucher code is appended as a query param so status.html
-    // can look up the session without any extra user input.
     var DST_AFTER_LOGIN = 'https://mobilehubuganda-github-io.pages.dev/status.html';
 
-    // Runtime state — populated in window.onload
     var _mac      = 'unknown';
     var _loginUrl = MIKROTIK_LOGIN_URLS[0];
 
-    // ─────────────────────────────────────────────────────────────────
-    //  FIXED: isSafeLoginUrl
-    //
-    //  Now allows HTTP for *.mynetname.net — your real router DDNS
-    //  hostname runs on HTTP port 8728 / 80, NOT HTTPS.
-    //  The previous version only allowed mynetname.net over HTTPS,
-    //  which caused every login attempt to be silently rejected.
-    // ─────────────────────────────────────────────────────────────────
     function isSafeLoginUrl(url) {
         try {
             var parsed = new URL(url);
@@ -136,23 +117,21 @@
     window.onload = function () {
         var params = new URLSearchParams(window.location.search);
 
-        // ── Capture MikroTik params ────────────────────────────────────
-        // MikroTik appends these to its OWN login page URL (the router-served
-        // HTML). By the time a user reaches this GitHub-hosted page those params
-        // have been lost — UNLESS index.html (router page) captured them into
-        // localStorage when the user first chose "Buy Package".
-        // We read from params first, localStorage as fallback.
         _mac = params.get('mac') || localStorage.getItem('client_mac') || 'unknown';
 
         var savedUrl = params.get('link-login-only')
                     || params.get('link-login')
                     || localStorage.getItem('mikrotik_login_url');
 
-        _loginUrl = MIKROTIK_LOGIN_URLS[0];
+        if (savedUrl && isSafeLoginUrl(savedUrl)) {
+            _loginUrl = savedUrl;
+            localStorage.setItem('mikrotik_login_url', savedUrl);
+        } else {
+            _loginUrl = MIKROTIK_LOGIN_URLS[0];
+        }
 
         if (_mac !== 'unknown') localStorage.setItem('client_mac', _mac);
 
-        // ── Auto-fill voucher arriving from connecting.html ────────────
         var urlVoucher = params.get('voucher');
         if (urlVoucher) {
             document.getElementById('voucherCode').value = urlVoucher.toUpperCase();
@@ -160,7 +139,6 @@
             return;
         }
 
-        // ── Restore last voucher ───────────────────────────────────────
         var lastVoucher = localStorage.getItem('last_voucher');
         if (lastVoucher) {
             document.getElementById('hintCode').textContent      = lastVoucher.toUpperCase();
@@ -190,50 +168,36 @@
         btn.textContent = 'AUTHORIZING...';
         showStatus('⏳ Verifying voucher...', '#67e8f9');
 
-        // ── STEP 1: Validate + activate voucher via Cloudflare ─────────
-        // This stamps the expiry clock and locks the MAC to this device.
-        // We also handle the "no internet yet" case gracefully — if
-        // Cloudflare is unreachable (because the user has no internet yet)
-        // we fall through to the MikroTik login so they can get online.
+        // ── STEP 1: Validate voucher via Cloudflare (with 5s timeout) ──
         var actData = null;
         try {
             var actRes = await Promise.race([
-    fetch(
-        'https://mobilehubuganda-github-io.pages.dev/api/voucher/activate',
-        {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({
-                code:        code,
-                mac:         _mac,
-                tracking_id: params.get('tracking_id') || null
-            })
-        }
-    ),
-    new Promise(function(_, rej) {
-        setTimeout(function() { rej(new Error('timeout')); }, 5000);
-    })
-]);
-actData = await actRes.json();
+                fetch(
+                    'https://mobilehubuganda-github-io.pages.dev/api/voucher/activate',
+                    {
+                        method:  'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body:    JSON.stringify({
+                            code:        code,
+                            mac:         _mac,
+                            tracking_id: params.get('tracking_id') || null
+                        })
+                    }
+                ),
+                new Promise(function(_, rej) {
+                    setTimeout(function() { rej(new Error('timeout')); }, 5000);
+                })
+            ]);
+            actData = await actRes.json();
         } catch (netErr) {
-            // Network error = no internet yet (expected on first connection).
-            // Mark as a network error so we can bypass the strict gate below.
-            console.warn('[LOGIN] Activation API unreachable (no internet yet?):', netErr.message);
+            console.warn('[LOGIN] Activation API unreachable:', netErr.message);
             actData = { success: false, _networkError: true };
         }
 
         if (!actData.success) {
             if (actData._networkError) {
-                // Can't reach Cloudflare — probably because internet is not
-                // granted yet. This is the chicken-and-egg situation:
-                // we need internet to validate, but we need to log in to get internet.
-                // Solution: proceed to MikroTik. If the voucher is invalid,
-                // MikroTik itself will reject the username/password.
                 showStatus('⚡ Connecting to router...', '#fbbf24');
-                console.warn('[LOGIN] Bypassing activation gate — proceeding to MikroTik (network error path)');
             } else {
-                // Cloudflare reached us and explicitly rejected the voucher.
-                // Do NOT proceed — stop here.
                 showStatus('⛔ ' + (actData.error || 'Activation failed. Try again.'), '#f87171');
                 btn.disabled    = false;
                 btn.textContent = '⚡ ACTIVATE INTERNET';
@@ -244,7 +208,7 @@ actData = await actRes.json();
             showStatus('✅ Verified! Connecting to network...', '#4ecdc4');
         }
 
-        // ── STEP 2: Pick the best MikroTik login URL ───────────────────
+        // ── STEP 2: Resolve MikroTik login URL ─────────────────────────
         var loginUrl = (_loginUrl && isSafeLoginUrl(_loginUrl)) ? _loginUrl : null;
         if (!loginUrl) {
             for (var i = 0; i < MIKROTIK_LOGIN_URLS.length; i++) {
@@ -262,53 +226,40 @@ actData = await actRes.json();
             return;
         }
 
-        // ── STEP 3: Navigate to MikroTik login via GET ─────────────────
-        //
-        //  ✅ WHY window.location.href AND NOT A FORM POST:
-        //
-        //  This page is served over HTTPS (pages.dev). MikroTik runs on
-        //  HTTP (10.0.0.1 or mynetname.net). A form POST from HTTPS to HTTP
-        //  is classified as a "Mixed Content Active Request" by browsers —
-        //  Chrome, Firefox and Safari all silently block it. No error is
-        //  shown to the user. The form never reaches MikroTik. This was the
-        //  primary reason internet access was never granted.
-        //
-        //  window.location.href is a TOP-LEVEL NAVIGATION, not a fetch or
-        //  XHR. The browser's mixed-content block does NOT apply to top-level
-        //  navigations from HTTPS to HTTP when the target is a private/local
-        //  IP or LAN hostname. The browser follows the redirect normally.
-        //
-        //  MikroTik's hotspot login fully supports GET requests with
-        //  username, password, and dst as URL query parameters. This is
-        //  the standard approach described in MikroTik's own hotspot
-        //  customisation documentation.
-        //
-        //  The 300ms delay gives Cloudflare's DB time to commit the
-        //  activation write before MikroTik checks its own user list.
+        var dst = DST_AFTER_LOGIN + '?voucher=' + encodeURIComponent(code);
 
-        setTimeout(function () {
-    var loginUrl = params.get('link-login-only')
-                || localStorage.getItem('mikrotik_login_url')
-                || 'http://10.0.0.1/login';
+        // ── STEP 3: Try direct navigation first (bypasses mixed content) 
+        //           If that doesn't work within 3s, fall back to form POST
+        showStatus('⚡ Logging in...', '#67e8f9');
 
-    var dst = 'https://mobilehubuganda-github-io.pages.dev/status.html?voucher='
-              + encodeURIComponent(code);
+        var directUrl = loginUrl
+            + '?username=' + encodeURIComponent(code)
+            + '&password=' + encodeURIComponent(code)
+            + '&dst='      + encodeURIComponent(dst);
 
-    var form = document.createElement('form');
-    form.method = 'GET';
-    form.action = loginUrl;
+        // Attempt 1: direct window.location navigation (alogin style)
+        // MikroTik intercepts this navigation and grants access directly
+        var navTimer = setTimeout(function () {
+            // Attempt 2: form submission fallback
+            // Fires only if direct navigation didn't result in a page change
+            showStatus('⚡ Trying alternative login...', '#fbbf24');
+            var form = document.createElement('form');
+            form.method = 'GET';
+            form.action = loginUrl;
+            [['username', code], ['password', code], ['dst', dst]].forEach(function(pair) {
+                var inp  = document.createElement('input');
+                inp.type  = 'hidden';
+                inp.name  = pair[0];
+                inp.value = pair[1];
+                form.appendChild(inp);
+            });
+            document.body.appendChild(form);
+            form.submit();
+        }, 3000);
 
-    [['username', code], ['password', code], ['dst', dst]].forEach(function(pair){
-        var inp = document.createElement('input');
-        inp.type  = 'hidden';
-        inp.name  = pair[0];
-        inp.value = pair[1];
-        form.appendChild(inp);
-    });
-
-    document.body.appendChild(form);
-    form.submit();
-}, 300);
+        // Navigate directly — if MikroTik accepts this the page will change
+        // and the fallback timer above will never fire
+        window.location.href = directUrl;
     }
 
     // ── GALAXY BACKGROUND ─────────────────────────────────────────────
