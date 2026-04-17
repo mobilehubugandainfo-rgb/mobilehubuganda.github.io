@@ -52,30 +52,29 @@
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
         .buy-link { display:block; margin-top:18px; font-size:0.6rem; letter-spacing:1.5px; text-transform:uppercase; color:#a78bfa; font-family:'Orbitron',sans-serif; text-decoration:none; opacity:0.75; }
         .buy-link:hover { opacity:1; color:#67e8f9; }
-        .countdown { font-family:'Orbitron',sans-serif; font-size:0.65rem; color:#67e8f9; margin-top:8px; display:none; letter-spacing:1px;}
-                   /* --- New Restore Tab Styling --- */
-.restore-tab-btn {
-    width: 100%;
-    padding: 12px 16px;
-    background: rgba(124, 58, 237, 0.12);
-    border: 1.5px solid rgba(124, 58, 237, 0.45);
-    border-radius: 12px;
-    color: #c084fc;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.6rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.25s;
-    text-align: center;
-    margin-bottom: 15px;
-}
 
-.restore-tab-btn:hover {
-    background: rgba(124, 58, 237, 0.28);
-    border-color: #a78bfa;
-    color: #e9d5ff;
-}
+        /* Restore tab button */
+        .restore-tab-btn {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(124, 58, 237, 0.12);
+            border: 1.5px solid rgba(124, 58, 237, 0.45);
+            border-radius: 12px;
+            color: #c084fc;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.6rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.25s;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .restore-tab-btn:hover {
+            background: rgba(124, 58, 237, 0.28);
+            border-color: #a78bfa;
+            color: #e9d5ff;
+        }
     </style>
 </head>
 <body>
@@ -89,77 +88,87 @@
 
     <div class="form-group">
         <label class="field-label">Your Active Voucher</label>
-       <div id="restoreHint" style="display:none;">
-    <button type="button" class="restore-tab-btn" onclick="restoreVoucher()">
-        ↩ Restore Previous Voucher
-        <span id="hintCode" style="display:block; font-size:0.7rem; color:#67e8f9; margin-top:3px; letter-spacing:2px;"></span>
-    </button>
-</div>
+        <div id="restoreHint" style="display:none;">
+            <button type="button" class="restore-tab-btn" onclick="restoreVoucher()">
+                ↩ Restore Previous Voucher
+                <span id="hintCode" style="display:block; font-size:0.7rem; color:#67e8f9; margin-top:3px; letter-spacing:2px;"></span>
+            </button>
+        </div>
         <input type="text" id="voucherCode" placeholder="ENTER CODE..." autocomplete="off"
                oninput="this.value=this.value.toUpperCase()">
     </div>
 
     <button onclick="connectWiFi()" class="connect-btn" id="loginBtn">⚡ ACTIVATE INTERNET</button>
     <div id="status" class="status-msg"></div>
-    <div class="countdown" id="countdown"></div>
 
     <a href="https://mobilehubuganda-github-io.pages.dev/index.html" class="buy-link">💫 Buy a new voucher</a>
 </div>
 
 <script>
-    // ── MikroTik session params (injected into URL by MikroTik) ──
+    // ── MikroTik session params captured from URL (MikroTik appends these) ──
     var _mac      = 'unknown';
     var _loginUrl = 'http://10.0.0.1/login';
 
+    // ── Validate that a login URL is a safe local/router address ──
     function isSafeLoginUrl(url) {
-      try {
-        const parsed = new URL(url);
-        const host = parsed.hostname;
+        try {
+            const parsed = new URL(url);
+            const host   = parsed.hostname;
 
-        if (parsed.protocol === 'http:') {
-          return (
-            /^10\./.test(host) ||
-            /^192\.168\./.test(host) ||
-            /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
-            host === '10.0.0.1' ||
-            host.endsWith('.mynetname.net')
-          );
+            if (parsed.protocol === 'http:') {
+                return (
+                    /^10\./.test(host)                          ||
+                    /^192\.168\./.test(host)                    ||
+                    /^172\.(1[6-9]|2\d|3[01])\./.test(host)    ||
+                    host === '10.0.0.1'                         ||
+                    host.endsWith('.mynetname.net')
+                );
+            }
+            if (parsed.protocol === 'https:') {
+                return host.endsWith('.mynetname.net');
+            }
+            return false;
+        } catch {
+            return false;
         }
-
-        if (parsed.protocol === 'https:') {
-          return host.endsWith('.mynetname.net');
-        }
-
-        return false;
-      } catch {
-        return false;
-      }
     }
-    window.onload = function() {
+
+    function showStatus(msg, color) {
+        const el = document.getElementById('status');
+        el.style.display      = 'block';
+        el.style.color        = color || '#fff';
+        el.style.background   = 'rgba(255,255,255,0.05)';
+        el.style.border       = '1px solid rgba(255,255,255,0.1)';
+        el.textContent        = msg;
+    }
+
+    window.onload = function () {
         const params = new URLSearchParams(window.location.search);
 
-        // Capture MikroTik params from the URL it appends when redirecting here
-        _mac      = params.get('mac')            || localStorage.getItem('client_mac')       || 'unknown';
-_loginUrl = params.get('link-login-only') || params.get('link-login') || localStorage.getItem('mikrotik_login_url') || 'http://10.0.0.1/login';
+        // Capture MikroTik params injected into the URL when it redirects here
+        _mac      = params.get('mac')             || localStorage.getItem('client_mac')          || 'unknown';
+        _loginUrl = params.get('link-login-only') || params.get('link-login')
+                 || localStorage.getItem('mikrotik_login_url')
+                 || 'http://10.0.0.1/login';
 
         // Persist for reconnections
         if (_mac !== 'unknown') localStorage.setItem('client_mac', _mac);
         if (_loginUrl)          localStorage.setItem('mikrotik_login_url', _loginUrl);
 
-        // Auto-fill voucher from URL param (e.g. after Pesapal: ?voucher=MH-XXXX)
+        // Auto-fill voucher from URL param (arriving from connecting.html: ?voucher=MH-XXXX)
         const urlVoucher = params.get('voucher');
         if (urlVoucher) {
             document.getElementById('voucherCode').value = urlVoucher.toUpperCase();
-            showStatus('🚀 Voucher received! Click Activate.', '#67e8f9');
+            showStatus('🚀 Voucher received! Click Activate to go online.', '#67e8f9');
             return;
         }
 
-        // Restore last used voucher
+        // Restore last used voucher from localStorage
         const lastVoucher = localStorage.getItem('last_voucher');
         if (lastVoucher) {
-            document.getElementById('hintCode').textContent = lastVoucher.toUpperCase();
+            document.getElementById('hintCode').textContent    = lastVoucher.toUpperCase();
             document.getElementById('restoreHint').style.display = 'block';
-            document.getElementById('voucherCode').value = lastVoucher.toUpperCase();
+            document.getElementById('voucherCode').value       = lastVoucher.toUpperCase();
             showStatus('↩ Previous voucher restored. Tap Activate to reconnect.', '#a78bfa');
         }
     };
@@ -169,77 +178,129 @@ _loginUrl = params.get('link-login-only') || params.get('link-login') || localSt
         if (last) {
             document.getElementById('voucherCode').value = last.toUpperCase();
             showStatus('✅ Voucher loaded. Connecting...', '#67e8f9');
-            connectWiFi(); // This triggers the login immediately
+            connectWiFi();
         }
     }
 
-   async function connectWiFi() {
-    const code = document.getElementById('voucherCode').value.trim().toUpperCase();
-    const btn  = document.getElementById('loginBtn');
+    async function connectWiFi() {
+        const code = document.getElementById('voucherCode').value.trim().toUpperCase();
+        const btn  = document.getElementById('loginBtn');
+        const params = new URLSearchParams(window.location.search);
 
-    if (!code) { showStatus('⚠️ No voucher code entered.', '#ffa502'); return; }
+        if (!code) { showStatus('⚠️ No voucher code entered.', '#ffa502'); return; }
 
-    btn.disabled    = true;
-    btn.textContent = 'AUTHORIZING...';
-    showStatus('⏳ Verifying voucher...', '#67e8f9');
+        btn.disabled    = true;
+        btn.textContent = 'AUTHORIZING...';
+        showStatus('⏳ Verifying voucher with server...', '#67e8f9');
 
-    try {
-        // Step 1: Activate/validate voucher on Cloudflare
-        const actRes  = await fetch('https://mobilehubuganda-github-io.pages.dev/api/voucher/activate', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ code, mac: _mac })
-        });
-        const actData = await actRes.json();
-        if (!actData.success) throw new Error(actData.error || 'Activation failed');
+        // ── STEP 1: Activate / validate voucher on Cloudflare ──────────
+        // This stamps the expiry clock and locks the MAC address.
+        // MikroTik login NEVER fires unless this succeeds.
+        let actData;
+        try {
+            const actRes = await fetch(
+                'https://mobilehubuganda-github-io.pages.dev/api/voucher/activate',
+                {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({
+                        code,
+                        mac:         _mac,
+                        tracking_id: params.get('tracking_id') || null
+                    })
+                }
+            );
+            actData = await actRes.json();
+        } catch (netErr) {
+            showStatus('⛔ Network error — check your connection and try again.', '#f87171');
+            btn.disabled    = false;
+            btn.textContent = '⚡ ACTIVATE INTERNET';
+            return;
+        }
 
+        // ── STRICT GATE: block MikroTik login if activation failed ──────
+        // This guarantees: activate.js runs first → voucher validated / MAC locked
+        // → ONLY THEN does MikroTik login happen.
+        if (!actData.success) {
+            showStatus('⛔ ' + (actData.error || 'Activation failed. Try again.'), '#f87171');
+            btn.disabled    = false;
+            btn.textContent = '⚡ ACTIVATE INTERNET';
+            return;
+        }
+
+        // ── STEP 2: Save voucher for reconnection ───────────────────────
         localStorage.setItem('last_voucher', code);
         showStatus('✅ Voucher verified! Connecting to network...', '#4ecdc4');
 
+        // ── STEP 3: Validate the MikroTik login URL ─────────────────────
         if (!isSafeLoginUrl(_loginUrl)) {
-          showStatus('⛔ Router URL not detected. Reconnect to Mobile Hub WiFi.', '#f87171');
-          btn.disabled    = false;
-          btn.textContent = '⚡ ACTIVATE INTERNET';
-          return;
+            showStatus('⛔ Router URL not detected. Reconnect to Mobile Hub WiFi first.', '#f87171');
+            btn.disabled    = false;
+            btn.textContent = '⚡ ACTIVATE INTERNET';
+            return;
         }
 
-        // Step 2: Build the MikroTik form
-        
-        // dst tells MikroTik where to send the user AFTER it grants access.
-        // We let MikroTik do the redirect — no setTimeout, no window.location.
-        // Interrupting the POST before MikroTik responds = no firewall rule = no internet.
-        const statusUrl = 'https://mobilehubuganda-github-io.pages.dev/status.html?voucher=' + encodeURIComponent(code);
+        // ── STEP 4: Build MikroTik login form ───────────────────────────
+        // post-login landing page after MikroTik authentication completes
+        // Using 10.0.0.1/status (router-side) is the safest option.
+        // After MikroTik grants internet, the user can navigate to status.html freely.
+        const statusUrl = 'https://mobilehubuganda-github-io.pages.dev/status.html';
 
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = _loginUrl;
-        // No form.target — must submit in the main window so MikroTik's
-        // session cookie and MAC-based firewall rule apply to this browser context
+        // NO form.target — must submit in main window so MikroTik's
+        // session cookie and MAC-based firewall rule apply to this browser context.
 
-        const fields = {
-            username: code,
-            password: code,
-            dst:      statusUrl
-        };
-
+        const fields = { username: code, password: code, dst: statusUrl };
         for (const key in fields) {
-            const inp = document.createElement('input');
-            inp.type  = 'hidden';
-            inp.name  = key;
-            inp.value = fields[key];
+            const inp   = document.createElement('input');
+            inp.type    = 'hidden';
+            inp.name    = key;
+            inp.value   = fields[key];
             form.appendChild(inp);
         }
 
-        document.body.appendChild(form);
-
-        // Short delay so user sees "Connecting..." before the page navigates.
-        // DO NOT add any further setTimeout after this — let MikroTik handle
-        // the redirect to status.html via the dst param above.
-        setTimeout(() => form.submit(), 600);
-
-    } catch (err) {
-        showStatus('⛔ ' + err.message, '#f87171');
-        btn.disabled    = false;
-        btn.textContent = '⚡ ACTIVATE INTERNET';
+        // ── STEP 5: Submit with a 300ms buffer ──────────────────────────
+        // This buffer gives the backend time to:
+        //   • commit voucher activation to DB
+        //   • lock MAC address
+        //   • finalize all DB writes
+        // before MikroTik validates the credentials against its user table.
+        setTimeout(() => {
+            document.body.appendChild(form);
+            form.submit();
+        }, 300);
     }
-}
+
+    // ── GALAXY BACKGROUND ────────────────────────────────────────────────
+    (function () {
+        const cv = document.getElementById('galaxy'), ctx = cv.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() { W = cv.width = innerWidth; H = cv.height = innerHeight; mkStars(); }
+
+        function mkStars() {
+            stars = [];
+            for (let i = 0; i < 60; i++) {
+                stars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.2 + .3, v: Math.random() * .3 + .1 });
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            stars.forEach(s => {
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+                s.y -= s.v;
+                if (s.y < 0) s.y = H;
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', resize);
+        resize(); draw();
+    })();
+</script>
+</body>
+</html>
