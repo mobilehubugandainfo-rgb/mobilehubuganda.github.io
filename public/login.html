@@ -197,19 +197,24 @@
         // we fall through to the MikroTik login so they can get online.
         var actData = null;
         try {
-            var actRes = await fetch(
-                'https://mobilehubuganda-github-io.pages.dev/api/voucher/activate',
-                {
-                    method:  'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify({
-                        code:        code,
-                        mac:         _mac,
-                        tracking_id: params.get('tracking_id') || null
-                    })
-                }
-            );
-            actData = await actRes.json();
+            var actRes = await Promise.race([
+    fetch(
+        'https://mobilehubuganda-github-io.pages.dev/api/voucher/activate',
+        {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+                code:        code,
+                mac:         _mac,
+                tracking_id: params.get('tracking_id') || null
+            })
+        }
+    ),
+    new Promise(function(_, rej) {
+        setTimeout(function() { rej(new Error('timeout')); }, 5000);
+    })
+]);
+actData = await actRes.json();
         } catch (netErr) {
             // Network error = no internet yet (expected on first connection).
             // Mark as a network error so we can bypass the strict gate below.
