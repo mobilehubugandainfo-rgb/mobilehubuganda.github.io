@@ -241,10 +241,10 @@
         }
 
         // ── STEP 4: Build MikroTik login form ───────────────────────────
-        // post-login landing page after MikroTik authentication completes
+        // dst tells MikroTik where to send the user AFTER it grants access.
         // Using 10.0.0.1/status (router-side) is the safest option.
         // After MikroTik grants internet, the user can navigate to status.html freely.
-        const statusUrl = 'https://mobilehubuganda-github-io.pages.dev/status.html';
+        const statusUrl = 'http://10.0.0.1/status';
 
         const form = document.createElement('form');
         form.method = 'POST';
