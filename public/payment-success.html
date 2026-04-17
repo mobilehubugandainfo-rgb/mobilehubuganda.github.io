@@ -93,28 +93,28 @@ html, body {
     <ul class="steps">
       <li class="done"><span class="si">✅</span> Payment verified</li>
       <li class="active" id="s2"><span class="si"><span class="spin">⟳</span></span> <span id="s2text">Allocating your session...</span></li>
-      <li id="s3"><span class="si">📡</span> Opening network access</li>
+      <li id="s3"><span class="si">📡</span> Preparing activation portal</li>
     </ul>
     <div class="prog-wrap"><div class="prog-bar" id="bar"></div></div>
     <p class="footer-note">Please stay on this page — this takes under 30 seconds.</p>
   </div>
 
-  <!-- STATE: CONNECTING -->
-  <div id="stateConnecting" class="hidden">
+  <!-- STATE: REDIRECTING -->
+  <div id="stateRedirecting" class="hidden">
     <div class="ring-wrap">
       <svg viewBox="0 0 90 90">
         <circle cx="45" cy="45" r="40" fill="none" stroke="rgba(6,182,212,.15)" stroke-width="3.5"/>
         <circle cx="45" cy="45" r="40" fill="none" stroke="#06b6d4" stroke-width="3.5" stroke-dasharray="255" stroke-dashoffset="0" stroke-linecap="round" style="transform-origin:center;transform:rotate(-90deg);"/>
       </svg>
-      <span class="ring-icon">🔌</span>
+      <span class="ring-icon">🚀</span>
     </div>
-    <div class="state-title">Opening Access</div>
-    <p class="status-text">Connecting you to the network — do not close this page</p>
+    <div class="state-title">Almost There!</div>
+    <p class="status-text">Taking you to the activation portal...</p>
     <div class="divider"></div>
     <ul class="steps">
       <li class="done"><span class="si">✅</span> Payment verified</li>
-      <li class="done"><span class="si">✅</span> Session allocated</li>
-      <li class="active"><span class="si"><span class="spin">⟳</span></span> Opening network access...</li>
+      <li class="done"><span class="si">✅</span> Voucher assigned</li>
+      <li class="active"><span class="si"><span class="spin">⟳</span></span> Redirecting to activation portal...</li>
     </ul>
   </div>
 
@@ -134,36 +134,27 @@ html, body {
 </div>
 
 <script>
-// CONFIG
-const CF_API      = 'https://mobilehubuganda-github-io.pages.dev';
-const STATUS_PAGE = 'https://mobilehubuganda-github-io.pages.dev/status.html';
+// ── CONFIG ──────────────────────────────────────────────────────────
+const CF_API = 'https://mobilehubuganda-github-io.pages.dev';
 
-// PARAMS
+// ── URL PARAMS ──────────────────────────────────────────────────────
 const urlParams       = new URLSearchParams(window.location.search);
 const trackingId      = urlParams.get('id') || urlParams.get('tracking_id') || urlParams.get('OrderMerchantReference');
 const orderTrackingId = urlParams.get('OrderTrackingId');
 
-var _mac      = urlParams.get('mac') || sessionStorage.getItem('client_mac') || localStorage.getItem('client_mac') || 'unknown';
-var _loginUrl = urlParams.get('link-login-only') || urlParams.get('link-login') || sessionStorage.getItem('mikrotik_login_url') || localStorage.getItem('mikrotik_login_url') || 'http://10.0.0.1/login';
-
-if (_mac !== 'unknown') {
-  sessionStorage.setItem('client_mac', _mac);
-  localStorage.setItem('client_mac', _mac);
-}
-if (_loginUrl) {
-  sessionStorage.setItem('mikrotik_login_url', _loginUrl);
-  localStorage.setItem('mikrotik_login_url', _loginUrl);
-}
-
-// STATE
-let attempts = 0;
-let polling = false;
-const schedule = [3000,3000,3000,5000,5000,5000,8000,8000,8000];
+// ── STATE ───────────────────────────────────────────────────────────
+let attempts  = 0;
+let polling   = false;
 let progInterval;
 
+// Poll schedule (ms between attempts)
+const schedule = [3000, 3000, 3000, 5000, 5000, 5000, 8000, 8000, 8000];
+
+// ── HELPERS ─────────────────────────────────────────────────────────
 function showState(id) {
-  ['statePolling','stateConnecting','stateError'].forEach(s =>
-    document.getElementById(s).classList.toggle('hidden', s !== id));
+  ['statePolling', 'stateRedirecting', 'stateError'].forEach(s =>
+    document.getElementById(s).classList.toggle('hidden', s !== id)
+  );
 }
 
 function startProgress() {
@@ -184,67 +175,34 @@ function setRing(pct) {
   if (el) el.style.strokeDashoffset = 255 - (255 * Math.min(pct, 100) / 100);
 }
 
-function showError(detail) {
+function showError() {
   showState('stateError');
   const orderEl = document.getElementById('displayOrderId');
   if (orderEl) orderEl.textContent = trackingId || 'N/A';
 }
 
-// ✅ FIXED ACTIVATION FUNCTION
-async function activateInternet(voucherCode, packageType, loginUrl) {
-  console.log('[ACTIVATE] Starting activation...');
-  console.log('[ACTIVATE] Voucher:', voucherCode);
-  console.log('[ACTIVATE] Login URL:', loginUrl);
-  console.log('[ACTIVATE] Package:', packageType);
-
-  // Save to storage
-  try {
-    sessionStorage.setItem('last_voucher', voucherCode.toUpperCase());
-    localStorage.setItem('last_voucher', voucherCode.toUpperCase());
-    sessionStorage.setItem('package_type', packageType || 'unknown');
-  } catch(e) {}
-
+// ── REDIRECT TO LOGIN.HTML (THE ONLY ACTION ON SUCCESS) ─────────────
+// connecting.html ONLY polls and redirects.
+// It does NOT touch MikroTik. login.html handles all MikroTik auth.
+function redirectToLogin(voucherCode) {
   finishProgress();
-  showState('stateConnecting');
+  showState('stateRedirecting');
 
-  // Register activation (non-critical)
-  try {
-    await fetch(`${CF_API}/api/voucher/activate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: voucherCode, mac: _mac, tracking_id: trackingId })
-    });
-    console.log('[ACTIVATE] Activation API called');
-  } catch(err) {
-    console.warn('[ACTIVATE] API error (non-fatal):', err);
-  }
-
-  await new Promise(r => setTimeout(r, 800));
-
-  // ✅ CRITICAL: Submit to MikroTik
-  const dst = `${STATUS_PAGE}?voucher=${encodeURIComponent(voucherCode)}`;
-  
-  // ✅ INCREASED DELAY: Give DOM time
+  // Short delay so user sees the "redirecting" state before navigation
   setTimeout(() => {
-  const password = voucherCode; // always same as voucher
-
-  const loginUrlWithParams =
-    `${loginUrl}?username=${encodeURIComponent(voucherCode)}&password=${encodeURIComponent(password)}&dst=${encodeURIComponent(dst)}`;
-
-  console.log('[ACTIVATE] Redirecting to MikroTik:', loginUrlWithParams);
-
-  window.location.href = loginUrlWithParams;
-
-}, 600);
+    const redirectUrl =
+      `${CF_API}/login.html?voucher=${encodeURIComponent(voucherCode)}`;
+    window.location.href = redirectUrl;
+  }, 800);
 }
 
-// POLL FOR PAYMENT STATUS
+// ── POLL FOR PAYMENT STATUS ──────────────────────────────────────────
 async function checkPayment() {
   if (polling) return;
   polling = true;
 
   if (!trackingId) {
-    showError('NO_TRACKING_ID');
+    showError();
     polling = false;
     return;
   }
@@ -252,9 +210,10 @@ async function checkPayment() {
   attempts++;
   console.log(`[POLL] Attempt ${attempts}`);
 
+  // Update step 2 label based on attempt count
   const s2text = document.getElementById('s2text');
   if (s2text) {
-    s2text.textContent = attempts <= 3 ? 'Allocating your session...' : 
+    s2text.textContent = attempts <= 3 ? 'Allocating your session...' :
                          attempts <= 7 ? 'Verifying with gateway...' : 'Almost there...';
   }
 
@@ -265,68 +224,68 @@ async function checkPayment() {
     let url = `${CF_API}/api/payment/status?tracking_id=${encodeURIComponent(trackingId)}`;
     if (orderTrackingId) url += `&OrderTrackingId=${encodeURIComponent(orderTrackingId)}`;
 
-    const res = await fetch(url, {
-      headers: { 'Accept': 'application/json' }
-    });
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
 
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const data = await res.json();
     console.log('[POLL] Response:', data);
 
+    // ── SUCCESS: payment completed and voucher assigned ──────────────
     if ((data.status === 'COMPLETED' || data.status === 'SUCCESS') && data.voucherCode) {
-      console.log('[POLL] Payment completed! Voucher:', data.voucherCode);
-      
-      const loginUrl = _loginUrl || 'http://10.0.0.1/login';
+      console.log('[POLL] ✅ Payment completed! Voucher:', data.voucherCode);
 
-      // Update steps
+      // Update step UI to show voucher assigned
       const s2el = document.getElementById('s2');
       const s3el = document.getElementById('s3');
       if (s2el) {
         s2el.className = 'done';
-        s2el.innerHTML = '<span class="si">✅</span> Session allocated';
+        s2el.innerHTML = '<span class="si">✅</span> Voucher assigned';
       }
       if (s3el) {
         s3el.className = 'active';
-        s3el.innerHTML = '<span class="si"><span class="spin">⟳</span></span> Opening network access...';
+        s3el.innerHTML = '<span class="si"><span class="spin">⟳</span></span> Redirecting to activation portal...';
       }
 
       setRing(100);
+
+      // Small pause so user sees the completed step state
       await new Promise(r => setTimeout(r, 500));
 
       polling = false;
-      activateInternet(data.voucherCode, data.package_type, loginUrl);
+
+      // ✅ ONLY action: redirect to login.html with the voucher
+      // login.html handles ALL MikroTik authentication
+      redirectToLogin(data.voucherCode);
       return;
     }
 
-    // Still pending
+    // ── STILL PENDING — schedule next poll ───────────────────────────
     if (attempts < schedule.length) {
       polling = false;
       setTimeout(checkPayment, schedule[attempts - 1] || 5000);
     } else {
       polling = false;
-      showError('TIMEOUT');
+      showError();
     }
 
-  } catch(err) {
+  } catch (err) {
     console.error('[POLL] Error:', err);
     if (attempts < schedule.length) {
       polling = false;
       setTimeout(checkPayment, schedule[attempts - 1] || 5000);
     } else {
       polling = false;
-      showError('TIMEOUT');
+      showError();
     }
   }
 }
 
-// START
+// ── START ────────────────────────────────────────────────────────────
 checkPayment();
 
-// Simple galaxy background
-(function() {
+// ── GALAXY BACKGROUND ────────────────────────────────────────────────
+(function () {
   const cv = document.getElementById('galaxy'), ctx = cv.getContext('2d');
   let W, H, stars = [];
 
@@ -335,22 +294,17 @@ checkPayment();
   function mkStars() {
     stars = [];
     for (let i = 0; i < 60; i++) {
-      stars.push({
-        x: Math.random()*W, y: Math.random()*H,
-        r: Math.random()*1.2+.3, v: Math.random()*.3+.1
-      });
+      stars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.2 + .3, v: Math.random() * .3 + .1 });
     }
   }
 
   function draw() {
-    ctx.clearRect(0,0,W,H);
-    ctx.fillStyle='rgba(255,255,255,0.7)';
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
     stars.forEach(s => {
-      ctx.beginPath();
-      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-      ctx.fill();
-      s.y-=s.v;
-      if(s.y<0) s.y=H;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+      s.y -= s.v;
+      if (s.y < 0) s.y = H;
     });
     requestAnimationFrame(draw);
   }
