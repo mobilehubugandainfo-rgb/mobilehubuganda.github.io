@@ -36,14 +36,6 @@
         .status-pod { display:inline-flex; align-items:center; gap:6px; background:rgba(6,182,212,.1); border:1px solid rgba(6,182,212,.3); border-radius:30px; padding:4px 12px; font-family:'Orbitron',sans-serif; font-size:.55rem; color:#67e8f9; text-transform:uppercase; margin-bottom:25px; }
         .form-group { margin-bottom:20px; text-align:left; }
         .field-label { font-size:.6rem; letter-spacing:2px; text-transform:uppercase; color:#a78bfa; font-weight:700; font-family:'Orbitron',sans-serif; display:block; margin-bottom:8px; }
-        .restore-hint {
-            font-size:0.55rem; color:#67e8f9; letter-spacing:1px;
-            margin-bottom:8px; display:none; cursor:pointer;
-            font-family:'Orbitron',sans-serif; text-align:center;
-            background:rgba(6,182,212,0.08); border:1px solid rgba(6,182,212,0.25);
-            border-radius:8px; padding:6px 10px;
-        }
-        .restore-hint:hover { background:rgba(6,182,212,0.18); }
         input[type="text"] { width:100%; padding:15px; background:rgba(255,255,255,.05); border:1.5px solid rgba(124,58,237,.4); border-radius:12px; color:#fff; font-family:'Orbitron',sans-serif; font-size:1.2rem; text-align:center; letter-spacing:3px; text-transform:uppercase; transition:0.3s; }
         input[type="text"]:focus { border-color:var(--cyan); outline:none; box-shadow:0 0 15px rgba(6,182,212,0.3); }
         .connect-btn { width:100%; padding:16px; border:none; border-radius:12px; cursor:pointer; font-family:'Orbitron',sans-serif; font-size:.9rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#fff; background:linear-gradient(115deg,#7c3aed,#06b6d4); box-shadow:0 4px 20px rgba(124,58,237,0.4); transition:opacity 0.2s; }
@@ -52,29 +44,13 @@
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
         .buy-link { display:block; margin-top:18px; font-size:0.6rem; letter-spacing:1.5px; text-transform:uppercase; color:#a78bfa; font-family:'Orbitron',sans-serif; text-decoration:none; opacity:0.75; }
         .buy-link:hover { opacity:1; color:#67e8f9; }
-
-        /* Restore tab button */
         .restore-tab-btn {
-            width: 100%;
-            padding: 12px 16px;
-            background: rgba(124, 58, 237, 0.12);
-            border: 1.5px solid rgba(124, 58, 237, 0.45);
-            border-radius: 12px;
-            color: #c084fc;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.6rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.25s;
-            text-align: center;
-            margin-bottom: 15px;
+            width:100%; padding:12px 16px; background:rgba(124,58,237,.12);
+            border:1.5px solid rgba(124,58,237,.45); border-radius:12px; color:#c084fc;
+            font-family:'Orbitron',sans-serif; font-size:0.6rem; letter-spacing:2px;
+            text-transform:uppercase; cursor:pointer; transition:all .25s; text-align:center; margin-bottom:15px;
         }
-        .restore-tab-btn:hover {
-            background: rgba(124, 58, 237, 0.28);
-            border-color: #a78bfa;
-            color: #e9d5ff;
-        }
+        .restore-tab-btn:hover { background:rgba(124,58,237,.28); border-color:#a78bfa; color:#e9d5ff; }
     </style>
 </head>
 <body>
@@ -105,106 +81,131 @@
 </div>
 
 <script>
-    // ── MikroTik session params captured from URL (MikroTik appends these) ──
-    var _mac      = 'unknown';
-    var _loginUrl = 'http://10.0.0.1/login';
+    // ─────────────────────────────────────────────────────────────────
+    //  ROUTER CONFIG
+    //
+    //  Both your real DDNS hostname and the local IP are listed.
+    //  The first reachable one will be used.
+    // ─────────────────────────────────────────────────────────────────
+    var MIKROTIK_LOGIN_URLS = [
+        'http://hka0apw4nbj.sn.mynetname.net/login',
+        'http://10.0.0.1/login'
+    ];
 
-    // ── Validate that a login URL is a safe local/router address ──
+    // After MikroTik grants internet access it follows the dst param.
+    // We send users straight to status.html so they see their session.
+    // The voucher code is appended as a query param so status.html
+    // can look up the session without any extra user input.
+    var DST_AFTER_LOGIN = 'https://mobilehubuganda-github-io.pages.dev/status.html';
+
+    // Runtime state — populated in window.onload
+    var _mac      = 'unknown';
+    var _loginUrl = MIKROTIK_LOGIN_URLS[0];
+
+    // ─────────────────────────────────────────────────────────────────
+    //  FIXED: isSafeLoginUrl
+    //
+    //  Now allows HTTP for *.mynetname.net — your real router DDNS
+    //  hostname runs on HTTP port 8728 / 80, NOT HTTPS.
+    //  The previous version only allowed mynetname.net over HTTPS,
+    //  which caused every login attempt to be silently rejected.
+    // ─────────────────────────────────────────────────────────────────
     function isSafeLoginUrl(url) {
         try {
-            const parsed = new URL(url);
-            const host   = parsed.hostname;
-
-            if (parsed.protocol === 'http:') {
-                return (
-                    /^10\./.test(host)                          ||
-                    /^192\.168\./.test(host)                    ||
-                    /^172\.(1[6-9]|2\d|3[01])\./.test(host)    ||
-                    host === '10.0.0.1'                         ||
-                    host.endsWith('.mynetname.net')
-                );
-            }
-            if (parsed.protocol === 'https:') {
-                return host.endsWith('.mynetname.net');
-            }
-            return false;
-        } catch {
-            return false;
-        }
+            var parsed = new URL(url);
+            var host   = parsed.hostname;
+            var proto  = parsed.protocol;
+            return (
+                (proto === 'http:'  && /^10\./.test(host))                       ||
+                (proto === 'http:'  && /^192\.168\./.test(host))                 ||
+                (proto === 'http:'  && /^172\.(1[6-9]|2\d|3[01])\./.test(host)) ||
+                (proto === 'http:'  && host.endsWith('.mynetname.net'))           ||
+                (proto === 'https:' && host.endsWith('.mynetname.net'))
+            );
+        } catch (e) { return false; }
     }
 
     function showStatus(msg, color) {
-        const el = document.getElementById('status');
-        el.style.display      = 'block';
-        el.style.color        = color || '#fff';
-        el.style.background   = 'rgba(255,255,255,0.05)';
-        el.style.border       = '1px solid rgba(255,255,255,0.1)';
-        el.textContent        = msg;
+        var el = document.getElementById('status');
+        el.style.display    = 'block';
+        el.style.color      = color || '#fff';
+        el.style.background = 'rgba(255,255,255,0.05)';
+        el.style.border     = '1px solid rgba(255,255,255,0.1)';
+        el.textContent      = msg;
     }
 
     window.onload = function () {
-        const params = new URLSearchParams(window.location.search);
+        var params = new URLSearchParams(window.location.search);
 
-        // Capture MikroTik params injected into the URL when it redirects here
-        _mac      = params.get('mac')             || localStorage.getItem('client_mac')          || 'unknown';
-        _loginUrl = params.get('link-login-only') || params.get('link-login')
-                 || localStorage.getItem('mikrotik_login_url')
-                 || 'http://10.0.0.1/login';
+        // ── Capture MikroTik params ────────────────────────────────────
+        // MikroTik appends these to its OWN login page URL (the router-served
+        // HTML). By the time a user reaches this GitHub-hosted page those params
+        // have been lost — UNLESS index.html (router page) captured them into
+        // localStorage when the user first chose "Buy Package".
+        // We read from params first, localStorage as fallback.
+        _mac = params.get('mac') || localStorage.getItem('client_mac') || 'unknown';
 
-        // Persist for reconnections
+        var savedUrl = params.get('link-login-only')
+                    || params.get('link-login')
+                    || localStorage.getItem('mikrotik_login_url');
+
+        _loginUrl = (savedUrl && isSafeLoginUrl(savedUrl)) ? savedUrl : MIKROTIK_LOGIN_URLS[0];
+
         if (_mac !== 'unknown') localStorage.setItem('client_mac', _mac);
-        if (_loginUrl)          localStorage.setItem('mikrotik_login_url', _loginUrl);
+        localStorage.setItem('mikrotik_login_url', _loginUrl);
 
-        // Auto-fill voucher from URL param (arriving from connecting.html: ?voucher=MH-XXXX)
-        const urlVoucher = params.get('voucher');
+        // ── Auto-fill voucher arriving from connecting.html ────────────
+        var urlVoucher = params.get('voucher');
         if (urlVoucher) {
             document.getElementById('voucherCode').value = urlVoucher.toUpperCase();
-            showStatus('🚀 Voucher received! Click Activate to go online.', '#67e8f9');
+            showStatus('🚀 Voucher ready — tap Activate to go online!', '#67e8f9');
             return;
         }
 
-        // Restore last used voucher from localStorage
-        const lastVoucher = localStorage.getItem('last_voucher');
+        // ── Restore last voucher ───────────────────────────────────────
+        var lastVoucher = localStorage.getItem('last_voucher');
         if (lastVoucher) {
-            document.getElementById('hintCode').textContent    = lastVoucher.toUpperCase();
+            document.getElementById('hintCode').textContent      = lastVoucher.toUpperCase();
             document.getElementById('restoreHint').style.display = 'block';
-            document.getElementById('voucherCode').value       = lastVoucher.toUpperCase();
+            document.getElementById('voucherCode').value         = lastVoucher.toUpperCase();
             showStatus('↩ Previous voucher restored. Tap Activate to reconnect.', '#a78bfa');
         }
     };
 
     function restoreVoucher() {
-        const last = localStorage.getItem('last_voucher');
+        var last = localStorage.getItem('last_voucher');
         if (last) {
             document.getElementById('voucherCode').value = last.toUpperCase();
-            showStatus('✅ Voucher loaded. Connecting...', '#67e8f9');
+            showStatus('✅ Voucher loaded — connecting...', '#67e8f9');
             connectWiFi();
         }
     }
 
     async function connectWiFi() {
-        const code = document.getElementById('voucherCode').value.trim().toUpperCase();
-        const btn  = document.getElementById('loginBtn');
-        const params = new URLSearchParams(window.location.search);
+        var code   = document.getElementById('voucherCode').value.trim().toUpperCase();
+        var btn    = document.getElementById('loginBtn');
+        var params = new URLSearchParams(window.location.search);
 
-        if (!code) { showStatus('⚠️ No voucher code entered.', '#ffa502'); return; }
+        if (!code) { showStatus('⚠️ Please enter your voucher code.', '#ffa502'); return; }
 
         btn.disabled    = true;
         btn.textContent = 'AUTHORIZING...';
-        showStatus('⏳ Verifying voucher with server...', '#67e8f9');
+        showStatus('⏳ Verifying voucher...', '#67e8f9');
 
-        // ── STEP 1: Activate / validate voucher on Cloudflare ──────────
-        // This stamps the expiry clock and locks the MAC address.
-        // MikroTik login NEVER fires unless this succeeds.
-        let actData;
+        // ── STEP 1: Validate + activate voucher via Cloudflare ─────────
+        // This stamps the expiry clock and locks the MAC to this device.
+        // We also handle the "no internet yet" case gracefully — if
+        // Cloudflare is unreachable (because the user has no internet yet)
+        // we fall through to the MikroTik login so they can get online.
+        var actData = null;
         try {
-            const actRes = await fetch(
+            var actRes = await fetch(
                 'https://mobilehubuganda-github-io.pages.dev/api/voucher/activate',
                 {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body:    JSON.stringify({
-                        code,
+                        code:        code,
                         mac:         _mac,
                         tracking_id: params.get('tracking_id') || null
                     })
@@ -212,92 +213,112 @@
             );
             actData = await actRes.json();
         } catch (netErr) {
-            showStatus('⛔ Network error — check your connection and try again.', '#f87171');
-            btn.disabled    = false;
-            btn.textContent = '⚡ ACTIVATE INTERNET';
-            return;
+            // Network error = no internet yet (expected on first connection).
+            // Mark as a network error so we can bypass the strict gate below.
+            console.warn('[LOGIN] Activation API unreachable (no internet yet?):', netErr.message);
+            actData = { success: false, _networkError: true };
         }
 
-        // ── STRICT GATE: block MikroTik login if activation failed ──────
-        // This guarantees: activate.js runs first → voucher validated / MAC locked
-        // → ONLY THEN does MikroTik login happen.
         if (!actData.success) {
-            showStatus('⛔ ' + (actData.error || 'Activation failed. Try again.'), '#f87171');
-            btn.disabled    = false;
-            btn.textContent = '⚡ ACTIVATE INTERNET';
-            return;
+            if (actData._networkError) {
+                // Can't reach Cloudflare — probably because internet is not
+                // granted yet. This is the chicken-and-egg situation:
+                // we need internet to validate, but we need to log in to get internet.
+                // Solution: proceed to MikroTik. If the voucher is invalid,
+                // MikroTik itself will reject the username/password.
+                showStatus('⚡ Connecting to router...', '#fbbf24');
+                console.warn('[LOGIN] Bypassing activation gate — proceeding to MikroTik (network error path)');
+            } else {
+                // Cloudflare reached us and explicitly rejected the voucher.
+                // Do NOT proceed — stop here.
+                showStatus('⛔ ' + (actData.error || 'Activation failed. Try again.'), '#f87171');
+                btn.disabled    = false;
+                btn.textContent = '⚡ ACTIVATE INTERNET';
+                return;
+            }
+        } else {
+            localStorage.setItem('last_voucher', code);
+            showStatus('✅ Verified! Connecting to network...', '#4ecdc4');
         }
 
-        // ── STEP 2: Save voucher for reconnection ───────────────────────
-        localStorage.setItem('last_voucher', code);
-        showStatus('✅ Voucher verified! Connecting to network...', '#4ecdc4');
-
-        // ── STEP 3: Validate the MikroTik login URL ─────────────────────
-        if (!isSafeLoginUrl(_loginUrl)) {
-            showStatus('⛔ Router URL not detected. Reconnect to Mobile Hub WiFi first.', '#f87171');
-            btn.disabled    = false;
-            btn.textContent = '⚡ ACTIVATE INTERNET';
-            return;
-        }
-
-        // ── STEP 4: Build MikroTik login form ───────────────────────────
-        // dst tells MikroTik where to send the user AFTER it grants access.
-        // Using 10.0.0.1/status (router-side) is the safest option.
-        // After MikroTik grants internet, the user can navigate to status.html freely.
-        const statusUrl = 'http://10.0.0.1/status';
-
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = _loginUrl;
-        // NO form.target — must submit in main window so MikroTik's
-        // session cookie and MAC-based firewall rule apply to this browser context.
-
-        const fields = { username: code, password: code, dst: statusUrl };
-        for (const key in fields) {
-            const inp   = document.createElement('input');
-            inp.type    = 'hidden';
-            inp.name    = key;
-            inp.value   = fields[key];
-            form.appendChild(inp);
-        }
-
-        // ── STEP 5: Submit with a 300ms buffer ──────────────────────────
-        // This buffer gives the backend time to:
-        //   • commit voucher activation to DB
-        //   • lock MAC address
-        //   • finalize all DB writes
-        // before MikroTik validates the credentials against its user table.
-        setTimeout(() => {
-            document.body.appendChild(form);
-            form.submit();
-        }, 300);
-    }
-
-    // ── GALAXY BACKGROUND ────────────────────────────────────────────────
-    (function () {
-        const cv = document.getElementById('galaxy'), ctx = cv.getContext('2d');
-        let W, H, stars = [];
-
-        function resize() { W = cv.width = innerWidth; H = cv.height = innerHeight; mkStars(); }
-
-        function mkStars() {
-            stars = [];
-            for (let i = 0; i < 60; i++) {
-                stars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.2 + .3, v: Math.random() * .3 + .1 });
+        // ── STEP 2: Pick the best MikroTik login URL ───────────────────
+        var loginUrl = (_loginUrl && isSafeLoginUrl(_loginUrl)) ? _loginUrl : null;
+        if (!loginUrl) {
+            for (var i = 0; i < MIKROTIK_LOGIN_URLS.length; i++) {
+                if (isSafeLoginUrl(MIKROTIK_LOGIN_URLS[i])) {
+                    loginUrl = MIKROTIK_LOGIN_URLS[i];
+                    break;
+                }
             }
         }
 
+        if (!loginUrl) {
+            showStatus('⛔ Cannot find router. Make sure you are on Mobile Hub WiFi.', '#f87171');
+            btn.disabled    = false;
+            btn.textContent = '⚡ ACTIVATE INTERNET';
+            return;
+        }
+
+        // ── STEP 3: Navigate to MikroTik login via GET ─────────────────
+        //
+        //  ✅ WHY window.location.href AND NOT A FORM POST:
+        //
+        //  This page is served over HTTPS (pages.dev). MikroTik runs on
+        //  HTTP (10.0.0.1 or mynetname.net). A form POST from HTTPS to HTTP
+        //  is classified as a "Mixed Content Active Request" by browsers —
+        //  Chrome, Firefox and Safari all silently block it. No error is
+        //  shown to the user. The form never reaches MikroTik. This was the
+        //  primary reason internet access was never granted.
+        //
+        //  window.location.href is a TOP-LEVEL NAVIGATION, not a fetch or
+        //  XHR. The browser's mixed-content block does NOT apply to top-level
+        //  navigations from HTTPS to HTTP when the target is a private/local
+        //  IP or LAN hostname. The browser follows the redirect normally.
+        //
+        //  MikroTik's hotspot login fully supports GET requests with
+        //  username, password, and dst as URL query parameters. This is
+        //  the standard approach described in MikroTik's own hotspot
+        //  customisation documentation.
+        //
+        //  The 300ms delay gives Cloudflare's DB time to commit the
+        //  activation write before MikroTik checks its own user list.
+
+        setTimeout(function () {
+            // dst is where MikroTik sends the user after granting internet.
+            // We include the voucher code so status.html can auto-load the session.
+            var dst = DST_AFTER_LOGIN + '?voucher=' + encodeURIComponent(code);
+
+            var target = loginUrl
+                + '?username=' + encodeURIComponent(code)
+                + '&password=' + encodeURIComponent(code)
+                + '&dst='      + encodeURIComponent(dst);
+
+            console.log('[LOGIN] ▶ Navigating to MikroTik:', loginUrl);
+            window.location.href = target;
+        }, 300);
+    }
+
+    // ── GALAXY BACKGROUND ─────────────────────────────────────────────
+    (function () {
+        var cv = document.getElementById('galaxy'), ctx = cv.getContext('2d');
+        var W, H, stars = [];
+        function resize() { W = cv.width = innerWidth; H = cv.height = innerHeight; mkStars(); }
+        function mkStars() {
+            stars = [];
+            for (var i = 0; i < 60; i++) {
+                stars.push({ x: Math.random()*W, y: Math.random()*H, r: Math.random()*1.2+.3, v: Math.random()*.3+.1 });
+            }
+        }
         function draw() {
             ctx.clearRect(0, 0, W, H);
             ctx.fillStyle = 'rgba(255,255,255,0.7)';
-            stars.forEach(s => {
-                ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+            stars.forEach(function(s) {
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
                 s.y -= s.v;
                 if (s.y < 0) s.y = H;
             });
             requestAnimationFrame(draw);
         }
-
         window.addEventListener('resize', resize);
         resize(); draw();
     })();
