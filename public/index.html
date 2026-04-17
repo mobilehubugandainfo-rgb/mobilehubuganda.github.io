@@ -3,653 +3,530 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Hotspot Central | Buy Internet Vouchers</title>
+<title>HOTSPOT CENTRAL · Mobile Hub Uganda</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+
 <style>
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
-:root {
-  --violet:#7c3aed; --cyan:#06b6d4; --pink:#ec4899; --white:#f0f4ff;
-  --muted:rgba(200,210,255,0.55);
-  --glass:rgba(8,4,24,0.82);
-  --border:rgba(124,58,237,0.38);
-  --gold:#fbbf24;
+:root{
+  --ff-display: 'Orbitron', 'Courier New', monospace;
+  --ff-body:    'Rajdhani', 'Segoe UI', Arial, sans-serif;
+  --cyan:   #06b6d4; --violet: #7c3aed; --pink:   #ec4899;
+  --white:  #f0f4ff; --muted:  rgba(200,210,255,.55);
+  --glass:  rgba(8,4,22,.92); --border: rgba(124,58,237,.38);
+  --gold:   #fbbf24; --green:  #22c55e; --red:    #f43f5e;
 }
 
-html, body {
-  width:100%; background:#020008;
-  font-family:'Rajdhani',sans-serif; color:var(--white);
-}
+*,*::before,*::after{ margin:0;padding:0;box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ width:100%;background:#020008; font-family:var(--ff-body);color:var(--white);overflow-x:hidden; }
 
-/* ═══ GALAXY BACKGROUND ═══ */
-#galaxy { position:fixed; inset:0; z-index:0; }
-.nebula {
-  position:fixed; inset:0; z-index:1; pointer-events:none;
+#galaxy{position:fixed;inset:0;z-index:0}
+.nebula{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
   background:
-    radial-gradient(ellipse 70% 55% at 18% 28%, rgba(124,58,237,.25) 0%,transparent 65%),
-    radial-gradient(ellipse 55% 45% at 82% 68%, rgba(6,182,212,.18)  0%,transparent 60%),
-    radial-gradient(ellipse 50% 40% at 55%  8%, rgba(236,72,153,.13) 0%,transparent 55%),
-    radial-gradient(ellipse 45% 38% at  8% 82%, rgba(79,70,229,.20)  0%,transparent 60%);
-  animation:nebDrift 20s ease-in-out infinite alternate;
+    radial-gradient(ellipse 70% 55% at 18% 28%,rgba(124,58,237,.22) 0%,transparent 65%),
+    radial-gradient(ellipse 55% 45% at 82% 68%,rgba(6,182,212,.15) 0%,transparent 60%);
+  animation:nebDrift 22s ease-in-out infinite alternate;
 }
-@keyframes nebDrift { from{opacity:.85} to{opacity:1;transform:scale(1.06)} }
-.ss{position:fixed;z-index:2;pointer-events:none;width:2px;border-radius:2px;opacity:0;background:linear-gradient(to bottom,transparent,rgba(255,255,255,.88));}
-.ss1{height:90px;top:-90px;left:15%;animation:shoot 3.5s 0s   linear infinite;}
-.ss2{height:70px;top:-70px;left:55%;animation:shoot 2.8s 1.8s linear infinite;}
-.ss3{height:110px;top:-110px;left:80%;animation:shoot 4.0s 3.2s linear infinite;}
-.ss4{height:65px;top:-65px;left:6%;animation:shoot 3.2s 5.1s linear infinite;}
-.ss5{height:80px;top:-80px;left:40%;animation:shoot 2.6s 6.5s linear infinite;}
-@keyframes shoot{0%{transform:translateY(0) rotate(14deg);opacity:0}6%{opacity:.8}85%{opacity:.2}100%{transform:translateY(115vh) rotate(14deg);opacity:0}}
+@keyframes nebDrift{from{opacity:.8}to{opacity:1;transform:scale(1.04)}}
 
-/* ═══ SHARED HEADER ═══ */
-.site-header { position:relative; z-index:10; text-align:center; padding:20px 14px 0; }
-.ssid-name {
-  font-family:'Orbitron',sans-serif;
-  font-size:clamp(1.5rem,6vw,2.8rem);
-  font-weight:900; letter-spacing:4px; text-transform:uppercase; line-height:1;
-  background:linear-gradient(90deg,#c084fc,#a78bfa,#67e8f9,#f0abfc);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  filter:drop-shadow(0 0 20px rgba(167,139,250,.8));
-}
-.ssid-sub {
-  font-size:clamp(.58rem,2vw,.72rem); letter-spacing:2.5px; text-transform:uppercase;
-  color:#67e8f9; font-weight:600; margin-top:4px;
-  text-shadow:0 0 14px rgba(6,182,212,.9);
-}
-.meta-row {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:6px 14px 0; position:relative; z-index:10;
-}
-.meta-label { font-size:clamp(.5rem,1.5vw,.62rem); letter-spacing:2.5px; text-transform:uppercase; color:#a78bfa; font-weight:700; }
-.signal-pod {
-  display:flex; align-items:center; gap:6px;
-  background:rgba(6,182,212,.1); border:1px solid rgba(6,182,212,.35); border-radius:30px;
-  padding:4px 11px; font-family:'Orbitron',sans-serif;
-  font-size:clamp(.46rem,1.2vw,.56rem); letter-spacing:1.5px; color:#67e8f9; text-transform:uppercase;
-}
-.orbit-dot { width:7px; height:7px; border-radius:50%; background:var(--cyan); box-shadow:0 0 8px var(--cyan); animation:oPulse 1.7s ease-in-out infinite; flex-shrink:0; }
-@keyframes oPulse{0%,100%{box-shadow:0 0 6px var(--cyan)}50%{box-shadow:0 0 14px var(--cyan);transform:scale(1.35)}}
-
-/* ═══ SHARED CARD / GLASS SURFACE ═══ */
-.glass-card {
-  background:var(--glass); border:1.5px solid var(--border);
-  border-radius:16px; backdrop-filter:blur(18px);
+#app{
+  position:relative;z-index:10;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:20px 16px 60px;gap:20px;
 }
 
-/* ═══ TRIAL BANNER ═══ */
-.trial-banner {
-  position:relative; overflow:hidden;
-  border-radius:16px; padding:18px 20px;
-  background:linear-gradient(118deg,rgba(109,40,217,.35),rgba(124,58,237,.25) 40%,rgba(6,182,212,.18));
-  border:1.5px dashed rgba(167,139,250,.55);
-  text-align:center;
-  animation:trialAura 3s ease-in-out infinite;
+.hdr{text-align:center;width:100%;max-width:560px}
+.hdr-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.32);border-radius:30px;
+  padding:4px 13px;font-family:var(--ff-display);
+  font-size:.5rem;letter-spacing:2px;color:#67e8f9;text-transform:uppercase;margin-bottom:10px;
 }
-@keyframes trialAura{0%,100%{box-shadow:0 0 20px rgba(124,58,237,.2)}50%{box-shadow:0 0 40px rgba(124,58,237,.45),0 0 80px rgba(6,182,212,.12)}}
-.trial-banner::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(124,58,237,.018) 3px,rgba(124,58,237,.018) 4px);pointer-events:none;}
-.trial-title { font-family:'Orbitron',sans-serif; font-size:clamp(.8rem,3vw,1.1rem); font-weight:700; letter-spacing:2px; color:#fff; text-transform:uppercase; }
-.trial-title em { color:#67e8f9; font-style:normal; }
-.trial-sub { font-size:clamp(.65rem,2.2vw,.8rem); color:var(--muted); letter-spacing:.5px; margin-top:4px; margin-bottom:14px; }
-
-/* ═══ TRIAL BUTTON ═══ */
-.btn-trial {
-  display:inline-flex; align-items:center; justify-content:center; gap:8px;
-  padding:11px 28px; border-radius:30px; border:none; cursor:pointer;
-  font-family:'Orbitron',sans-serif; font-size:clamp(.7rem,2.5vw,.82rem);
-  font-weight:700; letter-spacing:2px; text-transform:uppercase;
-  background:linear-gradient(118deg,#6d28d9,#7c3aed 38%,#4f46e5 68%,#06b6d4);
-  color:#fff; box-shadow:0 4px 24px rgba(124,58,237,.55);
-  transition:all .22s ease;
+.orbit-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--cyan);
+  box-shadow:0 0 8px var(--cyan);animation:oPulse 1.7s ease-in-out infinite;
 }
-.btn-trial:hover { transform:translateY(-2px); box-shadow:0 8px 36px rgba(124,58,237,.75); }
-.btn-trial:active { transform:scale(.97); }
-.btn-trial:disabled { opacity:.6; cursor:not-allowed; transform:none; }
-
-/* ═══ SECTION LABEL ═══ */
-.section-label {
-  font-family:'Orbitron',sans-serif; font-size:clamp(.7rem,2.5vw,.85rem);
-  letter-spacing:3px; text-transform:uppercase; text-align:center;
-  color:#a78bfa; font-weight:700;
-  text-shadow:0 0 16px rgba(167,139,250,.6);
+@keyframes oPulse{ 0%,100%{box-shadow:0 0 6px var(--cyan)} 50%{box-shadow:0 0 14px var(--cyan);transform:scale(1.35)} }
+.hdr-title{
+  font-family:var(--ff-display);font-size:clamp(1.7rem,7vw,2.8rem);
+  font-weight:900;letter-spacing:4px;text-transform:uppercase;line-height:1;
+  background:linear-gradient(90deg,#c084fc,#67e8f9);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
 }
-.section-label span { color:#67e8f9; }
+.hdr-sub{font-size:.65rem;letter-spacing:2.5px;text-transform:uppercase;color:#67e8f9;font-weight:600;margin-top:5px;}
 
-/* ═══ PACKAGE CARDS ═══ */
-.pkg-card {
-  background:var(--glass); border:1.5px solid rgba(124,58,237,.28);
-  border-radius:16px; padding:20px 16px;
-  cursor:pointer; text-align:center;
-  transition:all .25s ease; position:relative; overflow:hidden;
-  backdrop-filter:blur(18px);
+.info-strip{
+  display:flex;align-items:center;justify-content:center;gap:18px;
+  width:100%;max-width:560px;padding:10px 14px;
+  background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);border-radius:12px;
 }
-.pkg-card::after{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(167,139,250,.06) 50%,transparent 70%);transform:translateX(-110%);transition:transform .45s ease;}
-.pkg-card:hover::after{transform:translateX(110%)}
-.pkg-card:hover { border-color:rgba(167,139,250,.65); transform:translateY(-4px); box-shadow:0 8px 32px rgba(124,58,237,.28); }
-.pkg-card.selected { border-color:var(--cyan); background:rgba(6,182,212,.1); box-shadow:0 0 28px rgba(6,182,212,.25); }
-.pkg-card.popular { border-color:rgba(251,191,36,.6); animation:bipPulse 2.4s ease-in-out infinite; }
-.pkg-card.popular .pkg-price { color:var(--gold); text-shadow:0 0 18px rgba(251,191,36,.7); }
+.info-item{text-align:center}
+.info-lbl{font-size:.5rem;letter-spacing:2px;color:#67e8f9;text-transform:uppercase;font-family:var(--ff-display)}
+.info-val{font-size:.8rem;font-weight:700;color:#fff;letter-spacing:2px;font-family:var(--ff-display)}
+.info-div{width:1px;height:26px;background:rgba(6,182,212,.22)}
 
-@keyframes bipPulse{
-  0%  {box-shadow:0 0 8px rgba(251,191,36,.15);border-color:rgba(251,191,36,.4)}
-  30% {box-shadow:0 6px 30px rgba(251,191,36,.5),0 0 40px rgba(251,191,36,.2);border-color:rgba(251,191,36,.95)}
-  55% {box-shadow:0 0 8px rgba(251,191,36,.15);border-color:rgba(251,191,36,.4)}
-  78% {box-shadow:0 3px 18px rgba(251,191,36,.3);border-color:rgba(251,191,36,.7)}
-  100%{box-shadow:0 0 8px rgba(251,191,36,.15);border-color:rgba(251,191,36,.4)}
+.sec-label{
+  font-family:var(--ff-display);font-size:.75rem;
+  letter-spacing:3px;text-transform:uppercase;color:#a78bfa;font-weight:700;
+  width:100%;max-width:560px;margin-top:10px;
 }
+.sec-label span{color:#67e8f9}
 
-.pkg-badge {
-  position:absolute; top:10px; right:10px;
+.trial-hero{
+  width:100%;max-width:560px;border-radius:18px;padding:20px;
+  background:linear-gradient(118deg,rgba(109,40,217,.45),rgba(6,182,212,.22));
+  border:1.5px dashed rgba(167,139,250,.55);text-align:center;
+}
+.trial-title{font-family:var(--ff-display);font-size:1.1rem;font-weight:700;letter-spacing:2px;color:#fff;text-transform:uppercase;}
+.trial-title em{color:#67e8f9;font-style:normal}
+.trial-sub{font-size:.7rem;color:var(--muted);margin:6px 0 16px}
+.btn-trial{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  padding:12px 32px;border-radius:30px;border:none;cursor:pointer;
+  font-family:var(--ff-display);font-size:.8rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  background:linear-gradient(118deg,#6d28d9,#06b6d4);color:#fff;
+  box-shadow:0 4px 24px rgba(124,58,237,.5);transition:transform .2s;
+}
+.btn-trial:hover:not(:disabled){transform:translateY(-2px)}
+.btn-trial:disabled{opacity:.6;cursor:not-allowed}
+
+.pkg-grid{
+  width:100%;max-width:560px;
+  display:grid;grid-template-columns:repeat(2,1fr);gap:12px;
+}
+@media(min-width:560px){.pkg-grid{grid-template-columns:repeat(4,1fr)}}
+
+.pkg-card{
+  background:var(--glass);backdrop-filter:blur(14px);
+  border:1.5px solid rgba(124,58,237,.28);border-radius:14px;padding:18px 14px;
+  cursor:pointer;text-align:center;transition:all .25s;position:relative;
+}
+.pkg-card:hover{border-color:rgba(167,139,250,.62);transform:translateY(-4px);box-shadow:0 8px 28px rgba(124,58,237,.25);}
+.pkg-card.selected{border-color:var(--cyan);background:rgba(6,182,212,.15);box-shadow:0 0 26px rgba(6,182,212,.3);}
+.pkg-card.popular{border-color:rgba(251,191,36,.55);}
+.pkg-badge{
+  position:absolute;top:8px;right:8px;
   background:linear-gradient(135deg,#fbbf24,#f59e0b);
-  color:#1a1000; font-size:.5rem; font-weight:900;
-  letter-spacing:1.5px; text-transform:uppercase;
-  padding:3px 8px; border-radius:20px;
-  font-family:'Orbitron',sans-serif;
+  color:#1a1000;font-size:.43rem;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;
+  padding:2px 7px;border-radius:20px;font-family:var(--ff-display);
 }
-.pkg-icon { font-size:1.6rem; margin-bottom:6px; display:block; }
-.pkg-price {
-  font-family:'Orbitron',sans-serif;
-  font-size:clamp(1.1rem,4vw,1.5rem); font-weight:900;
-  color:var(--cyan); letter-spacing:1px;
-  text-shadow:0 0 14px rgba(6,182,212,.6);
-}
-.pkg-name {
-  font-weight:700; font-size:clamp(.78rem,2.5vw,.95rem);
-  color:#fff; letter-spacing:1px; margin:4px 0 10px;
-}
-.pkg-dur {
-  display:inline-block; padding:3px 12px;
-  background:rgba(124,58,237,.2); border:1px solid rgba(124,58,237,.35);
-  border-radius:20px; font-size:.65rem; letter-spacing:1.5px;
-  color:#c4b5fd; font-family:'Orbitron',sans-serif; text-transform:uppercase;
-  margin-bottom:12px;
-}
-.pkg-features { list-style:none; font-size:.72rem; color:var(--muted); line-height:2; }
-.pkg-features li::before { content:'✦ '; color:var(--cyan); }
-
-/* ═══ CHECKOUT PANEL ═══ */
-.checkout-panel {
-  display:none;
-  background:var(--glass); border:1.5px solid rgba(236,72,153,.45);
-  border-radius:16px; padding:24px; backdrop-filter:blur(18px);
-  box-shadow:0 0 40px rgba(236,72,153,.15);
-  animation:checkIn .35s cubic-bezier(.22,.68,0,1.2);
-}
-@keyframes checkIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-.checkout-panel.open { display:block; }
-
-.co-title {
-  font-family:'Orbitron',sans-serif; font-size:clamp(.85rem,3vw,1.05rem);
-  font-weight:700; letter-spacing:2px; text-transform:uppercase;
-  color:#f0abfc; margin-bottom:4px;
-}
-.co-summary { font-size:.78rem; color:var(--muted); letter-spacing:.4px; margin-bottom:18px; }
-.co-summary strong { color:#fff; }
-
-.field-label {
-  font-size:.65rem; letter-spacing:2px; text-transform:uppercase;
-  color:#a78bfa; font-weight:700; font-family:'Orbitron',sans-serif;
-  display:block; margin-bottom:6px;
-}
-.field-input {
-  width:100%; padding:13px 15px;
-  background:rgba(255,255,255,.04); border:1px solid rgba(124,58,237,.35);
-  border-radius:11px; color:#fff; font-family:'Rajdhani',sans-serif;
-  font-size:.9rem; letter-spacing:.5px;
-  transition:border-color .2s, box-shadow .2s;
-  margin-bottom:16px;
-}
-.field-input:focus { outline:none; border-color:var(--cyan); box-shadow:0 0 16px rgba(6,182,212,.2); }
-.field-input::placeholder { color:rgba(200,210,255,.3); }
-
-.btn-pay {
-  display:flex; align-items:center; justify-content:center; gap:10px;
-  width:100%; padding:14px; border-radius:13px; border:none; cursor:pointer;
-  font-family:'Orbitron',sans-serif; font-size:clamp(.72rem,2.5vw,.85rem);
-  font-weight:700; letter-spacing:2px; text-transform:uppercase;
-  background:linear-gradient(118deg,#be185d,#ec4899 45%,#f43f5e);
-  color:#fff; box-shadow:0 4px 24px rgba(236,72,153,.45);
-  transition:all .22s ease;
-}
-.btn-pay:hover { transform:translateY(-2px); box-shadow:0 8px 36px rgba(236,72,153,.65); }
-.btn-pay:active { transform:scale(.97); }
-.btn-pay:disabled { opacity:.6; cursor:not-allowed; transform:none; }
-
-/* ═══ WHATSAPP FLOAT ═══ */
-.wa-float {
-  position:fixed; bottom:20px; right:16px; z-index:100;
-  display:flex; align-items:center; gap:9px;
-  background:rgba(37,211,102,.15); border:1.5px solid rgba(37,211,102,.5);
-  backdrop-filter:blur(16px); border-radius:40px;
-  padding:10px 18px; text-decoration:none; color:#86efac;
-  box-shadow:0 4px 20px rgba(37,211,102,.25);
-  transition:all .22s ease;
-}
-.wa-float:hover { background:rgba(37,211,102,.25); box-shadow:0 6px 28px rgba(37,211,102,.4); transform:translateY(-2px); }
-.wa-float .wa-ico { font-size:1.2rem; }
-.wa-float .wa-text { font-family:'Rajdhani',sans-serif; font-size:.8rem; font-weight:700; letter-spacing:.5px; }
-
-/* ═══ FOOTER ═══ */
-.page-footer { text-align:center; padding:16px 0 80px; }
-.page-footer span { font-size:.62rem; color:rgba(167,139,250,.4); letter-spacing:.5px; }
-
-/* ═══ SPINNER ═══ */
-@keyframes spin{to{transform:rotate(360deg)}}
-.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.18);border-top-color:#a78bfa;border-radius:50%;animation:spin .75s linear infinite;vertical-align:middle;margin-right:6px}
-
-/* ═══ STATUS MSG ═══ */
-.status-msg{display:none;padding:8px 14px;border-radius:10px;font-size:.75rem;font-weight:600;text-align:center;letter-spacing:.3px;margin-top:6px;}
-.status-msg.show{display:block}
-.status-msg.info   {background:rgba(6,182,212,.1);  color:#67e8f9; border:1px solid rgba(6,182,212,.28)}
-.status-msg.error  {background:rgba(236,72,153,.1); color:#f9a8d4; border:1px solid rgba(236,72,153,.28)}
-.status-msg.success{background:rgba(124,58,237,.12);color:#c4b5fd; border:1px solid rgba(124,58,237,.32)}
-
-/* ════════════════════════════════════════
-   MOBILE LAYOUT  (default, < 768px)
-   Single scrollable column
-════════════════════════════════════════ */
-.mob-layout {
-  display:block;
-  position:relative; z-index:10;
-  padding:0 13px 20px;
-  min-height:100vh;
-  overflow-x:hidden;
+.pkg-icon{font-size:1.5rem;margin-bottom:5px;display:block}
+.pkg-price{font-family:var(--ff-display);font-size:1.2rem;font-weight:900;color:var(--cyan);letter-spacing:1px;}
+.pkg-card.popular .pkg-price{color:var(--gold)}
+.pkg-name{font-weight:700;font-size:.8rem;color:#fff;letter-spacing:.8px;margin:4px 0 6px}
+.pkg-dur{
+  display:inline-block;padding:2px 10px;
+  background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.32);
+  border-radius:20px;font-size:.55rem;letter-spacing:1.5px;
+  color:#c4b5fd;font-family:var(--ff-display);text-transform:uppercase;
 }
 
-.mob-layout .trial-banner { margin-bottom:18px; }
-.mob-layout .section-label { margin-bottom:14px; }
-.mob-layout .pkg-grid {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-bottom:18px;
+.checkout-panel{
+  display:none;width:100%;max-width:560px;
+  background:rgba(20,10,40,0.98);backdrop-filter:blur(20px);
+  border:2px solid rgba(236,72,153,.5);border-radius:16px;padding:24px;
+  box-shadow:0 10px 50px rgba(236,72,153,.3);animation:slideIn .3s ease-out;margin-top:10px;
 }
-.mob-layout .checkout-panel { margin-bottom:18px; }
+.checkout-panel.open{display:block}
+@keyframes slideIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
 
-/* ════════════════════════════════════════
-   DESKTOP LAYOUT  (≥ 768px)
-   Two-column: left = packages+checkout, right = sidebar
-   Hidden on mobile
-════════════════════════════════════════ */
-.desk-layout {
-  display:none;
-  position:relative; z-index:10;
-  padding:0 28px 30px;
-  min-height:100vh;
-}
+.co-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:12px;border-bottom:1px solid rgba(236,72,153,.2);}
+.co-title{font-family:var(--ff-display);font-size:1.1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#f0abfc;}
+.co-close{background:rgba(244,63,94,.2);border:1px solid rgba(244,63,94,.4);border-radius:6px;color:#fda4af;font-size:1.1rem;cursor:pointer;padding:4px 10px;transition:all .2s;line-height:1;}
+.co-close:hover{background:rgba(244,63,94,.4);color:#fff;}
+.co-summary{font-size:.85rem;color:var(--white);margin-bottom:20px;padding:10px;background:rgba(236,72,153,.1);border-radius:8px;text-align:center;}
+.co-summary strong{color:#f0abfc;font-size:1.1rem;font-family:var(--ff-display);}
 
-.desk-layout .desk-row {
-  display:flex; gap:22px; align-items:flex-start;
-}
+.field-label{font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:#a78bfa;font-weight:700;font-family:var(--ff-display);display:block;margin-bottom:8px;margin-top:16px;}
+.field-label:first-of-type{margin-top:0}
+.phone-row{display:flex;gap:10px;margin-bottom:16px}
+.phone-flag{display:flex;align-items:center;gap:6px;padding:14px 12px;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.4);border-radius:11px;color:#fff;font-family:var(--ff-body);font-size:.9rem;white-space:nowrap;}
+.phone-flag span{font-size:.8rem;color:var(--muted)}
+.field-input{width:100%;padding:14px 16px;background:rgba(255,255,255,.08);border:1px solid rgba(124,58,237,.4);border-radius:11px;color:#fff;font-family:var(--ff-body);font-size:1rem;letter-spacing:.5px;transition:all .2s;}
+.field-input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 14px rgba(6,182,212,.25);background:rgba(255,255,255,.12);}
+.field-input::placeholder{color:rgba(200,210,255,.3)}
 
-/* Left: main content (packages + checkout) */
-.desk-main {
-  flex:1; min-width:0;
-  display:flex; flex-direction:column; gap:18px;
-}
+.sec-badge{display:flex;align-items:center;gap:6px;margin:16px 0;padding:8px 12px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px;font-size:.65rem;color:rgba(34,197,94,.9);letter-spacing:.5px;}
+.sec-badge svg{flex-shrink:0}
 
-/* Right: sidebar */
-.desk-sidebar {
-  width:260px; flex-shrink:0;
-  display:flex; flex-direction:column; gap:14px;
-  position:sticky; top:20px;
+.btn-pay{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:16px;border-radius:13px;border:none;cursor:pointer;
+  font-family:var(--ff-display);font-size:.9rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  background:linear-gradient(118deg,#be185d,#ec4899 45%,#f43f5e);color:#fff;
+  box-shadow:0 6px 30px rgba(236,72,153,.5);transition:all .2s;margin-top:20px;
 }
+.btn-pay:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 40px rgba(236,72,153,.7);}
+.btn-pay:active:not(:disabled){transform:scale(.98)}
+.btn-pay:disabled{opacity:.6;cursor:not-allowed}
 
-/* Desktop pkg grid: 2 columns on smaller desktop, 4 on wide */
-.desk-layout .pkg-grid {
-  display:grid;
-  grid-template-columns:repeat(2, 1fr);
-  gap:14px;
+.action-row{display:flex;gap:12px;width:100%;max-width:560px;margin-top:10px;}
+.action-btn{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px 12px;border-radius:14px;border:1.5px solid;cursor:pointer;
+  font-family:var(--ff-body);font-weight:700;font-size:.85rem;letter-spacing:.5px;
+  background:var(--glass);backdrop-filter:blur(14px);color:var(--white);transition:all .2s;text-decoration:none;
 }
-@media (min-width:1100px) {
-  .desk-layout .pkg-grid { grid-template-columns:repeat(4,1fr); }
-}
+.action-btn:hover{transform:translateY(-2px)}
+.btn-voucher{border-color:rgba(6,182,212,.4);color:#67e8f9}
+.btn-voucher:hover{border-color:rgba(6,182,212,.7);box-shadow:0 0 18px rgba(6,182,212,.2)}
+.btn-wa{border-color:rgba(34,197,94,.38);color:#86efac}
+.btn-wa:hover{border-color:rgba(34,197,94,.7);box-shadow:0 0 18px rgba(34,197,94,.2)}
 
-/* Sidebar cards */
-.sb-card {
-  border-radius:14px; padding:16px;
-  background:var(--glass); border:1px solid var(--border);
-  backdrop-filter:blur(18px);
-}
-.sb-card .sb-label { font-size:.52rem; letter-spacing:2px; color:#67e8f9; text-transform:uppercase; margin-bottom:8px; font-family:'Orbitron',sans-serif; }
-.sb-card .sb-value { font-size:1.3rem; font-weight:700; color:#fff; letter-spacing:3px; font-family:'Orbitron',sans-serif; text-shadow:0 0 18px rgba(6,182,212,.7); }
-.sb-card .sb-sub   { font-size:.57rem; color:var(--muted); margin-top:4px; letter-spacing:.8px; }
+.status{display:none;width:100%;max-width:560px;padding:12px 16px;border-radius:10px;font-size:.8rem;font-weight:600;text-align:center;letter-spacing:.3px;}
+.status.show{display:block}
+.status.info{background:rgba(6,182,212,.15);color:#67e8f9;border:1px solid rgba(6,182,212,.3)}
+.status.error{background:rgba(244,63,94,.15);color:#fda4af;border:1px solid rgba(244,63,94,.3)}
+.status.success{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.3)}
 
-.sb-wa {
-  display:flex; align-items:center; gap:10px;
-  border-radius:14px; padding:15px;
-  background:rgba(34,197,94,.08); border:1.5px solid rgba(34,197,94,.3);
-  text-decoration:none; color:var(--white); transition:all .2s;
-}
-.sb-wa:hover { border-color:rgba(34,197,94,.65); box-shadow:0 0 20px rgba(34,197,94,.2); }
-.sb-wa .swa-ico { font-size:1.5rem; flex-shrink:0; }
-.sb-wa .swa-lbl { font-size:.72rem; color:#86efac; font-weight:600; letter-spacing:.3px; }
-.sb-wa .swa-num { font-family:'Orbitron',sans-serif; font-size:.75rem; font-weight:700; color:#fff; letter-spacing:1.5px; margin-top:2px; text-shadow:0 0 10px rgba(34,197,94,.5); }
+.how-strip{width:100%;max-width:560px;background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.2);border-radius:12px;padding:16px;margin-top:10px;}
+.how-title{font-family:var(--ff-display);font-size:.6rem;letter-spacing:2px;color:#a78bfa;text-transform:uppercase;margin-bottom:10px;}
+.how-steps{display:flex;gap:8px;flex-wrap:wrap}
+.how-step{flex:1;min-width:90px;text-align:center;padding:10px 8px;border-radius:10px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.18);}
+.how-num{font-family:var(--ff-display);font-size:.6rem;color:#a78bfa;letter-spacing:1px;}
+.how-desc{font-size:.7rem;color:var(--muted);margin-top:2px;line-height:1.3}
 
-.sb-brand { text-align:center; border-radius:14px; padding:15px; background:rgba(124,58,237,.08); border:1px solid rgba(124,58,237,.25); }
-.sb-brand .br-by   { font-size:.5rem; letter-spacing:2px; color:#a78bfa; text-transform:uppercase; font-family:'Orbitron',sans-serif; margin-bottom:4px; }
-.sb-brand .br-name { font-size:.9rem; font-weight:700; color:#fff; letter-spacing:2px; font-family:'Orbitron',sans-serif; }
-.sb-brand .br-sub  { font-size:.58rem; color:var(--muted); margin-top:3px; }
-
-/* ════════════════════════════════════════
-   SWITCH at 768px
-════════════════════════════════════════ */
-@media (min-width:768px) {
-  .mob-layout  { display:none; }
-  .desk-layout { display:block; }
-}
+footer{text-align:center;font-size:.6rem;color:rgba(167,139,250,.4);letter-spacing:.5px;margin-top:20px;}
 </style>
 </head>
 <body>
 
 <canvas id="galaxy"></canvas>
 <div class="nebula"></div>
-<div class="ss ss1"></div><div class="ss ss2"></div><div class="ss ss3"></div>
-<div class="ss ss4"></div><div class="ss ss5"></div>
 
-<!-- ══════════════════════════════════
-     MOBILE LAYOUT
-══════════════════════════════════ -->
-<div class="mob-layout">
+<div id="app">
 
-  <!-- Header -->
-  <div class="site-header">
-    <div class="ssid-name">HOTSPOT CENTRAL</div>
-    <div class="ssid-sub">Ultra-Fast WiFi · Mobile Hub Uganda</div>
-  </div>
-  <div class="meta-row" style="margin-bottom:14px;">
-    <div class="meta-label">Data Plans</div>
-    <div class="signal-pod"><div class="orbit-dot"></div>Online</div>
-  </div>
+  <header class="hdr">
+    <div class="hdr-badge">
+      <div class="orbit-dot"></div>
+      Signal Lock · Mobile Hub Uganda
+    </div>
+    <div class="hdr-title">HOTSPOT CENTRAL</div>
+    <div class="hdr-sub">📶 Ultra-Fast WiFi · Connect to the Galaxy</div>
+  </header>
 
-  <!-- Trial -->
-  <div class="trial-banner" style="margin-bottom:16px;">
-    <div class="trial-title">🎁 New here? Try for <em>Free!</em></div>
-    <div class="trial-sub">5 Minutes high-speed access · Once per 24hrs per device</div>
-    <button class="btn-trial" id="trialBtnM" onclick="startFreeTrial('M')">⚡ ACTIVATE FREE TRIAL</button>
-    <div id="trialStM" class="status-msg"></div>
-  </div>
-
-  <!-- Section label -->
-  <div class="section-label" style="margin-bottom:12px;">Choose a <span>Data Plan</span></div>
-
-  <!-- Package grid (2-col on mobile) -->
-  <div class="pkg-grid" id="pkgGridM"></div>
-
-  <!-- Checkout -->
-  <div class="checkout-panel" id="checkoutM">
-    <div class="co-title" id="coTitleM">Complete Purchase</div>
-    <div class="co-summary" id="coSummaryM"></div>
-    <label class="field-label">Phone Number (Mobile Money)</label>
-    <input class="field-input" type="tel" id="phoneM" placeholder="e.g. 0771 999 302">
-    <label class="field-label">Email (Voucher backup)</label>
-    <input class="field-input" type="email" id="emailM" placeholder="yourname@gmail.com">
-    <button class="btn-pay" id="payBtnM" onclick="initiatePesapal('M')">💳 PAY WITH PESAPAL</button>
+  <div class="info-strip">
+    <div class="info-item">
+      <div class="info-lbl">Portal IP</div>
+      <div class="info-val">10.0.0.1</div>
+    </div>
+    <div class="info-div"></div>
+    <div class="info-item">
+      <div class="info-lbl">Support</div>
+      <div class="info-val">0771 999 302</div>
+    </div>
+    <div class="info-div"></div>
+    <div class="info-item">
+      <div class="info-lbl">Network</div>
+      <div class="info-val">Mobile Hub</div>
+    </div>
   </div>
 
-  <div class="page-footer"><span>✦ Mobile Hub Uganda · Fast · Reliable · Always On ✦</span></div>
+  <div id="status" class="status"></div>
 
-</div><!-- end mob-layout -->
-
-
-<!-- ══════════════════════════════════
-     DESKTOP LAYOUT
-══════════════════════════════════ -->
-<div class="desk-layout">
-
-  <!-- Header -->
-  <div class="site-header">
-    <div class="ssid-name">HOTSPOT CENTRAL</div>
-    <div class="ssid-sub">Ultra-Fast WiFi · Mobile Hub Uganda</div>
-  </div>
-  <div class="meta-row" style="margin-bottom:18px;">
-    <div class="meta-label">Data Plans</div>
-    <div class="signal-pod"><div class="orbit-dot"></div>Online</div>
+  <div class="trial-hero">
+    <div class="trial-title">🎁 New Here? Try for <em>Free!</em></div>
+    <div class="trial-sub">5 Minutes of high-speed access · Once per 24 hrs</div>
+    <button class="btn-trial" id="freeBtn" onclick="startFreeTrial()">
+      ⚡ ACTIVATE FREE TRIAL
+    </button>
   </div>
 
-  <div class="desk-row">
+  <div class="sec-label">Choose a <span>Data Plan</span></div>
+  <div class="pkg-grid" id="pkgGrid"></div>
 
-    <!-- LEFT: main content -->
-    <div class="desk-main">
+  <div class="checkout-panel" id="checkoutPanel">
+    <div class="co-header">
+      <div class="co-title" id="coTitle">Complete Purchase</div>
+      <button class="co-close" onclick="closeCheckout()">✕</button>
+    </div>
+    <div class="co-summary" id="coSummary">Selected: <strong>--</strong></div>
 
-      <!-- Trial -->
-      <div class="trial-banner">
-        <div class="trial-title">🎁 New here? Try for <em>Free!</em></div>
-        <div class="trial-sub">5 Minutes of high-speed access · Once every 24hrs per device</div>
-        <button class="btn-trial" id="trialBtnD" onclick="startFreeTrial('D')">⚡ ACTIVATE FREE TRIAL</button>
-        <div id="trialStD" class="status-msg"></div>
-      </div>
+    <label class="field-label" for="phone">📱 Phone Number (Mobile Money)</label>
+    <div class="phone-row">
+      <div class="phone-flag">🇺🇬 <span>+256</span></div>
+      <input class="field-input" type="tel" id="phone"
+        placeholder="7XX XXX XXX" inputmode="numeric" maxlength="10"
+        style="flex:1;margin-bottom:0" autocomplete="tel-national">
+    </div>
 
-      <!-- Section label -->
-      <div class="section-label">Choose a <span>Data Plan</span></div>
+    <label class="field-label" for="email">📧 Email (Optional - for voucher backup)</label>
+    <input class="field-input" type="email" id="email"
+      placeholder="yourname@gmail.com" autocomplete="email">
 
-      <!-- Package grid -->
-      <div class="pkg-grid" id="pkgGridD"></div>
+    <div class="sec-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      Secured by Pesapal · Your payment details are encrypted
+    </div>
 
-      <!-- Checkout -->
-      <div class="checkout-panel" id="checkoutD">
-        <div class="co-title" id="coTitleD">Complete Purchase</div>
-        <div class="co-summary" id="coSummaryD"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-          <div>
-            <label class="field-label">Phone Number (Mobile Money)</label>
-            <input class="field-input" type="tel" id="phoneD" placeholder="e.g. 0771 999 302">
-          </div>
-          <div>
-            <label class="field-label">Email (Voucher backup)</label>
-            <input class="field-input" type="email" id="emailD" placeholder="yourname@gmail.com">
-          </div>
-        </div>
-        <button class="btn-pay" id="payBtnD" onclick="initiatePesapal('D')">💳 PAY WITH PESAPAL</button>
-      </div>
+    <button class="btn-pay" id="payBtn" onclick="initiatePesapal()">
+      💳 PAY WITH PESAPAL
+    </button>
+  </div>
 
-      <div class="page-footer" style="padding-bottom:30px;"><span>✦ Mobile Hub Uganda · Powered by Pesapal V3 ✦</span></div>
+  <div class="action-row">
+    <button class="action-btn btn-voucher" onclick="goToVoucherPage()">
+      🔭 Enter Voucher Code
+    </button>
+    <a class="action-btn btn-wa"
+      href="https://wa.me/256771999302?text=I%20need%20help%20with%20Hotspot%20Central"
+      target="_blank" rel="noopener">
+      💬 WhatsApp Help
+    </a>
+  </div>
 
-    </div><!-- end desk-main -->
+  <div class="how-strip">
+    <div class="how-title">How It Works</div>
+    <div class="how-steps">
+      <div class="how-step"><div class="how-num">01</div><div class="how-desc">Pick a plan</div></div>
+      <div class="how-step"><div class="how-num">02</div><div class="how-desc">Enter phone</div></div>
+      <div class="how-step"><div class="how-num">03</div><div class="how-desc">Pay</div></div>
+      <div class="how-step"><div class="how-num">04</div><div class="how-desc">Get voucher</div></div>
+      <div class="how-step"><div class="how-num">05</div><div class="how-desc">Connect!</div></div>
+    </div>
+  </div>
 
-    <!-- RIGHT: sidebar -->
-    <div class="desk-sidebar">
+  <footer>✦ Mobile Hub Uganda · Fast · Reliable · Always On ✦</footer>
 
-      <div class="sb-card" style="border-color:rgba(6,182,212,.3);">
-        <div class="sb-label">Portal IP</div>
-        <div class="sb-value">10.0.0.1</div>
-        <div class="sb-sub">Type in browser if page won't load</div>
-      </div>
-
-      <a href="https://wa.me/256771999302?text=I%20need%20help%20with%20Hotspot%20Central" class="sb-wa" target="_blank">
-        <span class="swa-ico">💬</span>
-        <div>
-          <div class="swa-lbl">Need Help? WhatsApp</div>
-          <div class="swa-num">0771 999 302</div>
-        </div>
-      </a>
-
-      <!-- Quick info cards -->
-      <div class="sb-card" style="border-color:rgba(167,139,250,.28);">
-        <div class="sb-label">How It Works</div>
-        <div style="font-size:.75rem;color:var(--muted);line-height:2;">
-          <div>✦ Select a data plan below</div>
-          <div>✦ Enter phone &amp; email</div>
-          <div>✦ Pay via Pesapal</div>
-          <div>✦ Voucher sent instantly</div>
-          <div>✦ Enter voucher to connect</div>
-        </div>
-      </div>
-
-      <div class="sb-brand">
-        <div class="br-by">Powered By</div>
-        <div class="br-name">Mobile Hub</div>
-        <div class="br-sub">Uganda · Fast · Reliable · Always On</div>
-      </div>
-
-    </div><!-- end sidebar -->
-
-  </div><!-- end desk-row -->
-
-</div><!-- end desk-layout -->
-
-<!-- WhatsApp float (mobile only) -->
-<a href="https://wa.me/256771999302?text=I%20need%20help%20with%20Hotspot%20Central" class="wa-float" target="_blank" id="waFloat">
-  <span class="wa-ico">💬</span>
-  <span class="wa-text">Need Help?</span>
-</a>
+</div>
 
 <script>
-/* ══════════════════════════════════════════
-   BACKEND CODE — UNCHANGED
-══════════════════════════════════════════ */
-const API_BASE = '';
+// ─────────────────────────────────────────────────────────────────
+// GLOBAL STATE
+// Capture MikroTik params the moment the page loads.
+// These arrive via the redirect stub on MikroTik.
+// We store them in module-level vars so every function can use them.
+// ─────────────────────────────────────────────────────────────────
+var WORKER_BASE  = 'https://mobilehubuganda-github-io.pages.dev';
+var _params      = new URLSearchParams(window.location.search);
+var _loginUrl    = _params.get('link-login-only') || 'http://10.0.0.1/login';
+var _mac         = _params.get('mac')             || '';
+var _ip          = _params.get('ip')              || '';
+var selectedPackage = null;
 
-const packages = [
-    { id:'p1', price:500,   name:'Quick Surf',   dur:'3 Hours',  icon:'⚡', features:['⏱ 3 Hours of Access','📶 High-Speed WiFi','✅ Instant Activation'] },
-    { id:'p2', price:1000,  name:'Day Pass',     dur:'24 Hours', icon:'🌅', features:['⏱ Full Day Access','📶 High-Speed WiFi','✅ Instant Activation'] },
-    { id:'p3', price:6000,  name:'Weekly Pass',  dur:'7 Days',   icon:'🚀', popular:true, features:['⏱ 7 Days of Access','📶 High-Speed WiFi','✅ Instant Activation','💰 Best Value'] },
-    { id:'p4', price:25000, name:'Monthly Pass', dur:'30 Days',  icon:'🏆', features:['⏱ 30 Days of Access','📶 High-Speed WiFi','✅ Instant Activation','🏆 Best Deal'] }
+// Persist login URL so voucher page can also use it
+// (only if it looks like a real local URL — not the raw MikroTik variable string)
+if (_loginUrl && _loginUrl.indexOf('$(') === -1) {
+  localStorage.setItem('mikrotik_login_url', _loginUrl);
+} else {
+  // Fallback: use whatever is stored or default to 10.0.0.1
+  _loginUrl = localStorage.getItem('mikrotik_login_url') || 'http://10.0.0.1/login';
+}
+
+// ─────────────────────────────────────────────────────────────────
+// PACKAGES
+// ─────────────────────────────────────────────────────────────────
+var packages = [
+  { id:'p1', price:500,   name:'Quick Surf',  dur:'3 Hours',  icon:'⚡' },
+  { id:'p2', price:1000,  name:'Day Pass',    dur:'24 Hours', icon:'🌅' },
+  { id:'p3', price:6000,  name:'Weekly Pass', dur:'7 Days',   icon:'🚀', popular:true },
+  { id:'p4', price:25000, name:'Monthly',     dur:'30 Days',  icon:'🏆' }
 ];
 
-let selectedPkg = { M:null, D:null };
-
-/* Render grids */
-function renderGrid(gridId, side) {
-    const grid = document.getElementById(gridId);
-    grid.innerHTML = packages.map(pkg => `
-        <div class="pkg-card${pkg.popular?' popular':''}" onclick="selectPkg('${pkg.id}','${side}')" id="card-${side}-${pkg.id}">
-            ${pkg.popular ? '<div class="pkg-badge">Best Value</div>' : ''}
-            <span class="pkg-icon">${pkg.icon}</span>
-            <div class="pkg-price">${pkg.price.toLocaleString()} UGX</div>
-            <div class="pkg-name">${pkg.name}</div>
-            <div class="pkg-dur">${pkg.dur}</div>
-            <ul class="pkg-features">${pkg.features.map(f=>`<li>${f}</li>`).join('')}</ul>
-        </div>
-    `).join('');
+function renderPackages(){
+  var grid = document.getElementById('pkgGrid');
+  grid.innerHTML = packages.map(function(p){
+    return '<div class="pkg-card' + (p.popular?' popular':'') + '"'
+      + ' onclick="selectPkg(\'' + p.id + '\')" id="card-' + p.id + '">'
+      + (p.popular ? '<div class="pkg-badge">Best Value</div>' : '')
+      + '<span class="pkg-icon">' + p.icon + '</span>'
+      + '<div class="pkg-price">' + p.price.toLocaleString() + ' UGX</div>'
+      + '<div class="pkg-name">' + p.name + '</div>'
+      + '<div class="pkg-dur">' + p.dur + '</div>'
+      + '</div>';
+  }).join('');
 }
-renderGrid('pkgGridM','M');
-renderGrid('pkgGridD','D');
+renderPackages();
 
-function selectPkg(id, side) {
-    selectedPkg[side] = packages.find(p => p.id === id);
-    document.querySelectorAll(`[id^="card-${side}-"]`).forEach(c => c.classList.remove('selected'));
-    document.getElementById(`card-${side}-${id}`).classList.add('selected');
-    const co = document.getElementById('checkout'+side);
-    document.getElementById('coTitle'+side).innerText = `Buy ${selectedPkg[side].name}`;
-    document.getElementById('coSummary'+side).innerHTML = `Total: <strong>${selectedPkg[side].price.toLocaleString()} UGX</strong> · ${selectedPkg[side].dur} of access`;
-    co.classList.add('open');
-    co.scrollIntoView({ behavior:'smooth', block:'nearest' });
-}
-
-async function startFreeTrial(side) {
-    const btn = document.getElementById('trialBtn'+side);
-    const st  = document.getElementById('trialSt'+side);
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spin"></span> CHECKING DEVICE…';
-    const fingerprint = btoa(navigator.userAgent + navigator.language).substring(0, 16);
-    try {
-        const res  = await fetch(`${API_BASE}/api/voucher/free-trial`, {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ deviceId: fingerprint })
-        });
-        const data = await res.json();
-        if (data.success) {
-            window.location.href = `login.html?voucher=${data.code}`;
-        } else {
-            showSt(st, 'error', data.message || '⛔ Trial already used today!');
-            btn.disabled = false;
-            btn.innerHTML = '⚡ ACTIVATE FREE TRIAL';
-        }
-    } catch(e) {
-        showSt(st, 'error', '⚠️ Connection error. Ensure you are on Hotspot Central.');
-        btn.disabled = false;
-        btn.innerHTML = '⚡ ACTIVATE FREE TRIAL';
-    }
+// ─────────────────────────────────────────────────────────────────
+// PACKAGE SELECTION
+// ─────────────────────────────────────────────────────────────────
+function selectPkg(id){
+  selectedPackage = packages.find(function(x){ return x.id===id; });
+  if(!selectedPackage) return;
+  document.querySelectorAll('.pkg-card').forEach(function(c){ c.classList.remove('selected'); });
+  document.getElementById('card-'+id).classList.add('selected');
+  document.getElementById('coTitle').textContent   = 'Buy ' + selectedPackage.name;
+  document.getElementById('coSummary').innerHTML   =
+    'Selected: <strong>' + selectedPackage.name + ' — '
+    + selectedPackage.price.toLocaleString() + ' UGX</strong>';
+  var panel = document.getElementById('checkoutPanel');
+  panel.classList.add('open');
+  setTimeout(function(){ panel.scrollIntoView({behavior:'smooth', block:'nearest'}); }, 100);
+  hideSt();
 }
 
-async function initiatePesapal(side) {
-    const phone = document.getElementById('phone'+side).value;
-    const email = document.getElementById('email'+side).value;
-    const btn   = document.getElementById('payBtn'+side);
-    if (!phone) { alert('Please enter your phone number'); return; }
-    if (!selectedPkg[side]) { alert('Please select a package'); return; }
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spin"></span> REDIRECTING TO PESAPAL…';
-    try {
-        const res  = await fetch(`${API_BASE}/api/payment/checkout`, {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ package_id: selectedPkg[side].id, phone, email })
-        });
-        const data = await res.json();
-        if (data.redirect_url) {
-            window.location.href = data.redirect_url;
-        } else {
-            alert(data.error || 'Payment error. Please try again.');
-            btn.disabled = false;
-            btn.innerHTML = '💳 PAY WITH PESAPAL';
-        }
-    } catch(e) {
-        alert('Error starting payment. Check your connection.');
-        btn.disabled = false;
-        btn.innerHTML = '💳 PAY WITH PESAPAL';
-    }
+function closeCheckout(){
+  document.getElementById('checkoutPanel').classList.remove('open');
+  document.querySelectorAll('.pkg-card').forEach(function(c){ c.classList.remove('selected'); });
+  selectedPackage = null;
 }
 
-/* Hide WA float on desktop */
-if (window.innerWidth >= 768) {
-    const waf = document.getElementById('waFloat');
-    if(waf) waf.style.display = 'none';
+// ─────────────────────────────────────────────────────────────────
+// STATUS HELPERS
+// ─────────────────────────────────────────────────────────────────
+function showSt(type, msg){
+  var s = document.getElementById('status');
+  s.className = 'status show ' + type;
+  s.innerHTML = msg;
+  s.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+function hideSt(){ document.getElementById('status').classList.remove('show'); }
+
+// ─────────────────────────────────────────────────────────────────
+// SUBMIT LOGIN TO MIKROTIK
+// Uses a real HTML form GET submit — the only method that works
+// reliably inside Android CaptivePortalLogin WebView when the
+// source page is HTTPS and MikroTik is HTTP.
+// window.location.href is silently blocked in this context.
+// ─────────────────────────────────────────────────────────────────
+function submitToMikrotik(voucher, loginUrl) {
+  var dst = WORKER_BASE + '/status.html?voucher=' + encodeURIComponent(voucher);
+
+  var form = document.createElement('form');
+  form.method = 'GET';
+  form.action = loginUrl;
+
+  [['username', voucher], ['password', voucher], ['dst', dst]].forEach(function(pair){
+    var inp = document.createElement('input');
+    inp.type  = 'hidden';
+    inp.name  = pair[0];
+    inp.value = pair[1];
+    form.appendChild(inp);
+  });
+
+  document.body.appendChild(form);
+  form.submit();
 }
 
-/* ══════════════════════════════════════════
-   GALAXY CANVAS
-══════════════════════════════════════════ */
-(function(){
-  const cv=document.getElementById('galaxy'),ctx=cv.getContext('2d');
-  let W,H,stars=[],dust=[];
-  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
-  function mkStars(){
-    stars=[];const n=Math.floor(W*H/1600);
-    for(let i=0;i<n;i++){
-      const big=Math.random()>.65;
-      stars.push({x:Math.random()*W,y:Math.random()*H,
-        r:big?Math.random()*1.9+.9:Math.random()*.75+.15,
-        a:Math.random(),da:(Math.random()*.005+.001)*(Math.random()<.5?1:-1),
-        vy:big?.012:.038,
-        col:['#ffffff','#c4b5fd','#93c5fd','#67e8f9','#fbcfe8'][Math.floor(Math.random()*5)]});
-    }
+// ─────────────────────────────────────────────────────────────────
+// PESAPAL PAYMENT
+// ─────────────────────────────────────────────────────────────────
+async function initiatePesapal(){
+  if(!selectedPackage){ showSt('error','⚠️ Please select a package first'); return; }
+
+  var phone = document.getElementById('phone').value.trim();
+  var email = document.getElementById('email').value.trim();
+
+  if(!phone){ showSt('error','⚠️ Please enter your phone number'); return; }
+  if(phone.length < 9){ showSt('error','⚠️ Phone number too short'); return; }
+
+  phone = phone.replace(/\D/g,'');
+  if(phone.startsWith('0'))   phone = '256' + phone.substring(1);
+  if(!phone.startsWith('256')) phone = '256' + phone;
+
+  var btn = document.getElementById('payBtn');
+  btn.disabled    = true;
+  btn.textContent = '⏳ Processing...';
+  showSt('info','🚀 Initiating payment...');
+
+  try {
+    var res = await fetch(WORKER_BASE + '/api/payment/checkout', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        package_id: selectedPackage.id,
+        phone:      phone,
+        email:      email || undefined,
+        mac:        _mac  || null,
+        // Pass login URL through so payment callback can redirect client correctly
+        login_url:  _loginUrl
+      })
+    });
+
+    var data = await res.json();
+    if(!data.success) throw new Error(data.error || 'Payment initiation failed');
+
+    showSt('success','✅ Redirecting to payment gateway...');
+    setTimeout(function(){ window.location.href = data.redirect_url; }, 1000);
+
+  } catch(err){
+    console.error(err);
+    showSt('error','⚠️ ' + err.message);
+    btn.disabled    = false;
+    btn.textContent = '💳 PAY WITH PESAPAL';
   }
-  function mkDust(){
-    dust=[];
-    for(let i=0;i<7;i++)dust.push({
-      x:Math.random()*W,y:Math.random()*H,r:70+Math.random()*130,
-      a:.028+Math.random()*.045,
-      col:['rgba(124,58,237,','rgba(6,182,212,','rgba(236,72,153,','rgba(79,70,229,'][i%4],
-      dx:(Math.random()-.5)*.1,dy:(Math.random()-.5)*.1});
+}
+
+// ─────────────────────────────────────────────────────────────────
+// FREE TRIAL
+// Activates a free-trial voucher for this device's MAC,
+// then logs in directly via form submit to MikroTik.
+// ─────────────────────────────────────────────────────────────────
+async function startFreeTrial(){
+  var btn = document.getElementById('freeBtn');
+
+  if(!_mac || _mac === '' || _mac.indexOf('$(') !== -1){
+    // No MAC available — happens when page is opened directly (not via captive portal)
+    showSt('error','⚠️ Connect to Mobile Hub WiFi first, then tap the free trial.');
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = '⏳ Activating...';
+  showSt('info','🎁 Activating free trial...');
+
+  try {
+    var res = await fetch(WORKER_BASE + '/api/voucher/free-trial', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ mac: _mac, ip: _ip })
+    });
+
+    var data = await res.json();
+
+    if(!data.success) throw new Error(data.error || 'Free trial unavailable');
+
+    showSt('success','✅ Free trial activated! Connecting...');
+    localStorage.setItem('last_voucher', data.voucher);
+
+    setTimeout(function(){
+      submitToMikrotik(data.voucher, _loginUrl);
+    }, 600);
+
+  } catch(err){
+    showSt('error','⚠️ ' + err.message);
+    btn.disabled    = false;
+    btn.textContent = '⚡ ACTIVATE FREE TRIAL';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// GO TO VOUCHER PAGE
+// CRITICAL FIX: passes link-login-only so the voucher page
+// knows which MikroTik URL to submit to.
+// ─────────────────────────────────────────────────────────────────
+function goToVoucherPage(){
+  var url = WORKER_BASE + '/login'
+    + '?link-login-only=' + encodeURIComponent(_loginUrl)
+    + (_mac ? '&mac=' + encodeURIComponent(_mac) : '');
+
+  window.location.href = url;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// GALAXY BACKGROUND
+// ─────────────────────────────────────────────────────────────────
+(function(){
+  var cv = document.getElementById('galaxy');
+  if(!cv) return;
+  var ctx = cv.getContext('2d'), W, H, stars = [];
+  function resize(){ W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; mkStars(); }
+  function mkStars(){
+    stars = [];
+    for(var i=0;i<60;i++) stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2+.3,v:Math.random()*.3+.1});
   }
   function draw(){
     ctx.clearRect(0,0,W,H);
-    const g=ctx.createRadialGradient(W*.5,H*.38,0,W*.5,H*.38,Math.max(W,H)*.75);
-    g.addColorStop(0,'rgba(18,8,48,.95)');g.addColorStop(1,'rgba(2,0,8,1)');
-    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-    dust.forEach(d=>{
-      d.x+=d.dx;d.y+=d.dy;
-      if(d.x<-d.r)d.x=W+d.r;if(d.x>W+d.r)d.x=-d.r;
-      if(d.y<-d.r)d.y=H+d.r;if(d.y>H+d.r)d.y=-d.r;
-      const ng=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r);
-      ng.addColorStop(0,d.col+d.a+')');ng.addColorStop(1,d.col+'0)');
-      ctx.fillStyle=ng;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fill();
-    });
-    stars.forEach(s=>{
-      s.a+=s.da;if(s.a>1||s.a<0)s.da*=-1;
-      s.y-=s.vy;if(s.y<-2){s.y=H+2;s.x=Math.random()*W;}
-      ctx.globalAlpha=Math.max(0,Math.min(1,s.a));
-      if(s.r>1.1){ctx.shadowBlur=7;ctx.shadowColor=s.col;}
-      ctx.fillStyle=s.col;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();
-      ctx.shadowBlur=0;
-    });
-    ctx.globalAlpha=1;requestAnimationFrame(draw);
+    ctx.fillStyle='rgba(255,255,255,0.7)';
+    stars.forEach(function(s){ ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();s.y-=s.v;if(s.y<0)s.y=H; });
+    requestAnimationFrame(draw);
   }
-  window.addEventListener('resize',()=>{resize();mkStars();mkDust();});
-  resize();mkStars();mkDust();draw();
+  window.addEventListener('resize',resize);
+  resize(); draw();
 })();
-
-function showSt(el,t,m){el.className='status-msg show '+t;el.textContent=m;}
 </script>
 </body>
 </html>
