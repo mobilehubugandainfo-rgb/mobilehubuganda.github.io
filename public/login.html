@@ -282,18 +282,28 @@
         //  activation write before MikroTik checks its own user list.
 
         setTimeout(function () {
-            // dst is where MikroTik sends the user after granting internet.
-            // We include the voucher code so status.html can auto-load the session.
-            var dst = DST_AFTER_LOGIN + '?voucher=' + encodeURIComponent(code);
+    var loginUrl = params.get('link-login-only')
+                || localStorage.getItem('mikrotik_login_url')
+                || 'http://10.0.0.1/login';
 
-            var target = loginUrl
-                + '?username=' + encodeURIComponent(code)
-                + '&password=' + encodeURIComponent(code)
-                + '&dst='      + encodeURIComponent(dst);
+    var dst = 'https://mobilehubuganda-github-io.pages.dev/status.html?voucher='
+              + encodeURIComponent(code);
 
-            console.log('[LOGIN] ▶ Navigating to MikroTik:', loginUrl);
-            window.location.href = target;
-        }, 300);
+    var form = document.createElement('form');
+    form.method = 'GET';
+    form.action = loginUrl;
+
+    [['username', code], ['password', code], ['dst', dst]].forEach(function(pair){
+        var inp = document.createElement('input');
+        inp.type  = 'hidden';
+        inp.name  = pair[0];
+        inp.value = pair[1];
+        form.appendChild(inp);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+}, 300);
     }
 
     // ── GALAXY BACKGROUND ─────────────────────────────────────────────
