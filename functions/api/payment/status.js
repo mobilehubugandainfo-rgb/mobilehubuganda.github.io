@@ -45,12 +45,9 @@ export async function onRequestGet({ request, env }) {
    // ─── 2. Already done — return immediately ──────────────────
 if (data.status === 'COMPLETED' && data.voucherCode) {
 
-  const loginUrl = `http://hka0apw4nbj.sn.mynetname.net/login?username=${data.voucherCode}&password=${data.voucherCode}`;
-
   return new Response(JSON.stringify({
     status: 'COMPLETED',
     voucherCode: data.voucherCode,
-    login_url: loginUrl,
     tracking_id: data.tracking_id,
     package_type: data.package_type,
     amount: data.amount
