@@ -88,9 +88,8 @@
     //  The first reachable one will be used.
     // ─────────────────────────────────────────────────────────────────
     var MIKROTIK_LOGIN_URLS = [
-        'http://hka0apw4nbj.sn.mynetname.net/login',
-        'http://10.0.0.1/login'
-    ];
+    'http://10.0.0.1/login'
+      ];
 
     // After MikroTik grants internet access it follows the dst param.
     // We send users straight to status.html so they see their session.
@@ -149,10 +148,9 @@
                     || params.get('link-login')
                     || localStorage.getItem('mikrotik_login_url');
 
-        _loginUrl = (savedUrl && isSafeLoginUrl(savedUrl)) ? savedUrl : MIKROTIK_LOGIN_URLS[0];
+        _loginUrl = MIKROTIK_LOGIN_URLS[0];
 
         if (_mac !== 'unknown') localStorage.setItem('client_mac', _mac);
-        localStorage.setItem('mikrotik_login_url', _loginUrl);
 
         // ── Auto-fill voucher arriving from connecting.html ────────────
         var urlVoucher = params.get('voucher');
