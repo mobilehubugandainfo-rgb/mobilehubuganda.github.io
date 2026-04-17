@@ -226,40 +226,22 @@
             return;
         }
 
-        var dst = DST_AFTER_LOGIN + '?voucher=' + encodeURIComponent(code);
-
-        // ── STEP 3: Try direct navigation first (bypasses mixed content) 
-        //           If that doesn't work within 3s, fall back to form POST
+        // ── STEP 3: Hand credentials back to MikroTik router page ──────
+        // We do NOT submit directly to MikroTik from here because this
+        // page is on HTTPS and MikroTik is on HTTP — browsers block that.
+        // Instead we redirect back to the router-served login page (HTTP)
+        // passing credentials as URL params. The router page receives them
+        // and submits the login form natively over HTTP — no blocking.
         showStatus('⚡ Logging in...', '#67e8f9');
 
-        var directUrl = loginUrl
-            + '?username=' + encodeURIComponent(code)
-            + '&password=' + encodeURIComponent(code)
-            + '&dst='      + encodeURIComponent(dst);
+        var dst = DST_AFTER_LOGIN + '?voucher=' + encodeURIComponent(code);
 
-        // Attempt 1: direct window.location navigation (alogin style)
-        // MikroTik intercepts this navigation and grants access directly
-        var navTimer = setTimeout(function () {
-            // Attempt 2: form submission fallback
-            // Fires only if direct navigation didn't result in a page change
-            showStatus('⚡ Trying alternative login...', '#fbbf24');
-            var form = document.createElement('form');
-            form.method = 'GET';
-            form.action = loginUrl;
-            [['username', code], ['password', code], ['dst', dst]].forEach(function(pair) {
-                var inp  = document.createElement('input');
-                inp.type  = 'hidden';
-                inp.name  = pair[0];
-                inp.value = pair[1];
-                form.appendChild(inp);
-            });
-            document.body.appendChild(form);
-            form.submit();
-        }, 3000);
-
-        // Navigate directly — if MikroTik accepts this the page will change
-        // and the fallback timer above will never fire
-        window.location.href = directUrl;
+        setTimeout(function () {
+            window.location.href = loginUrl
+                + '?username=' + encodeURIComponent(code)
+                + '&password=' + encodeURIComponent(code)
+                + '&dst='      + encodeURIComponent(dst);
+        }, 300);
     }
 
     // ── GALAXY BACKGROUND ─────────────────────────────────────────────
