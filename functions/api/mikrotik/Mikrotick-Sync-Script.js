@@ -1,115 +1,129 @@
-# ============================================================
-# MobileHub — MikroTik Auto-Kick & Sync Script
-# File: mikrotik-sync.rsc
-# Schedule: Every 5 minutes via /system scheduler
-#
-# What this does:
-#   1. Calls your Cloudflare Worker /api/mikrotik/kick-expired
-#   2. Gets back a list of voucher codes that have expired
-#   3. Removes those users from MikroTik hotspot
-#   4. Disconnects any active sessions for those users
-#
-# HOW TO INSTALL:
-#   Copy this entire script into:
-#   MikroTik > System > Scripts > Add New
-#   Name: mobilehub-sync
-#   Then set up scheduler (see bottom of file)
-# ============================================================
+// functions/api/mikrotik/sync-users.js
+// ============================================================
+// MobileHub — MikroTik → D1 User Data Sync Worker
+//
+// Called by MikroTik on a schedule (or on-login event).
+// Pulls live hotspot user data from MikroTik and upserts
+// phone number, MAC address, package, and session info into D1.
+//
+// ENDPOINT: POST /api/mikrotik/sync-users
+// AUTH:     Bearer token via env.SYNC_SECRET
+// ============================================================
 
-:local workerUrl "https://mobilehubuganda.github.io/api/mikrotik/kick-expired"
-:local logPrefix "[MobileHub]"
+const MIKROTIK_HOST = 'hka0apw4nbj.sn.mynetname.net';
+const MIKROTIK_PORT = '8728';
 
-# ── Step 1: Call the Worker to get expired codes ─────────────────
-:do {
-    :log info "$logPrefix Checking for expired vouchers..."
+const jsonHeaders = {
+  'Content-Type':                'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+};
 
-    /tool fetch \
-        url=$workerUrl \
-        http-method=get \
-        output=user \
-        dst-path="/tmp/expired.txt"
-
-    :local rawJson [/file get /tmp/expired.txt contents]
-    :log info "$logPrefix Raw response: $rawJson"
-
-    # ── Step 2: Parse the codes array from JSON ───────────────────
-    # Worker returns: {"codes":["ABC123","DEF456"]}
-    # We extract the value between [ and ]
-    :local startPos [:find $rawJson "["]
-    :local endPos   [:find $rawJson "]"]
-
-    :if (($startPos = 0) && ($endPos = 0)) do={
-        :log info "$logPrefix No expired vouchers found or bad response."
-        /file remove /tmp/expired.txt
-        :error "done"
+export async function onRequestPost({ request, env }) {
+  try {
+    // ── Auth check — simple bearer token ─────────────────────────
+    const authHeader = request.headers.get('Authorization') || '';
+    const token      = authHeader.replace('Bearer ', '').trim();
+    if (env.SYNC_SECRET && token !== env.SYNC_SECRET) {
+      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+        status: 401, headers: jsonHeaders
+      });
     }
 
-    :local codesStr [:pick $rawJson ($startPos + 1) $endPos]
+    // ── 1. Fetch all active hotspot sessions from MikroTik ────────
+    const auth = btoa(`${env.MIKROTIK_API_USER || 'api-user'}:${env.MIKROTIK_API_PASSWORD}`);
 
-    # If codes array is empty string, nothing to do
-    :if ($codesStr = "") do={
-        :log info "$logPrefix No expired vouchers at this time."
-        /file remove /tmp/expired.txt
-        :error "done"
+    const [activeRes, userRes] = await Promise.all([
+      fetch(`http://${MIKROTIK_HOST}:${MIKROTIK_PORT}/rest/ip/hotspot/active`, {
+        headers: { 'Authorization': `Basic ${auth}` },
+        signal: AbortSignal.timeout(10000)
+      }),
+      fetch(`http://${MIKROTIK_HOST}:${MIKROTIK_PORT}/rest/ip/hotspot/user`, {
+        headers: { 'Authorization': `Basic ${auth}` },
+        signal: AbortSignal.timeout(10000)
+      })
+    ]);
+
+    if (!activeRes.ok || !userRes.ok) {
+      throw new Error(`MikroTik API error: active=${activeRes.status} users=${userRes.status}`);
     }
 
-    # ── Step 3: Split codes by comma and kick each one ───────────
-    # codesStr looks like: "ABC123","DEF456","GHI789"
-    :local kicked 0
+    const activeSessions = await activeRes.json(); // live sessions with MAC + IP
+    const hotspotUsers   = await userRes.json();   // all users with profile/comment
 
-    :while ($codesStr != "") do={
-        :local commaPos [:find $codesStr ","]
-        :local code ""
-
-        :if ($commaPos != "") do={
-            :set code [:pick $codesStr 0 $commaPos]
-            :set codesStr [:pick $codesStr ($commaPos + 1) [:len $codesStr]]
-        } else={
-            :set code $codesStr
-            :set codesStr ""
-        }
-
-        # Strip surrounding quotes from "ABC123" → ABC123
-        :set code [:pick $code 1 ([:len $code] - 1)]
-
-        :if ($code != "") do={
-            # ── Remove active hotspot session ──────────────────
-            :do {
-                /ip hotspot active remove [find user=$code]
-                :log info "$logPrefix Kicked active session for: $code"
-            } on-error={
-                :log info "$logPrefix No active session for: $code (already offline)"
-            }
-
-            # ── Remove hotspot user account ───────────────────
-            :do {
-                /ip hotspot user remove [find name=$code]
-                :log info "$logPrefix Removed hotspot user: $code"
-                :set kicked ($kicked + 1)
-            } on-error={
-                :log info "$logPrefix User not found in hotspot (already removed?): $code"
-            }
-        }
+    // ── 2. Build a MAC lookup from active sessions ─────────────────
+    // activeSessions: [{ user, address, mac-address, uptime, ... }]
+    const macByUser = {};
+    for (const session of activeSessions) {
+      if (session.user && session['mac-address']) {
+        macByUser[session.user] = session['mac-address'].toUpperCase();
+      }
     }
 
-    :log info "$logPrefix Sync complete. Kicked $kicked expired user(s)."
-    /file remove /tmp/expired.txt
+    // ── 3. Sync each hotspot user into D1 ─────────────────────────
+    let synced  = 0;
+    let skipped = 0;
+    const errors = [];
 
-} on-error={
-    :log error "$logPrefix Script error — check Worker URL or network."
-    :do { /file remove /tmp/expired.txt } on-error={}
+    for (const user of hotspotUsers) {
+      const code    = user.name;
+      const profile = user.profile || 'unknown'; // p1, p2, p3, p4, free-trial
+      const comment = user.comment || '';         // "Exp: 2025-04-20 12:00:00 UTC"
+      const mac     = macByUser[code] || null;
+
+      // Extract expiry from comment field if present
+      // Comment format set by create-user.js: "Exp: YYYY-MM-DD HH:MM:SS UTC"
+      let expiresAt = null;
+      const expMatch = comment.match(/Exp:\s*(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
+      if (expMatch) expiresAt = expMatch[1];
+
+      // Skip users with no meaningful data
+      if (!code) { skipped++; continue; }
+
+      try {
+        // ── Upsert into vouchers table ─────────────────────────
+        // Only updates fields we have — never overwrites phone (stored in transactions)
+        await env.DB.prepare(`
+          UPDATE vouchers SET
+            device_id    = COALESCE(NULLIF(?, ''), device_id),
+            mac_address  = COALESCE(NULLIF(?, ''), mac_address),
+            package_type = COALESCE(NULLIF(?, ''), package_type),
+            expires_at   = COALESCE(NULLIF(?, ''), expires_at),
+            updated_at   = datetime('now')
+          WHERE code = ?
+        `).bind(
+          mac,           // device_id (same as mac for hotspot)
+          mac,           // mac_address
+          profile,       // package_type
+          expiresAt,     // expires_at (from comment)
+          code           // WHERE code = ?
+        ).run();
+
+        synced++;
+        console.log(`[SYNC] ✅ Updated ${code} | mac=${mac} | profile=${profile} | expires=${expiresAt}`);
+
+      } catch (rowErr) {
+        errors.push({ code, error: rowErr.message });
+        console.error(`[SYNC] ❌ Failed to sync ${code}:`, rowErr.message);
+      }
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      synced,
+      skipped,
+      errors: errors.length ? errors : undefined
+    }), { status: 200, headers: jsonHeaders });
+
+  } catch (error) {
+    console.error('[SYNC] ❌ Fatal error:', error.message);
+    return new Response(JSON.stringify({ success: false, error: error.message }), {
+      status: 500, headers: jsonHeaders
+    });
+  }
 }
 
-# ============================================================
-# SCHEDULER SETUP — Run this ONCE in terminal to install:
-#
-# /system scheduler add \
-#     name="mobilehub-sync" \
-#     interval=5m \
-#     on-event="mobilehub-sync" \
-#     policy=read,write,test \
-#     comment="MobileHub auto-kick expired vouchers"
-#
-# CHECK LOGS WITH:
-#   /log print where message~"MobileHub"
-# ============================================================
+export function onRequestOptions() {
+  return new Response(null, { status: 204, headers: jsonHeaders });
+}
