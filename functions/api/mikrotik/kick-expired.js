@@ -30,7 +30,7 @@ export async function onRequestGet({ request, env }) {
     `).bind(now).all();
 
     if (!results || results.length === 0) {
-      return new Response(JSON.stringify({ codes: [], expired_count: 0 }), {
+      return new Response(JSON.stringify({ codes: "NONE", expired_count: 0 }), {
         status: 200, headers: jsonHeaders
       });
     }
