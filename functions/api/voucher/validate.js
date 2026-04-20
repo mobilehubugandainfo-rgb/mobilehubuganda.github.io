@@ -1,13 +1,11 @@
 // functions/api/voucher/validate.js
-// ✅ Expiry check — wall-clock time from FIRST use, never reset
-// ✅ MAC locking — only first device can use voucher
-// ✅ Roaming allowed — MAC updates if previous session expired (keepalive 30s)
-// ✅ Anti-sharing — blocks simultaneous use from different devices
+// ✅ Free roaming — any MAC can use valid voucher
+// ✅ MAC updated to latest device on every login
+// ✅ Simultaneous use blocked — two devices at same time
+// ✅ Expiry check — wall-clock time from FIRST use
 // ✅ Expired vouchers blocked and marked in DB
-// ✅ Correct UTC datetime parsing from SQLite
 
-// How long to wait before allowing MAC switch (match MikroTik keepalive-timeout)
-const ROAMING_GRACE_SECONDS = 60; // 60s grace — slightly more than 30s keepalive
+const SIMULTANEOUS_BLOCK_SECONDS = 90; // block if same voucher used within 90s from different MAC
 
 export async function onRequestPost({ request, env }) {
   const jsonHeaders = {
@@ -65,61 +63,43 @@ export async function onRequestPost({ request, env }) {
           `UPDATE vouchers SET status = 'expired' WHERE id = ?`
         ).bind(voucher.id).run();
 
-        console.warn('[VALIDATE] ❌ Expired:', code, 'expired at', voucher.expires_at);
+        console.warn('[VALIDATE] ❌ Expired:', code);
 
         return new Response(JSON.stringify({
           success: false, error: 'This voucher has expired. Please purchase a new one.'
         }), { status: 200, headers: jsonHeaders });
       }
 
-      console.log('[VALIDATE] ⏳ Within expiry window, checking MAC...');
+      // ── Anti-simultaneous-use check ────────────────────────────
+      // Only block if a DIFFERENT MAC was seen very recently
+      if (
+        voucher.mac_address &&
+        voucher.mac_address !== 'unknown' &&
+        mac !== 'unknown' &&
+        voucher.mac_address !== mac
+      ) {
+        const lastSeen = voucher.last_seen ? new Date(voucher.last_seen) : null;
+        const secondsSince = lastSeen ? (now - lastSeen) / 1000 : SIMULTANEOUS_BLOCK_SECONDS + 1;
 
-      // ── Anti-sharing + Roaming logic ───────────────────────────
-      if (voucher.mac_address && voucher.mac_address !== 'unknown' && mac !== 'unknown') {
-        if (voucher.mac_address !== mac) {
+        if (secondsSince < SIMULTANEOUS_BLOCK_SECONDS) {
+          // Different MAC, active recently — block as simultaneous sharing
+          console.warn('[VALIDATE] ❌ Simultaneous use detected — code:', code,
+            '| locked MAC:', voucher.mac_address, '| new MAC:', mac,
+            '| last seen:', secondsSince, 's ago');
 
-          // Different MAC — check if previous session has gone idle
-          const lastSeen = voucher.last_seen ? new Date(voucher.last_seen) : null;
-          const secondsSinceLastSeen = lastSeen
-            ? (now - lastSeen) / 1000
-            : ROAMING_GRACE_SECONDS + 1; // no last_seen = treat as idle
-
-          console.log('[VALIDATE] 🔍 MAC mismatch — seconds since last seen:', secondsSinceLastSeen);
-
-          if (secondsSinceLastSeen < ROAMING_GRACE_SECONDS) {
-            // ❌ Previous session still active — this is sharing, not roaming
-            console.warn('[VALIDATE] ❌ SHARING DETECTED — locked to:', voucher.mac_address,
-              '| tried:', mac, '| last seen:', secondsSinceLastSeen, 's ago');
-
-            return new Response(JSON.stringify({
-              success: false,
-              error: 'This voucher is already active on another device. Please wait a moment and try again.'
-            }), { status: 200, headers: jsonHeaders });
-
-          } else {
-            // ✅ Previous session idle — allow roaming, update MAC
-            console.log('[VALIDATE] 🔄 Roaming detected — updating MAC:',
-              voucher.mac_address, '→', mac);
-
-            await env.DB.prepare(`
-              UPDATE vouchers SET mac_address = ?, last_seen = ?, last_ip = ? WHERE id = ?
-            `).bind(mac, now.toISOString(), ip, voucher.id).run();
-          }
-
-        } else {
-          // ✅ Same MAC — update last_seen (heartbeat)
-          await env.DB.prepare(`
-            UPDATE vouchers SET last_seen = ?, last_ip = ? WHERE id = ?
-          `).bind(now.toISOString(), ip, voucher.id).run();
+          return new Response(JSON.stringify({
+            success: false,
+            error: 'This voucher is currently active on another device. Please wait a moment and try again.'
+          }), { status: 200, headers: jsonHeaders });
         }
-      } else {
-        // No MAC on record yet — update last_seen
-        await env.DB.prepare(`
-          UPDATE vouchers SET last_seen = ?, last_ip = ? WHERE id = ?
-        `).bind(now.toISOString(), ip, voucher.id).run();
       }
 
-      console.log('[VALIDATE] ✅ Reconnection allowed — code:', code, '| expires:', voucher.expires_at);
+      // ── Allow — update MAC and last_seen ──────────────────────
+      await env.DB.prepare(`
+        UPDATE vouchers SET mac_address = ?, last_seen = ?, last_ip = ? WHERE id = ?
+      `).bind(mac, now.toISOString(), ip, voucher.id).run();
+
+      console.log('[VALIDATE] ✅ Reconnection allowed — code:', code, '| mac:', mac);
 
       return new Response(JSON.stringify({
         success:      true,
@@ -132,7 +112,7 @@ export async function onRequestPost({ request, env }) {
       }), { status: 200, headers: jsonHeaders });
     }
 
-    // ── 2. FIRST USE ────────────────────────────────────────────────
+    // ── 2. FIRST USE ───────────────────────────────────────────────
     if (voucher.status !== 'assigned' && voucher.status !== 'used') {
       console.warn('[VALIDATE] ❌ Unexpected status:', voucher.status, 'for code:', code);
       return new Response(JSON.stringify({
@@ -140,48 +120,20 @@ export async function onRequestPost({ request, env }) {
       }), { status: 200, headers: jsonHeaders });
     }
 
-    // MAC lock check on first use
-    if (voucher.mac_address && voucher.mac_address !== 'unknown' && mac !== 'unknown') {
-      if (voucher.mac_address !== mac) {
+    // Lock MAC and record first use
+    await env.DB.prepare(`
+      UPDATE vouchers SET mac_address = ?, last_seen = ?, last_ip = ? WHERE id = ?
+    `).bind(mac, now.toISOString(), ip, voucher.id).run();
 
-        const lastSeen = voucher.last_seen ? new Date(voucher.last_seen) : null;
-        const secondsSinceLastSeen = lastSeen
-          ? (now - lastSeen) / 1000
-          : ROAMING_GRACE_SECONDS + 1;
-
-        if (secondsSinceLastSeen < ROAMING_GRACE_SECONDS) {
-          // Still active on another device — block
-          console.warn('[VALIDATE] ❌ SHARING BLOCKED on first use — code:', code);
-          return new Response(JSON.stringify({
-            success: false,
-            error: 'This voucher is already active on another device. Please wait a moment and try again.'
-          }), { status: 200, headers: jsonHeaders });
-        } else {
-          // Previous session idle — allow, update MAC
-          console.log('[VALIDATE] 🔄 MAC update on first use (roaming):', voucher.mac_address, '→', mac);
-          await env.DB.prepare(`
-            UPDATE vouchers SET mac_address = ?, last_seen = ?, last_ip = ? WHERE id = ?
-          `).bind(mac, now.toISOString(), ip, voucher.id).run();
-        }
-      }
-    }
-
-    // Lock MAC on very first use
-    if (!voucher.mac_address || voucher.mac_address === 'unknown') {
-      await env.DB.prepare(`
-        UPDATE vouchers SET mac_address = ?, last_seen = ?, last_ip = ? WHERE id = ?
-      `).bind(mac, now.toISOString(), ip, voucher.id).run();
-    }
-
-    console.log('[VALIDATE] 🆕 Fresh voucher — ready for activation at login');
+    console.log('[VALIDATE] 🆕 Fresh voucher — ready for activation | mac:', mac);
 
     return new Response(JSON.stringify({
-      success:              true,
-      code:                 code,
-      password:             code,
-      package:              voucher.package_type,
-      profile:              voucher.package_type || 'p2',
-      activation_required:  true
+      success:             true,
+      code:                code,
+      password:            code,
+      package:             voucher.package_type,
+      profile:             voucher.package_type || 'p2',
+      activation_required: true
     }), { status: 200, headers: jsonHeaders });
 
   } catch (error) {
